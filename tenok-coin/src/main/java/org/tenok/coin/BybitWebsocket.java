@@ -32,13 +32,13 @@ public class BybitWebsocket {
         // string + object -> string + object.toString()
         // JSONObject jsonObject = (JSONObject) arrReturn;
         // jsonObject.get("confirm");
-        if ((boolean) ((JSONObject) arr.get(0)).get("confirm")) {
+        // if ((boolean) ((JSONObject) arr.get(0)).get("confirm")) {
 
-            if (((JSONObject) arr.get(1)).get("volume").toString().equals("0")) {
+        //     if (((JSONObject) arr.get(1)).get("volume").toString().equals("0")) {
                 System.out.println("Received message in client: open :  " + ((JSONObject) arr.get(0)).get("open"));
                 System.out.println("Received message in client: close : " + ((JSONObject) arr.get(0)).get("close"));
-            }
-        }
+            // }
+        // }
         
 
     }
