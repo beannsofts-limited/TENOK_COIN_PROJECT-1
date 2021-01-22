@@ -15,7 +15,6 @@ import javax.websocket.*;
 
 import org.json.simple.JSONObject;
 
-import jdk.javadoc.internal.doclets.toolkit.resources.doclets;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -86,7 +85,6 @@ public class App {
         return req.toString();
     }
 
-    @SuppressWarnings("unchecked")
     public static void main(String[] args) throws MalformedURLException, IOException {
         Map<String, String> request = new HashMap<>();
         request.put("symbol", "LINKUS");
