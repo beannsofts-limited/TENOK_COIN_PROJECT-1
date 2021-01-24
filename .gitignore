@@ -24,4 +24,11 @@ hs_err_pid*
 
 # vscode setting files
 /.vscode/
-*.pam
+
+# bybit api secret code
+secret.auth
+enc.java
+
+# maven
+target
+.classpath
