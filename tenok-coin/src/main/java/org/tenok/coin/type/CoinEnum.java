@@ -6,6 +6,7 @@ import lombok.Getter;
  * Symbol
  */
 @Getter
+@SuppressWarnings("unused")
 public enum CoinEnum {
     BTCUSDT("bitcoin", "비트코인"),
     ETHUSDT("ethereum", "이더리움"),

@@ -22,6 +22,7 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
     private Candle currentCandle = null;
 
     public CandleList(CoinEnum coinType, IntervalEnum interval) {
+        super();
         this.coinType = coinType;
         this.interval = interval;
     }

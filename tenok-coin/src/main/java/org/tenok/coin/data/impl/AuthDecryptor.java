@@ -1,7 +1,6 @@
 package org.tenok.coin.data.impl;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -14,6 +13,7 @@ import java.util.Base64;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -28,34 +28,43 @@ import org.json.simple.parser.ParseException;
 public class AuthDecryptor {
     private String apiKeyEncrypted;
     private String secretKeyEncrypted;
+    private String validationEncrypted;
+    private String pw = null;
 
-    /**
-     * AuthDecryptor
-     * 
-     * @param authFile 암호키 파일
-     * @throws FileNotFoundException    암호키 파일 Not Found
-     * @throws IllegalArgumentException IV String ascii 16바이트 불충족
-     */
-    public AuthDecryptor(File authFile) throws FileNotFoundException {
+    private AuthDecryptor(File authFile) {
         try {
             JSONParser parser = new JSONParser();
             JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(authFile));
             this.apiKeyEncrypted = (String) jsonObject.get("apiKey");
             this.secretKeyEncrypted = (String) jsonObject.get("secretKey");
+            this.validationEncrypted = (String) jsonObject.get("validation");
         } catch (IOException | ParseException e) {
             e.printStackTrace();
+            throw new RuntimeException("Secret Key File Path 체크 요망", e);
         }
     }
 
-    public String getApiKey(String password) {
+    private static class AuthHolder {
+        public static final AuthDecryptor INSTANCE = new AuthDecryptor(new File("./secret.auth"));
+    }
+
+    public static AuthDecryptor getInstance() {
+        return AuthHolder.INSTANCE;
+    }
+
+    public void setPassword(String password) {
+        this.pw = password;
+    }
+
+    private String getApiKey(String password) {
         return decrypt(this.apiKeyEncrypted, password);
     }
 
-    public String getApiSecretKey(String password) {
+    private String getApiSecretKey(String password) {
         return decrypt(this.secretKeyEncrypted, password);
     }
 
-    public static String decrypt(String cipherText, String password) {
+    private static String decrypt(String cipherText, String password) {
         Cipher cipher;
         try {
             cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
@@ -82,5 +91,59 @@ public class AuthDecryptor {
         }
         throw new RuntimeException("복호화 실패");
     }
-    
+
+    /**
+     * API Key 리턴
+     * @return API Key in String
+     */
+    public String getApiKey() {
+        return getApiKey(pw);
+    }
+
+    /**
+     * Bybit Signature
+     * @return Bybit Signature
+     */
+    public String generate_signature() {
+        return sha256_HMAC("GET/realtime" + String.valueOf(System.currentTimeMillis() + 1000), getApiSecretKey(pw));
+    }
+
+    /**
+     * 비밀번호 로그인 성공 여부 리턴
+     * @return 로그인 성공여부
+     */
+    public boolean validate() {
+        if (this.pw == null) {
+            throw new RuntimeException("비밀번호 set 요망");
+        }
+        return decrypt(validationEncrypted, this.pw).equals("success");
+    }
+
+    private String byteArrayToHexString(byte[] b) {
+        StringBuilder hs = new StringBuilder();
+        String stmp;
+        for (int n = 0; b != null && n < b.length; n++) {
+            stmp = Integer.toHexString(b[n] & 0XFF);
+            if (stmp.length() == 1)
+                hs.append('0');
+            hs.append(stmp);
+        }
+        return hs.toString().toLowerCase();
+    }
+
+    private String sha256_HMAC(String message, String secret) {
+        String hash = "";
+        try {
+            Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
+            SecretKeySpec secret_key = new SecretKeySpec(secret.getBytes(), "HmacSHA256");
+            sha256_HMAC.init(secret_key);
+            byte[] bytes = sha256_HMAC.doFinal(message.getBytes());
+            hash = byteArrayToHexString(bytes);
+        } catch (Exception e) {
+            System.out.println("Error HmacSHA256 ===========" + e.getMessage());
+        }
+        return hash;
+
+    }
+
 }

@@ -16,7 +16,6 @@ import javax.net.ssl.HttpsURLConnection;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.impl.BybitDAO;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
@@ -26,8 +25,7 @@ import org.tenok.coin.type.TIFEnum;
 
 public class BybitRestDAO {
 
-    public JSONObject requestKline(CoinEnum coinType, IntervalEnum interval, int limit, Date from)
-            throws ParseException, IOException {
+    public JSONObject requestKline(CoinEnum coinType, IntervalEnum interval, int limit, Date from) {
         Map<String, String> request = new HashMap<>();
         request.put("symbol", coinType.toString());
         request.put("interval", interval.toString());
@@ -42,7 +40,7 @@ public class BybitRestDAO {
 
     }
 
-    public JSONObject getActiveOrder(CoinEnum coinType) throws ParseException, IOException {
+    public JSONObject getActiveOrder(CoinEnum coinType) {
         Map<String, String> request = new HashMap<>();
         request.put("api_key", BybitDAO.getInstance().getApiKey());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
@@ -57,7 +55,7 @@ public class BybitRestDAO {
 
     }
 
-    public JSONObject getConditionalOrder() throws ParseException, IOException {
+    public JSONObject getConditionalOrder() {
         Map<String, String> request = new HashMap<>();
         request.put("api_key", BybitDAO.getInstance().getApiKey());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
