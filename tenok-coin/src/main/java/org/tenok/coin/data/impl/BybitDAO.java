@@ -10,7 +10,7 @@ import java.util.Map;
 import javax.security.auth.login.LoginException;
 
 import org.tenok.coin.data.CoinDataAccessable;
-import org.tenok.coin.data.PositionList;
+import org.tenok.coin.data.entity.impl.PositionList;
 import org.tenok.coin.data.entity.InstrumentInfo;
 import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.WalletAccessable;
@@ -33,7 +33,7 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
         public static BybitDAO INSTANCE = new BybitDAO();
     }
 
-    public BybitDAO getInstance() {
+    public static BybitDAO getInstance() {
         return BybitLazyLoader.INSTANCE;
     }
 
@@ -92,6 +92,14 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
     public void getPaidLimit(CoinEnum coinType) {
         // TODO Auto-generated method stub
 
+    }
+
+    public String getApiKey() {
+        return null;
+    }
+
+    public String getSign() {
+        return null;
     }
 
     @Override

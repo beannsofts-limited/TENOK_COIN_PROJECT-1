@@ -87,7 +87,7 @@ public class App {
 
     public static void main(String[] args) throws MalformedURLException, IOException {
         Map<String, String> request = new HashMap<>();
-        request.put("symbol", "LINKUS");
+        request.put("symbol", "LINKUSDT");
         request.put("interval", "15");
         request.put("limit", "200");
         request.put("from", "1611187200");
