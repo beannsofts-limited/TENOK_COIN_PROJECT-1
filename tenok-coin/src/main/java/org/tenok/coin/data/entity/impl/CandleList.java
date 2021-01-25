@@ -57,7 +57,7 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
     }
 
 
-    public double CalMA5(){
+    public double CalMA(){
         
     }
 }
