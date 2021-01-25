@@ -1,9 +1,13 @@
 package org.tenok.coin.data.impl;
 
 import java.io.Closeable;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.security.auth.login.LoginException;
 
 import org.tenok.coin.data.CoinDataAccessable;
 import org.tenok.coin.data.PositionList;
@@ -17,8 +21,9 @@ import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 
 public class BybitDAO implements CoinDataAccessable, Closeable {
-    private Map<CoinEnum, Map<IntervalEnum, Boolean>> candleListIsCachedMap = null;
-    private BybitWebsocketProcessor websocketProcessor = null;
+    private Map<CoinEnum, Map<IntervalEnum, Boolean>> candleListIsCachedMap;
+    private BybitWebsocketProcessor websocketProcessor;
+    private AuthDecryptor auth;
 
     private BybitDAO() {
         candleListIsCachedMap = new HashMap<>();
@@ -36,8 +41,13 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
 
     }
 
-    public void login(String password) {
-        
+    public void login(String password) throws LoginException {
+        try {
+            this.auth = new AuthDecryptor(new File("./secret.auth"));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        throw new LoginException("login failed");
     }
 
     @Override
