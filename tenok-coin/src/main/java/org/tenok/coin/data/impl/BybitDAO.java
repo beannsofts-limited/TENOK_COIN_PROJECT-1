@@ -32,7 +32,7 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
     private WalletAccessable walletInfo;
 
     private OrderList orderList;
-    private BybitWebsocketProcessor websocketProcessor;
+    private BybitWebsocketProcessor websocketProcessor = new BybitWebsocketProcessor();
     private BybitRestDAO restDAO;   // TODO 상호의존(순환참조) 해결
     private AuthDecryptor auth;
 
@@ -54,7 +54,7 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
     }
 
     public void init() {
-
+        this.websocketProcessor.init();
     }
 
     public void login(String password) throws LoginException {
@@ -70,8 +70,8 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
     public CandleList getCandleList(CoinEnum coinType, IntervalEnum interval) {
         if (!candleListIsCachedMap.get(coinType).containsKey(interval)) {
             // 해당 캔들 리스트가 캐시되어 있지 않을 경우.
-
-            JSONObject jsonObject = restDAO.requestKline(coinType, interval, 200, new Date(System.currentTimeMillis()));
+            long intervalSec = interval.getSec();
+            JSONObject jsonObject = restDAO.requestKline(coinType, interval, 200, new Date(System.currentTimeMillis() - intervalSec*200000L));
             JSONArray kLineArray = (JSONArray) jsonObject.get("result");
             CandleList candleList = new CandleList(coinType, interval);
             candleListIsCachedMap.get(coinType).put(interval, candleList);
@@ -80,12 +80,12 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
                 return (JSONObject) kLineObject;
             });
             map.forEachOrdered((JSONObject kLineObject) -> {
-                double open = (double) kLineObject.get("open");
-                double high = (double) kLineObject.get("high");
-                double low = (double) kLineObject.get("low");
-                double close = (double) kLineObject.get("close");
-                double volume = (double) kLineObject.get("volume");
-                Date startAt = new Date((long) kLineObject.get("start_at"));
+                double open = ((Number) kLineObject.get("open")).doubleValue();
+                double high = ((Number) kLineObject.get("high")).doubleValue();
+                double low = ((Number) kLineObject.get("low")).doubleValue();
+                double close = ((Number) kLineObject.get("close")).doubleValue();
+                double volume = ((Number) kLineObject.get("volume")).doubleValue();
+                Date startAt = new Date(((long) kLineObject.get("start_at")) * 1000L);
                 candleList.add(new Candle(startAt, volume, open, high, low, close));
             });
             // 실시간 kLine에 등록

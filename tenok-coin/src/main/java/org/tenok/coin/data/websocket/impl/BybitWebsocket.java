@@ -23,7 +23,7 @@ import org.tenok.coin.type.IntervalEnum;
 
 
 @ClientEndpoint(encoders = { BybitEncoder.class }, decoders = { BybitDecoder.class })
-class BybitWebsocket implements Closeable {
+public class BybitWebsocket implements Closeable {
     Map<CoinEnum, Map<IntervalEnum, Consumer<JSONObject>>> kLineCallbackMap;
     Consumer<JSONObject> walletInfoConsumer;
 
@@ -40,8 +40,14 @@ class BybitWebsocket implements Closeable {
 
     @OnMessage
     public void onMessage(JSONObject response) {
-        String topic = (String) response.get("topic");
+        JSONObject request = (JSONObject) response.get("request");
+        String op = (String) request.get("op");
+        if (op.equals("ping")) {
+            return;
+        }
+        System.out.println(request.toJSONString());
 
+        String topic = (String) response.get("topic");
         String[] topicParsed = topic.split(".");
 
         if (topicParsed.length == 0) {
@@ -79,10 +85,10 @@ class BybitWebsocket implements Closeable {
 
     }
 
-    @OnError
-    public void onError() {
+    // @OnError
+    // public void onError(Throwable t) {
 
-    }
+    // }
 
     /**
      * websocket kline 실시간 처리
@@ -99,7 +105,7 @@ class BybitWebsocket implements Closeable {
         }
         kLineCallbackMap.get(coinType).put(interval, consumer);
         JSONObject requestJson = getSubscriptionJSONObject(Arrays.asList(new String[] {String.format("%s.%s.%s", "candle",
-                                                           interval.getLiteral(), coinType.getLiteral())}));
+                                                           interval.getLiteral(), coinType.name())}));
         session.getAsyncRemote().sendObject(requestJson);
     }
 

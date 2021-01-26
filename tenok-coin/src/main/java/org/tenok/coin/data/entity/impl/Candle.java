@@ -116,5 +116,8 @@ public class Candle {
     void setLowerBB(double lowerBB) {
         this.lowerBB = lowerBB;
     }
-
+    @Override
+    public String toString() {
+        return String.format("open: %l, high:%l, close: %l, low: %l", open, high, close, low);
+    }
 }

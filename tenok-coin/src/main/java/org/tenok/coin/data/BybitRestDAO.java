@@ -16,6 +16,7 @@ import javax.net.ssl.HttpsURLConnection;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.tenok.coin.data.impl.AuthDecryptor;
 import org.tenok.coin.data.impl.BybitDAO;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
@@ -28,9 +29,9 @@ public class BybitRestDAO {
     public JSONObject requestKline(CoinEnum coinType, IntervalEnum interval, int limit, Date from) {
         Map<String, String> request = new HashMap<>();
         request.put("symbol", coinType.toString());
-        request.put("interval", interval.toString());
+        request.put("interval", interval.getLiteral());
         request.put("limit", Integer.toString(limit));
-        request.put("from", from.toString());
+        request.put("from", Long.toString(from.getTime() / 1000L));
         StringBuilder url = new StringBuilder("https://api.bybit.com/public/linear/kline?");
         StringBuilder loadData = getRestApi(request, url);
         JSONObject jsonResponse = stringToJSON((loadData.toString()));
@@ -159,7 +160,7 @@ public class BybitRestDAO {
 
     public JSONObject cancelAllActiveOrder(CoinEnum coinType, String orderID) {
         Map<String, String> request = new HashMap<>();
-        request.put("api_key", BybitDAO.getInstance().getApiKey());
+        request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.toString());
         request.put("order_id", orderID);
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
@@ -239,7 +240,6 @@ public class BybitRestDAO {
                 sb.append(line).append("\n");
 
             }
-
             br.close();
             return sb;
         } catch (IOException e1) {

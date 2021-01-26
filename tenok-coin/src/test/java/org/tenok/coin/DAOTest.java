@@ -1,6 +1,7 @@
 package org.tenok.coin;
 
 import static org.junit.Assert.assertSame;
+import static org.junit.Assume.assumeFalse;
 
 import javax.security.auth.login.LoginException;
 
