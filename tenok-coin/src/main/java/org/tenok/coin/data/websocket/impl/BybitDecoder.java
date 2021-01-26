@@ -11,16 +11,10 @@ import org.json.simple.parser.ParseException;
 public class BybitDecoder implements Decoder.Text<JSONObject> {
 
     @Override
-    public void init(EndpointConfig config) {
-        // TODO Auto-generated method stub
-
-    }
+    public void init(EndpointConfig config) { }
 
     @Override
-    public void destroy() {
-        // TODO Auto-generated method stub
-
-    }
+    public void destroy() { }
 
     @Override
     public JSONObject decode(String s) throws DecodeException {
@@ -33,7 +27,6 @@ public class BybitDecoder implements Decoder.Text<JSONObject> {
 
     @Override
     public boolean willDecode(String s) {
-        // TODO Auto-generated method stub
         return true;
     }
     

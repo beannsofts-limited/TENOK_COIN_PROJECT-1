@@ -1,4 +1,4 @@
-package org.tenok.coin.data;
+package org.tenok.coin.data.entity.impl;
 
 import java.util.List;
 
