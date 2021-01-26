@@ -7,11 +7,9 @@ import org.tenok.coin.type.CoinEnum;
 
 
 public class BybitInstrumentInfo implements InstrumentInfo {
-    private CoinEnum coinType = null;
-    private int lastPriceE4 = 0;
-    private Date creationTime = null;
-
-
+    private CoinEnum coinType;
+    private int lastPriceE4;
+    private Date creationTime;
 
     public BybitInstrumentInfo(CoinEnum coinType, int lastPriceE4, Date creationTime) {
         this.coinType = coinType;

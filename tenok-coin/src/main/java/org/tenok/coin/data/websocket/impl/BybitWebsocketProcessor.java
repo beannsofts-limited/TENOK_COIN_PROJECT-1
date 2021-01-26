@@ -31,7 +31,7 @@ public class BybitWebsocketProcessor implements Closeable {
         this.websocketInstance = new BybitWebsocket();
 
         try {
-            this.websocketSession = container.connectToServer(websocketInstance, new URI("wss://"));
+            this.websocketSession = container.connectToServer(websocketInstance, new URI("wss://stream.bybit.com/realtime_public"));
         } catch (DeploymentException e) {
             e.printStackTrace();
         } catch (IOException e) {

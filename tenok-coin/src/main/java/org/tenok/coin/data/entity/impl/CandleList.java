@@ -31,13 +31,31 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
     }
 
     public void registerNewCandle(Candle item) {
+        double ma5 = calMA(item, 5);
+        double ma10 = calMA(item, 10);
+        double ma20 = calMA(item, 20);
+        double ma60 = calMA(item, 60);
+        double ma120 = calMA(item, 120);
+        double lowerBB=calLowerBB(item, 20);
+        double middleBB=calMiddleBB(item, 20);
+        double upperBB=calUpperBB(item, 20);
+        
+        item.setMa5(ma5);
+        item.setMa10(ma10);
+        item.setMa20(ma20);
+        item.setMa60(ma60);
+        item.setMa120(ma120);
+        item.setLowerBB(lowerBB);
+        item.setMiddleBB(middleBB);
+        item.setUpperBB(upperBB);
+
         super.push(item);
     }
 
     /**
      * 현재 confirm 되지 않은 캔들 업데이트
      */
-    public void updateCurrentCandle(Candle item, JsonObject confirm) {
+    public void updateCurrentCandle(Candle item) {
         
         super.pop();
         double ma5 = calMA(item, 5);
@@ -66,13 +84,10 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
     }
 
     @Override
+    @Deprecated
     public Candle push(Candle item) {
-        
         return super.push(item);
     }
-
-    
-
 
     @Override
     @Deprecated
