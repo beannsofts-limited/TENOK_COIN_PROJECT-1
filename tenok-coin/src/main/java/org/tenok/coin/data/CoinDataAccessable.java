@@ -5,9 +5,13 @@ import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.data.entity.impl.CandleList;
 import org.tenok.coin.data.entity.impl.OrderList;
+import org.tenok.coin.data.entity.impl.PositionList;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 
+/**
+ * Coin Data Accessable: DAO sepcification
+ */
 public interface CoinDataAccessable {
     public CandleList getCandleList(CoinEnum coinType, IntervalEnum interval);
     public OrderList getOrderList();

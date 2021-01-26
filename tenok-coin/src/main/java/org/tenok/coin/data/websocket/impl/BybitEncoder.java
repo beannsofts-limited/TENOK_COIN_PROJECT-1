@@ -1,4 +1,4 @@
-package org.tenok.coin;
+package org.tenok.coin.data.websocket.impl;
 
 import javax.websocket.EncodeException;
 import javax.websocket.Encoder;
