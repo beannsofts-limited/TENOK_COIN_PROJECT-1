@@ -6,7 +6,6 @@ import lombok.Getter;
  * Symbol
  */
 @Getter
-@SuppressWarnings("unused")
 public enum CoinEnum {
     BTCUSDT("bitcoin", "비트코인"),
     ETHUSDT("ethereum", "이더리움"),
@@ -18,15 +17,15 @@ public enum CoinEnum {
     /**
      * english literal
      */
-    private String eName;
+    private String literal;
 
     /**
      * korean literal
      */
-    private String kName;
+    private String korean;
 
-    private CoinEnum(String eName, String kName) {
-        this.eName = eName;
-        this.kName = kName;
+    private CoinEnum(String literal, String korean) {
+        this.literal = literal;
+        this.korean = korean;
     }
 }

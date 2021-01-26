@@ -11,6 +11,7 @@ import javax.websocket.DeploymentException;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 
+import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
 import org.tenok.coin.data.entity.impl.OrderList;
@@ -63,7 +64,7 @@ public class BybitWebsocketProcessor implements Closeable {
      * @param interval
      * @param candleList
      */
-    public void subscribeKLine(CoinEnum coinType, IntervalEnum interval, CandleList candleList) {
+    public void subscribeCandle(CoinEnum coinType, IntervalEnum interval, CandleList candleList) {
         this.websocketInstance.registerKLineCallback(coinType, interval, (data) -> {
             double open = (double) data.get("open");
             double close = (double) data.get("close");
@@ -89,6 +90,15 @@ public class BybitWebsocketProcessor implements Closeable {
 
     public void subscribePosition() {
 
+    }
+
+    public void subscribeWalletInfo(WalletAccessable walletInfo) {
+        this.websocketInstance.registerWalletInfo(data -> {
+            double walletBalance = (double) data.get("wallet_balance");
+            double availableBalance = (double) data.get("available_balance");
+            walletInfo.setWalletBalance(walletBalance)
+                      .setWalletAvailableBalance(availableBalance);
+        });
     }
 
     public void subscribeOrder(CoinEnum coinType, IntervalEnum interval, OrderList orderList) {

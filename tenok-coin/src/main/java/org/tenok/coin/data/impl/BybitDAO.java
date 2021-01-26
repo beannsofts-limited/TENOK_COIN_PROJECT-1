@@ -18,6 +18,7 @@ import org.tenok.coin.data.entity.impl.PositionList;
 import org.tenok.coin.data.entity.InstrumentInfo;
 import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.WalletAccessable;
+import org.tenok.coin.data.entity.impl.BybitWalletInfo;
 import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
 import org.tenok.coin.data.entity.impl.OrderList;
@@ -26,7 +27,11 @@ import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 
 public class BybitDAO implements CoinDataAccessable, Closeable {
+    // cached data field
     private Map<CoinEnum, Map<IntervalEnum, CandleList>> candleListIsCachedMap;
+    private WalletAccessable walletInfo;
+
+    private OrderList orderList;
     private BybitWebsocketProcessor websocketProcessor;
     private BybitRestDAO restDAO;   // TODO 상호의존(순환참조) 해결
     private AuthDecryptor auth;
@@ -84,14 +89,16 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
                 candleList.add(new Candle(startAt, volume, open, high, low, close));
             });
             // 실시간 kLine에 등록
-            websocketProcessor.subscribeKLine(coinType, interval, candleList);
+            websocketProcessor.subscribeCandle(coinType, interval, candleList);
         }
         return candleListIsCachedMap.get(coinType).get(interval);
     }
 
     @Override
     public OrderList getOrderList() {
-        // TODO Auto-generated method stub
+        if (orderList == null) {
+
+        }
         return null;
     }
 
@@ -109,8 +116,11 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
 
     @Override
     public WalletAccessable getWalletInfo() {
-        // TODO Auto-generated method stub
-        return null;
+        if (walletInfo == null) {
+            walletInfo = new BybitWalletInfo(0, 0);
+            websocketProcessor.subscribeWalletInfo(walletInfo);
+        }
+        return walletInfo;
     }
 
     @Override
@@ -125,7 +135,7 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
 
     }
 
-    @Deprecated(forRemoval = false)
+    @Deprecated(forRemoval = true)
     public String getApiKey() {
         return null;
     }
