@@ -118,6 +118,6 @@ public class Candle {
     }
     @Override
     public String toString() {
-        return String.format("open: %l, high:%l, close: %l, low: %l", open, high, close, low);
+        return String.format("open: %f, high:%f, close: %f, low: %f", open, high, close, low);
     }
 }

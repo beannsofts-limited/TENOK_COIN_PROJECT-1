@@ -16,14 +16,17 @@ import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
 
+import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.tenok.coin.data.websocket.WebsocketResponseEnum;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 
 
 @ClientEndpoint(encoders = { BybitEncoder.class }, decoders = { BybitDecoder.class })
 public class BybitWebsocket implements Closeable {
+    private static Logger logger = Logger.getLogger(BybitWebsocket.class);
     Map<CoinEnum, Map<IntervalEnum, Consumer<JSONObject>>> kLineCallbackMap;
     Consumer<JSONObject> walletInfoConsumer;
 
@@ -36,19 +39,25 @@ public class BybitWebsocket implements Closeable {
     @OnOpen
     public void onOpen(Session session) {
         this.session = session;
+        logger.info(String.format("%s에 websocket 연결", session.getRequestURI().toString()));
     }
 
     @OnMessage
     public void onMessage(JSONObject response) {
-        JSONObject request = (JSONObject) response.get("request");
-        String op = (String) request.get("op");
-        if (op.equals("ping")) {
+        WebsocketResponseEnum resType = (WebsocketResponseEnum) response.get("response_type");
+
+        if (resType.equals(WebsocketResponseEnum.PING) || resType.equals(WebsocketResponseEnum.SUBSCRIPTION)) {
+            boolean success = (boolean) response.get("success");
+            if (!success) {
+                logger.fatal("Websocket Ping or Subscription failed");
+            } else {
+                logger.info(String.format("Websocket %s success", resType.name()));
+            }
             return;
         }
-        System.out.println(request.toJSONString());
 
         String topic = (String) response.get("topic");
-        String[] topicParsed = topic.split(".");
+        String[] topicParsed = topic.split("\\.");
 
         if (topicParsed.length == 0) {
             // . 구분자가 없는 topic
@@ -85,10 +94,11 @@ public class BybitWebsocket implements Closeable {
 
     }
 
-    // @OnError
-    // public void onError(Throwable t) {
-
-    // }
+    @OnError
+    public void onError(Throwable t) {
+        logger.error("Websocket Error", t);
+        t.printStackTrace();
+    }
 
     /**
      * websocket kline 실시간 처리

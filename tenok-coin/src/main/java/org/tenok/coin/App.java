@@ -10,10 +10,10 @@ public class App {
         BybitDAO.getInstance().init();
         CandleList candleList = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
 
-        candleList.stream().forEachOrdered(System.out::println);
+        // candleList.stream().forEachOrdered(System.out::println);
 
         while (true) {
-            System.out.println(candleList.get(0));
+            // System.out.println(candleList.get(0));
             Thread.sleep(1000);
         }
     }
