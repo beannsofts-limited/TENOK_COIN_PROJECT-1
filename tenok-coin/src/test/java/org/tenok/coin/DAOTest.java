@@ -5,11 +5,15 @@ import static org.junit.Assume.assumeFalse;
 
 import javax.security.auth.login.LoginException;
 
+import com.slack.api.webhook.WebhookResponse;
+
 import org.junit.Test;
 import org.tenok.coin.data.entity.impl.CandleList;
 import org.tenok.coin.data.impl.BybitDAO;
+import org.tenok.coin.slack.SlackDAO;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
+import org.tenok.coin.type.SideEnum;
 
 public class DAOTest {
     @Test
@@ -25,9 +29,21 @@ public class DAOTest {
 
     @Test
     public void candleListText() {
-        CandleList candleList = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
+        CandleList candleList =
+        BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
         assertSame(candleList.size(), 200);
-
         candleList.stream().forEachOrdered(System.out::println);
+    }
+
+    @Test
+    public void sendMessage(){
+        try {
+            
+            WebhookResponse response = SlackDAO.getInstance().sendTradingMessage(CoinEnum.BTCUSDT, SideEnum.BUY, 1);
+            assertSame(response.getCode(), 200);
+        } catch (NoSuchFieldException e) {
+            
+            e.printStackTrace();
+        }
     }
 }

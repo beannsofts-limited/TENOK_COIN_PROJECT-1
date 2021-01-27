@@ -3,16 +3,13 @@ package org.tenok.coin.data.entity.impl;
 import java.util.ArrayList;
 import java.util.Stack;
 
-import javax.swing.plaf.TreeUI;
-
-import com.google.gson.JsonObject;
 
 import org.tenok.coin.data.RealtimeAccessable;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
+
 
 
 
