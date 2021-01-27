@@ -1,6 +1,7 @@
 package org.tenok.coin;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 import javax.security.auth.login.LoginException;
 
@@ -41,13 +42,19 @@ public class DAOTest {
     @Test
     public void sendMessage(){
         try {
+            BybitDAO.getInstance().login("tenok2019");
+        } catch (LoginException e1) {
+            e1.printStackTrace();
+        }
+        try {
             
             WebhookResponse response = SlackDAO.getInstance().sendTradingMessage(CoinEnum.BTCUSDT, SideEnum.BUY, 1);
-            assertSame(response.getCode(), 200);
+            assertEquals(response.getCode().intValue(), 200);
         } catch (NoSuchFieldException e) {
             
             e.printStackTrace();
         }
+    }
     public void orderTest() throws LoginException {
         BybitDAO.getInstance().login("password");
         Orderable order = ActiveOrder.builder()

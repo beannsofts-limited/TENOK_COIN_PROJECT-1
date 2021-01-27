@@ -5,27 +5,21 @@ import java.io.IOException;
 import com.slack.api.Slack;
 import com.slack.api.webhook.WebhookResponse;
 
+import org.tenok.coin.data.impl.AuthDecryptor;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.SideEnum;
 
 public class SlackDAO {
-    private static String botToken="0";
-    private static String webhookUrl;
+    private String webhookUrl;
     private Slack slackInstance;
 
     WebhookResponse response;
 
     private SlackDAO() {
         slackInstance = Slack.getInstance();
+        this.webhookUrl = AuthDecryptor.getInstance().getSlackWebhookURL();
     }
 
-    public static void setBotToken(String botToken) {
-        SlackDAO.botToken = botToken;
-    }
-
-    public static void setWebhookUrl(String webhookUrl) {
-        SlackDAO.webhookUrl = webhookUrl;
-    }
 
     public WebhookResponse sendTradingMessage(CoinEnum coinType, SideEnum side, double qty) {
         // send(String.format("%s을 %s개 %s하였습니다.", coinType.getLiteral(),
@@ -64,8 +58,8 @@ public class SlackDAO {
     }
 
     public static SlackDAO getInstance() throws NoSuchFieldException {
-        if ( botToken ==null || webhookUrl == null) {
-            throw new NoSuchFieldException(" webhookUrl이 set되어 있지 않음.");
+        if (SlackDAOHolder.INSTANCE.webhookUrl == null) {
+            throw new NoSuchFieldException("webhookUrl이 set되어 있지 않음.");
         }
         return SlackDAOHolder.INSTANCE;
     }

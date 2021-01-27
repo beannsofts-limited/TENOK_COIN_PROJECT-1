@@ -29,6 +29,7 @@ public class AuthDecryptor {
     private String apiKeyEncrypted;
     private String secretKeyEncrypted;
     private String validationEncrypted;
+    private String slackWebhookURLEncrypted;
     private String pw = null;
 
     private AuthDecryptor(File authFile) {
@@ -38,6 +39,7 @@ public class AuthDecryptor {
             this.apiKeyEncrypted = (String) jsonObject.get("apiKey");
             this.secretKeyEncrypted = (String) jsonObject.get("secretKey");
             this.validationEncrypted = (String) jsonObject.get("validation");
+            this.slackWebhookURLEncrypted = (String) jsonObject.get("slackWebhookURL");
         } catch (IOException | ParseException e) {
             e.printStackTrace();
             throw new RuntimeException("Secret Key File Path 체크 요망", e);
@@ -45,7 +47,7 @@ public class AuthDecryptor {
     }
 
     private static class AuthHolder {
-        public static final AuthDecryptor INSTANCE = new AuthDecryptor(new File("./secret.auth"));  // 상대주소 입력
+        public static final AuthDecryptor INSTANCE = new AuthDecryptor(new File("./../secret.auth"));  // 상대주소 입력
     }
 
     public static AuthDecryptor getInstance() {
@@ -117,6 +119,14 @@ public class AuthDecryptor {
             throw new RuntimeException("비밀번호 set 요망");
         }
         return decrypt(validationEncrypted, this.pw).equals("success");
+    }
+
+    /**
+     * slack webhook 전용 url
+     * @return slack webhook url in String
+     */
+    public String getSlackWebhookURL() {
+        return decrypt(this.slackWebhookURLEncrypted, pw);
     }
 
     private String byteArrayToHexString(byte[] b) {
