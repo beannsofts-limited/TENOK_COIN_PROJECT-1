@@ -30,8 +30,10 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
     // cached data field
     private Map<CoinEnum, Map<IntervalEnum, CandleList>> candleListIsCachedMap;
     private WalletAccessable walletInfo;
-
     private OrderList orderList;
+    private PositionList positionList;
+
+    // data accessable instance field
     private BybitWebsocketProcessor websocketProcessor = new BybitWebsocketProcessor();
     private BybitRestDAO restDAO;   // TODO 상호의존(순환참조) 해결
     private AuthDecryptor auth;
@@ -43,6 +45,7 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
             candleListIsCachedMap.put(coinType, new HashMap<>());
         });
         restDAO = new BybitRestDAO();
+        this.websocketProcessor.init();
     }
 
     private static class BybitLazyLoader {
@@ -51,10 +54,6 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
 
     public static BybitDAO getInstance() {
         return BybitLazyLoader.INSTANCE;
-    }
-
-    public void init() {
-        this.websocketProcessor.init();
     }
 
     public void login(String password) throws LoginException {
@@ -97,14 +96,20 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
     @Override
     public OrderList getOrderList() {
         if (orderList == null) {
-
+            orderList = new OrderList();
+            // TODO
         }
         return null;
     }
 
     @Override
+    @Deprecated
     public PositionList getPositionList() {
-        // TODO Auto-generated method stub
+        if (positionList == null) {
+            positionList = new PositionList();
+
+            // restDAO.
+        }
         return null;
     }
 
@@ -125,8 +130,8 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
 
     @Override
     public void orderCoin(Orderable order) {
-        // TODO Auto-generated method stub
-
+        // active order 실패 시 exception 뜨게 바꿨으면 좋겠음.
+        // restDAO.placeActiveOrder(order.getSide(), order.getCoin(), order.getOrderType(), order.getQty(), order.getTIF());
     }
 
     @Override

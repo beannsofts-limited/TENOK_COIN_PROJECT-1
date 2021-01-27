@@ -7,11 +7,11 @@ public enum SideEnum {
     BUY("Buy", "매수"),
     Sell("Sell", "매도");
 
-    private String literal;
+    private String apiString;
     private String korean;
 
-    private SideEnum(String literal, String korean) {
-        this.literal = literal;
+    private SideEnum(String apiString, String korean) {
+        this.apiString = apiString;
         this.korean = korean;
     }
 }

@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import javax.websocket.ClientEndpoint;
 import javax.websocket.OnClose;
@@ -77,7 +76,7 @@ public class BybitWebsocket implements Closeable {
                     break;
 
                 case "candle":
-                    IntervalEnum interval = IntervalEnum.valueOfLiteral(topicParsed[1]);
+                    IntervalEnum interval = IntervalEnum.valueOfApiString(topicParsed[1]);
                     CoinEnum coinType = CoinEnum.valueOf(topicParsed[2]);
 
                     kLineCallbackMap.get(coinType).get(interval).accept((JSONObject) ((JSONArray) response.get("data")).get(0));
@@ -115,7 +114,7 @@ public class BybitWebsocket implements Closeable {
         }
         kLineCallbackMap.get(coinType).put(interval, consumer);
         JSONObject requestJson = getSubscriptionJSONObject(Arrays.asList(new String[] {String.format("%s.%s.%s", "candle",
-                                                           interval.getLiteral(), coinType.name())}));
+                                                           interval.getApiString(), coinType.name())}));
         session.getAsyncRemote().sendObject(requestJson);
     }
 

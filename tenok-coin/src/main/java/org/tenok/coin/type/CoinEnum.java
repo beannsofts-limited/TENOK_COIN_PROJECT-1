@@ -3,7 +3,7 @@ package org.tenok.coin.type;
 import lombok.Getter;
 
 /**
- * Symbol
+ * Symbol. api 요청 할 때는 name()로 접근.
  */
 @Getter
 public enum CoinEnum {

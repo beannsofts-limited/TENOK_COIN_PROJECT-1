@@ -26,6 +26,9 @@ public class BybitWebsocketProcessor implements Closeable {
     public BybitWebsocketProcessor() {
     }
 
+    /**
+     * 웹소켓 연결 및 heart deat 스레드 등록.
+     */
     public void init() {
         WebSocketContainer container = ContainerProvider.getWebSocketContainer();
         this.websocketInstance = new BybitWebsocket();
@@ -60,9 +63,9 @@ public class BybitWebsocketProcessor implements Closeable {
 
     /**
      * kLine 실시간 처리 등록
-     * @param coinType
-     * @param interval
-     * @param candleList
+     * @param coinType coin type
+     * @param interval interval
+     * @param candleList CandleList instance
      */
     public void subscribeCandle(CoinEnum coinType, IntervalEnum interval, CandleList candleList) {
         this.websocketInstance.registerKLineCallback(coinType, interval, (data) -> {
