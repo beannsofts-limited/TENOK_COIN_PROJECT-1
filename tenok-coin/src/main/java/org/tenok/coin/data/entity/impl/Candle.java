@@ -4,20 +4,20 @@ import java.util.Date;
 
 
 public class Candle {
-    private Date startAt = null;
-    private double volume = 0;
-    private double open = 0;
-    private double high = 0;
-    private double low = 0;
-    private double close = 0;
-    private double ma5 = 0;
-    private double ma10=0;
-    private double ma20=0;
-    private double ma60 =0;
-    private double ma120=0;
-    private double upperBB =0;
-    private double middleBB =0;
-    private double lowerBB=0;
+    private Date startAt;
+    private double volume;
+    private double open;
+    private double high;
+    private double low;
+    private double close;
+    private double ma5;
+    private double ma10;
+    private double ma20;
+    private double ma60;
+    private double ma120;
+    private double upperBB;
+    private double middleBB;
+    private double lowerBB;
 
     public Candle(Date startAt, double volume, double open, double high, double low, double close) {
         this.startAt = startAt;

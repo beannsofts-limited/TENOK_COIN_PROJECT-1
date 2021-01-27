@@ -131,7 +131,8 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
     @Override
     public void orderCoin(Orderable order) {
         // active order 실패 시 exception 뜨게 바꿨으면 좋겠음.
-        // restDAO.placeActiveOrder(order.getSide(), order.getCoin(), order.getOrderType(), order.getQty(), order.getTIF());
+        JSONObject res = restDAO.placeActiveOrder(order.getSide(), order.getCoin(), order.getOrderType(), order.getQty(), order.getTIF());
+        System.out.println(res.toJSONString());
     }
 
     @Override
