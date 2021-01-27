@@ -62,25 +62,25 @@ public enum IntervalEnum {
     @Deprecated
     MONTH("M", 24190200);
 
-    private String literal;
+    private String apiString;
     private long sec;
 
-    private IntervalEnum(String literal, long sec) {
-        this.literal = literal;
+    private IntervalEnum(String apiString, long sec) {
+        this.apiString = apiString;
         this.sec = sec;
     }
 
-    public String getLiteral() {
-        return literal;
+    public String getApiString() {
+        return apiString;
     }
 
     public long getSec() {
         return sec;
     }
 
-    public static IntervalEnum valueOfLiteral(String literal) {
+    public static IntervalEnum valueOfApiString(String literal) {
         for (var interval: IntervalEnum.values()) {
-            if (interval.getLiteral().equalsIgnoreCase(literal)) {
+            if (interval.getApiString().equalsIgnoreCase(literal)) {
                 return interval;
             }
         }

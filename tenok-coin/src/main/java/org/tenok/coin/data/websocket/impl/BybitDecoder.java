@@ -7,6 +7,7 @@ import javax.websocket.EndpointConfig;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.tenok.coin.data.websocket.WebsocketResponseEnum;
 
 public class BybitDecoder implements Decoder.Text<JSONObject> {
 
@@ -17,9 +18,21 @@ public class BybitDecoder implements Decoder.Text<JSONObject> {
     public void destroy() { }
 
     @Override
+    @SuppressWarnings("unchecked")
     public JSONObject decode(String s) throws DecodeException {
+        WebsocketResponseEnum resEnum = null;
         try {
-            return (JSONObject) new JSONParser().parse(s);
+            JSONObject jsonObject = (JSONObject) new JSONParser().parse(s);
+            if (jsonObject.containsKey("ret_msg")) {
+                String retMsg = (String) jsonObject.get("ret_msg");
+
+                resEnum = retMsg.equals("ping") ? WebsocketResponseEnum.PING : WebsocketResponseEnum.SUBSCRIPTION;
+            } else {
+                resEnum = WebsocketResponseEnum.TOPIC;
+            }
+
+            jsonObject.put("response_type", resEnum);
+            return jsonObject;
         } catch (ParseException e) {
             throw new DecodeException(s, "JSON Parse Failed", e);
         }

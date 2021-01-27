@@ -26,6 +26,9 @@ public class BybitWebsocketProcessor implements Closeable {
     public BybitWebsocketProcessor() {
     }
 
+    /**
+     * 웹소켓 연결 및 heart deat 스레드 등록.
+     */
     public void init() {
         WebSocketContainer container = ContainerProvider.getWebSocketContainer();
         this.websocketInstance = new BybitWebsocket();
@@ -60,18 +63,18 @@ public class BybitWebsocketProcessor implements Closeable {
 
     /**
      * kLine 실시간 처리 등록
-     * @param coinType
-     * @param interval
-     * @param candleList
+     * @param coinType coin type
+     * @param interval interval
+     * @param candleList CandleList instance
      */
     public void subscribeCandle(CoinEnum coinType, IntervalEnum interval, CandleList candleList) {
         this.websocketInstance.registerKLineCallback(coinType, interval, (data) -> {
-            double open = (double) data.get("open");
-            double close = (double) data.get("close");
-            double high = (double) data.get("high");
-            double low = (double) data.get("low");
-            double volume = (double) data.get("volume");
-            Date startAt = new Date((long) data.get("start"));
+            double open = ((Number) data.get("open")).doubleValue();
+            double close = ((Number) data.get("close")).doubleValue();
+            double high = ((Number) data.get("high")).doubleValue();
+            double low = ((Number) data.get("low")).doubleValue();
+            double volume = Double.valueOf((String) data.get("volume"));
+            Date startAt = new Date(((Number) data.get("start")).longValue() * 1000L);
             boolean confirm = (boolean) data.get("confirm");
 
             if (confirm) {

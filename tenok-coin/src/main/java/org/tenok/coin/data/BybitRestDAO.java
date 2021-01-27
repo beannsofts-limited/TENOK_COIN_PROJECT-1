@@ -29,7 +29,7 @@ public class BybitRestDAO {
     public JSONObject requestKline(CoinEnum coinType, IntervalEnum interval, int limit, Date from) {
         Map<String, String> request = new HashMap<>();
         request.put("symbol", coinType.toString());
-        request.put("interval", interval.getLiteral());
+        request.put("interval", interval.getApiString());
         request.put("limit", Integer.toString(limit));
         request.put("from", Long.toString(from.getTime() / 1000L));
         StringBuilder url = new StringBuilder("https://api.bybit.com/public/linear/kline?");

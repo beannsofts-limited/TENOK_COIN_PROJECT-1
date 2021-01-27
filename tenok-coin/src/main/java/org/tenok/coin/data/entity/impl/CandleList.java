@@ -10,9 +10,6 @@ import org.tenok.coin.type.IntervalEnum;
 
 import lombok.Getter;
 
-
-
-
 @Getter
 @SuppressWarnings("serial")
 public class CandleList extends Stack<Candle> implements RealtimeAccessable {

@@ -8,42 +8,56 @@ import org.tenok.coin.type.OrderTypeEnum;
 import org.tenok.coin.type.SideEnum;
 import org.tenok.coin.type.TIFEnum;
 
+import lombok.Builder;
+import lombok.NonNull;
+
+@Builder
 public class ActiveOrder implements Orderable {
+    @NonNull
+    private SideEnum side;
+
+    @NonNull
+    private CoinEnum coinType;
+
+    @NonNull
+    private OrderTypeEnum orderType;
+
+    @NonNull
+    private TIFEnum tif;
+
+    @NonNull
+    private double qty;
+
+    private Date timeStamp;
 
     @Override
     public SideEnum getSide() {
-        // TODO Auto-generated method stub
-        return null;
+        return side;
     }
 
     @Override
     public CoinEnum getCoin() {
-        // TODO Auto-generated method stub
-        return null;
+        return coinType;
     }
 
     @Override
     public OrderTypeEnum getOrderType() {
-        // TODO Auto-generated method stub
-        return null;
+        return orderType;
     }
 
     @Override
     public TIFEnum getTIF() {
-        // TODO Auto-generated method stub
-        return null;
+        return tif;
     }
 
     @Override
     public double getQty() {
-        // TODO Auto-generated method stub
-        return 0;
+        return qty;
     }
 
     @Override
     public Date getTimeStamp() {
-        // TODO Auto-generated method stub
-        return null;
+        return timeStamp;
     }
     
 }

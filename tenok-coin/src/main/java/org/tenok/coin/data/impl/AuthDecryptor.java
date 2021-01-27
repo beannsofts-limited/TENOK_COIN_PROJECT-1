@@ -34,7 +34,7 @@ public class AuthDecryptor {
     private AuthDecryptor(File authFile) {
         try {
             JSONParser parser = new JSONParser();
-            JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(authFile));
+            JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(authFile.getCanonicalFile()));
             this.apiKeyEncrypted = (String) jsonObject.get("apiKey");
             this.secretKeyEncrypted = (String) jsonObject.get("secretKey");
             this.validationEncrypted = (String) jsonObject.get("validation");
@@ -45,7 +45,7 @@ public class AuthDecryptor {
     }
 
     private static class AuthHolder {
-        public static final AuthDecryptor INSTANCE = new AuthDecryptor(new File("./secret.auth"));
+        public static final AuthDecryptor INSTANCE = new AuthDecryptor(new File("./secret.auth"));  // 상대주소 입력
     }
 
     public static AuthDecryptor getInstance() {
