@@ -5,6 +5,7 @@ import java.io.IOException;
 import com.slack.api.Slack;
 import com.slack.api.webhook.WebhookResponse;
 
+import org.apache.log4j.Logger;
 import org.tenok.coin.data.impl.AuthDecryptor;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.SideEnum;
@@ -12,6 +13,7 @@ import org.tenok.coin.type.SideEnum;
 public class SlackDAO {
     private String webhookUrl;
     private Slack slackInstance;
+    private static Logger logger = Logger.getLogger(SlackDAO.class);
 
     WebhookResponse response;
 
@@ -28,7 +30,7 @@ public class SlackDAO {
             
             String payload = String.format("{\"text\":\"%s %f개 %s\"}", coinType.getKorean(), qty, side.getKorean());
             response = slackInstance.send(webhookUrl, payload);
-            System.out.println(response);
+            logger.debug(response);
             return response;
         } catch (IOException e) {
 
@@ -38,13 +40,13 @@ public class SlackDAO {
 
     }
 
-    public void sendException(Throwable t) {
+    public WebhookResponse sendException(Throwable t) {
 
         try {
             String payload = String.format("{\"text\":\"Exception 발생\n%s\"}", t.getMessage());
             response = slackInstance.send(webhookUrl, payload);
-            System.out.println(response);
-           
+            logger.debug(response);
+            return response;
         } catch (IOException e) {
 
             e.printStackTrace();
@@ -57,9 +59,9 @@ public class SlackDAO {
         public static final SlackDAO INSTANCE = new SlackDAO();
     }
 
-    public static SlackDAO getInstance() throws NoSuchFieldException {
+    public static SlackDAO getInstance() {
         if (SlackDAOHolder.INSTANCE.webhookUrl == null) {
-            throw new NoSuchFieldException("webhookUrl이 set되어 있지 않음.");
+            throw new RuntimeException("webhookUrl이 set되어 있지 않음.");
         }
         return SlackDAOHolder.INSTANCE;
     }

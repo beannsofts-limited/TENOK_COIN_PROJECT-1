@@ -89,6 +89,10 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
         throw new RuntimeException("호출하지 마세요.");
     }
 
+    @Override
+    public Candle get(int index) {
+        return super.get(this.size() - index - 1);
+    }
 
     private double calMA(Candle item, int period){
         double closeSum=0;
@@ -125,7 +129,7 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
         double deviationSum=0;
         ArrayList<Candle> closeArray = new ArrayList<>();
         ArrayList<Double> deviationArray = new ArrayList<>();
-        for(int i =super.size()-1; i>=super.size()-period+1; i--){
+        for(int i = super.size()-1; i>=super.size()-period+1; i--){
             closeArray.add(super.elementAt(i));
             closeSum = closeSum+ super.elementAt(i).getClose();
          }

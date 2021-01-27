@@ -25,7 +25,6 @@ public class ActiveOrder implements Orderable {
     @NonNull
     private TIFEnum tif;
 
-    @NonNull
     private double qty;
 
     private Date timeStamp;

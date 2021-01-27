@@ -9,6 +9,7 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.Map;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -66,7 +67,7 @@ public class AuthDecryptor {
         return decrypt(this.secretKeyEncrypted, password);
     }
 
-    private static String decrypt(String cipherText, String password) {
+    private String decrypt(String cipherText, String password) {
         Cipher cipher;
         try {
             cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
@@ -107,7 +108,11 @@ public class AuthDecryptor {
      * @return Bybit Signature
      */
     public String generate_signature() {
-        return sha256_HMAC("GET/realtime" + String.valueOf(System.currentTimeMillis() + 1000), getApiSecretKey(pw));
+        return sha256_HMAC("GET/realtime" + String.valueOf(System.currentTimeMillis()/1000L + 1000), getApiSecretKey(pw));
+    }
+
+    public String generate_signature(Map<String, String> param) {
+        return null;    // TODO
     }
 
     /**

@@ -10,6 +10,7 @@ import java.net.URL;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -71,15 +72,15 @@ public class BybitRestDAO {
     }
 
     public JSONObject placeActiveOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum oderType,  double qty, TIFEnum tif) {
-        Map<String, String> request = new HashMap<>();
+        Map<String, String> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
-        request.put("side", side.toString());
-        request.put("symbol", coinType.toString());
-        request.put("order_type", oderType.toString());
+        request.put("side", side.getApiString());
+        request.put("symbol", coinType.name());
+        request.put("order_type", oderType.getApiString());
         request.put("qty", Double.toString(qty));
-        request.put("time_in_force", tif.toString());
+        request.put("time_in_force", tif.getApiString());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
-        request.put("sign", AuthDecryptor.getInstance().generate_signature());
+        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/order/create");
@@ -249,20 +250,22 @@ public class BybitRestDAO {
     }
 
     private StringBuilder postRestApi(Map<String, String> request, URL url) {
-        StringBuilder jsonInputString = new StringBuilder("{");
-        request.forEach((k, v) -> {
-            jsonInputString.append(String.format("\"%s\":\"%s\",", k, v));
-        });
-        jsonInputString.deleteCharAt(jsonInputString.length() - 1);
-        jsonInputString.append("}");
+        // StringBuilder jsonInputString = new StringBuilder("{");
+        JSONObject jsonInputObject = new JSONObject(request);
+        // request.forEach((k, v) -> {
+        //     jsonInputString.append(String.format("\"%s\":\"%s\",", k, v));
+        // });
+        // jsonInputString.deleteCharAt(jsonInputString.length() - 1);
+        // jsonInputString.append("}");
         HttpsURLConnection conn;
         try {
             conn = (HttpsURLConnection) url.openConnection();
             conn.setDoInput(true);
+            conn.setDoOutput(true);
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
             OutputStream os = conn.getOutputStream();
-            os.write(jsonInputString.toString().getBytes());
+            os.write(jsonInputObject.toJSONString().getBytes());
             conn.connect();
             StringBuilder sb = new StringBuilder();
             BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
