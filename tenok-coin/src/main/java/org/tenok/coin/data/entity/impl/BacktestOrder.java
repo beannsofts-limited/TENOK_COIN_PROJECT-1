@@ -22,7 +22,7 @@ public class BacktestOrder implements OrderDataAccessable {
     }
 
     @Override
-    public CoinEnum getCoin() {
+    public CoinEnum getCoinType() {
         // TODO Auto-generated method stub
         return null;
     }

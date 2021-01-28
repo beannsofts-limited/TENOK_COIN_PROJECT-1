@@ -29,7 +29,7 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable {
     }
 
     @Override
-    public InstrumentInfo getInsturmentInfo(CoinEnum coinType) {
+    public InstrumentInfo getInstrumentInfo(CoinEnum coinType) {
         // TODO Auto-generated method stub
         return null;
     }

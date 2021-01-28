@@ -19,6 +19,7 @@ import org.tenok.coin.data.entity.impl.PositionList;
 import org.tenok.coin.data.entity.InstrumentInfo;
 import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.WalletAccessable;
+import org.tenok.coin.data.entity.impl.BybitInstrumentInfo;
 import org.tenok.coin.data.entity.impl.BybitWalletInfo;
 import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
@@ -43,6 +44,7 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
     private WalletAccessable walletInfo;
     private OrderedList orderList;
     private PositionList positionList;
+    private Map<CoinEnum, InstrumentInfo> instrumentInfo;
 
     // data accessable instance field
     private BybitWebsocketProcessor websocketProcessor = new BybitWebsocketProcessor();
@@ -51,6 +53,7 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
 
     private BybitDAO() {
         candleListIsCachedMap = new HashMap<>();
+        instrumentInfo = new HashMap<>();
 
         Arrays.asList(CoinEnum.values()).parallelStream().forEach((coinType) -> {
             candleListIsCachedMap.put(coinType, new HashMap<>());
@@ -185,21 +188,34 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
         }
         if (positionList == null) {
             positionList = new PositionList();
-
-            // restDAO.
         }
         return null;
     }
 
     @Override
-    public InstrumentInfo getInsturmentInfo(CoinEnum coinType) {
+    public InstrumentInfo getInstrumentInfo(CoinEnum coinType) {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");
         }
-        // TODO Auto-generated method stub
-        return null;
+        if (!instrumentInfo.containsKey(coinType)) {
+            var insInfo = BybitInstrumentInfo.builder().coinType(coinType).build();
+            instrumentInfo.put(coinType, insInfo);
+            websocketProcessor.subscribeInsturmentInfo(coinType, insInfo);
+        }
+        return instrumentInfo.get(coinType);
     }
 
+    public double getCurrentPrice(CoinEnum coinType) {
+        if (!isLoggedIn) {
+            throw new RuntimeException("DAO instance is not logged in");
+        }
+        return 0;
+    }
+
+    /**
+     * wallet 객체 요청. 예수금 조회 가능
+     * @return wallet instance
+     */
     @Override
     public WalletAccessable getWalletInfo() {
         if (!isLoggedIn) {
@@ -223,11 +239,11 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
     }
 
     @Override
+    @Deprecated
     public void getPaidLimit(CoinEnum coinType) {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");
         }
-        // TODO Auto-generated method stub
 
     }
 
@@ -237,7 +253,6 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
 
     @Override
     public void close() throws IOException {
-        // TODO Auto-generated method stub
-
+        websocketProcessor.close();
     }
 }

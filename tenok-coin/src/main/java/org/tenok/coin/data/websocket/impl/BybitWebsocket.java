@@ -18,7 +18,6 @@ import javax.websocket.Session;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.tenok.coin.data.entity.impl.OrderedList;
 import org.tenok.coin.data.websocket.WebsocketResponseEnum;
 import org.tenok.coin.slack.SlackDAO;
 import org.tenok.coin.type.CoinEnum;
@@ -27,14 +26,16 @@ import org.tenok.coin.type.IntervalEnum;
 @ClientEndpoint(encoders = { BybitEncoder.class }, decoders = { BybitDecoder.class })
 public class BybitWebsocket implements Closeable {
     private static Logger logger = Logger.getLogger(BybitWebsocket.class);
-    Map<CoinEnum, Map<IntervalEnum, Consumer<JSONObject>>> kLineCallbackMap;
+    Map<CoinEnum, Map<IntervalEnum, Consumer<JSONObject>>> kLineConsumerMap;
     Consumer<JSONObject> walletInfoConsumer;
     Consumer<JSONObject> orderConsumer;
+    Map<CoinEnum, Consumer<JSONObject>> instrumentInfoConsumerMap;
 
     private Session session;
 
     public BybitWebsocket() {
-        this.kLineCallbackMap = new HashMap<>();
+        this.kLineConsumerMap = new HashMap<>();
+        this.instrumentInfoConsumerMap = new HashMap<>();
     }
 
     @OnOpen
@@ -46,9 +47,9 @@ public class BybitWebsocket implements Closeable {
     @OnMessage
     public void onMessage(JSONObject response) {
         WebsocketResponseEnum resType = (WebsocketResponseEnum) response.get("response_type");
-
+        logger.info(response);
         if (resType.equals(WebsocketResponseEnum.PING) || resType.equals(WebsocketResponseEnum.SUBSCRIPTION)) {
-            boolean success = (boolean) response.get("success");
+            boolean success = (boolean) response.get("success");    // TODO ping??
             if (!success) {
                 logger.fatal("Websocket Ping or Subscription failed");
                 logger.fatal(response.toJSONString());
@@ -61,6 +62,7 @@ public class BybitWebsocket implements Closeable {
         String topic = (String) response.get("topic");
         String[] topicParsed = topic.split("\\.");
 
+        CoinEnum coinType;
         switch (topicParsed[0]) {
             case "orderBookL2_25":
                 break;
@@ -72,13 +74,15 @@ public class BybitWebsocket implements Closeable {
                 break;
 
             case "instrument_info":
+                coinType = CoinEnum.valueOf(topicParsed[2]);
+                instrumentInfoConsumerMap.get(coinType).accept((JSONObject) response.get("data"));
                 break;
 
             case "candle":
                 IntervalEnum interval = IntervalEnum.valueOfApiString(topicParsed[1]);
-                CoinEnum coinType = CoinEnum.valueOf(topicParsed[2]);
+                coinType = CoinEnum.valueOf(topicParsed[2]);
 
-                kLineCallbackMap.get(coinType).get(interval)
+                kLineConsumerMap.get(coinType).get(interval)
                         .accept((JSONObject) ((JSONArray) response.get("data")).get(0));
                 break;
 
@@ -114,12 +118,12 @@ public class BybitWebsocket implements Closeable {
      * @param consumer 콜백
      */
     public void registerKLineCallback(CoinEnum coinType, IntervalEnum interval, Consumer<JSONObject> consumer) {
-        kLineCallbackMap.putIfAbsent(coinType, new HashMap<>());
-        var previousValue = kLineCallbackMap.get(coinType).get(interval);
+        kLineConsumerMap.putIfAbsent(coinType, new HashMap<>());
+        var previousValue = kLineConsumerMap.get(coinType).get(interval);
         if (previousValue != null) {
             throw new RuntimeException("RegisterKLineCallback request called twice by the homogeneous parameter");
         }
-        kLineCallbackMap.get(coinType).put(interval, consumer);
+        kLineConsumerMap.get(coinType).put(interval, consumer);
         JSONObject requestJson = getSubscriptionJSONObject(Arrays.asList(
                 new String[] { String.format("%s.%s.%s", "candle", interval.getApiString(), coinType.name()) }));
         session.getAsyncRemote().sendObject(requestJson);
@@ -147,8 +151,20 @@ public class BybitWebsocket implements Closeable {
         session.getAsyncRemote().sendObject(requestJson);
     }
 
-    public void unregisterKLine(CoinEnum coinType, IntervalEnum interval) {
-
+    /**
+     * instrument info 실시간 처리 등록
+     * 
+     * @param coinType 코인
+     * @param consumer 콜백
+     */
+    public void registerInsturmentInfo(CoinEnum coinType, Consumer<JSONObject> consumer) {
+        var previousValue = instrumentInfoConsumerMap.putIfAbsent(coinType, consumer);
+        if (previousValue != null) {
+            throw new RuntimeException("RegisterInsturmentInfo request called twice by the homogeneous parameter");
+        }
+        JSONObject requestJson = getSubscriptionJSONObject(
+                Arrays.asList(String.format("instrument_info.100ms.%s", coinType.name())));
+        session.getAsyncRemote().sendObject(requestJson);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -161,7 +177,6 @@ public class BybitWebsocket implements Closeable {
 
     @Override
     public void close() throws IOException {
-        // TODO Auto-generated method stub
-
+        session.close();
     }
 }

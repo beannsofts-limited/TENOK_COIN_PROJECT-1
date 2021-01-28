@@ -87,4 +87,15 @@ public class DAOTest {
 
         BybitDAO.getInstance().getOrderList();
     }
+
+    @Test
+    public void getInstrumentInfoTest() throws LoginException, InterruptedException {
+        BybitDAO.getInstance().login("tenok2019");
+        var inst = BybitDAO.getInstance().getInstrumentInfo(CoinEnum.BTCUSDT);
+
+        for (int i = 0; i < 20; i++) {
+            System.out.println(inst);
+            Thread.sleep(1000);
+        }
+    }
 }

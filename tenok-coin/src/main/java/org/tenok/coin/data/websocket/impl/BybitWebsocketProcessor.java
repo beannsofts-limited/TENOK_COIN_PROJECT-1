@@ -15,7 +15,9 @@ import javax.websocket.WebSocketContainer;
 
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
+import org.tenok.coin.data.entity.InstrumentInfo;
 import org.tenok.coin.data.entity.WalletAccessable;
+import org.tenok.coin.data.entity.impl.BybitInstrumentInfo;
 import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
 import org.tenok.coin.data.entity.impl.OrderedData;
@@ -26,6 +28,7 @@ import org.tenok.coin.type.IntervalEnum;
 import org.tenok.coin.type.OrderTypeEnum;
 import org.tenok.coin.type.SideEnum;
 import org.tenok.coin.type.TIFEnum;
+import org.tenok.coin.type.TickDirectionEnum;
 
 
 public class BybitWebsocketProcessor implements Closeable {
@@ -113,8 +116,26 @@ public class BybitWebsocketProcessor implements Closeable {
         });
     }
 
-    public void subscribeInsturmentInfo() {
+    public void subscribeInsturmentInfo(CoinEnum coinType, InstrumentInfo instrumentInfo) {
+        this.websocketPublicInstance.registerInsturmentInfo(coinType, data -> {
+            long lastPriceE4 = Long.valueOf((String) data.get("last_price_e4"));
+            TickDirectionEnum lastTickDirection = TickDirectionEnum.valueOfApiString((String) data.get("last_tick_direction"));
+            long price24hPcntE6 = (long) data.get("price_24h_pcnt_e6"); // TODO
+            long highPrice24hE4 = (long) data.get("high_price_24h_e4");
+            long lowPrice24hE4 = (long) data.get("low_price_24h_e4");
+            long price1hPcntE6 = (long) data.get("price_1h_pcnt_e6");
+            long highPrice1hE4 = (long) data.get("high_price_1h_e4");
+            long lowPrice1hE4 = (long) data.get("low_price_1h_e4");
 
+            ((BybitInstrumentInfo) instrumentInfo).price24hPcntE6(price24hPcntE6)
+                                                  .highPrice24hE4(highPrice24hE4)
+                                                  .lowPrice24hE4(lowPrice24hE4)
+                                                  .price1hPcntE6(price1hPcntE6)
+                                                  .highPrice1hE4(highPrice1hE4)
+                                                  .lowPrice1hE4(lowPrice1hE4)
+                                                  .lastTickDirection(lastTickDirection)
+                                                  .lastPriceE4(lastPriceE4);
+        });
     }
 
     public void subscribePosition() {
@@ -162,14 +183,11 @@ public class BybitWebsocketProcessor implements Closeable {
         });
     }
 
-    public void unsubscribeKLine(CoinEnum coinType, IntervalEnum interval) {
-        this.websocketPublicInstance.unregisterKLine(coinType, interval);
-    }
-
     @Override
     public void close() throws IOException {
         this.heartBeatThread.interrupt();   // heart beat 세션 유지용 스레드 인터럽트
         this.websocketPublicInstance.close();
+        this.websocketPrivateInstance.close();
     }
 
 }
