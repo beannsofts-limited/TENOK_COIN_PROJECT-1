@@ -36,10 +36,14 @@ public class DAOTest {
         CandleList candleList = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
         assertEquals(candleList.size(), 200);
 
-        candleList.stream().forEachOrdered(System.out::println);
-        for (int i = 0; i < 100; i++) {
+        candleList.stream().forEachOrdered(cl -> {
+            System.out.println(String.format("u bb: %f\nm bb: %f\nl bb: %f", cl.getUpperBB(), cl.getMiddleBB(), cl.getLowerBB()));
+            System.out.println(String.format("ma5: %f ma10: %f ma20: %f ma60: %f ma120: %f\nstart at: %s\n", cl.getMa5(), cl.getMa10(), cl.getMa20(), cl.getMa60(), cl.getMa120(), cl.getStartAt().toString()));
+        });
+        for (int i = 0; i < 50; i++) {
             var cl = candleList.get(0);
             System.out.println(String.format("u bb: %f\nm bb: %f\nl bb: %f", cl.getUpperBB(), cl.getMiddleBB(), cl.getLowerBB()));
+            System.out.println(String.format("ma5: %f ma10: %f ma20: %f ma60: %f ma120: %f\n", cl.getMa5(), cl.getMa10(), cl.getMa20(), cl.getMa60(), cl.getMa120()));
             Thread.sleep(1000);
         }
     }
