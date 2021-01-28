@@ -24,6 +24,12 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
         this.interval = interval;
     }
 
+    /**
+     * 
+     * confirm 이 true 일때 캔들을 확정지음
+     * or
+     * kline으로 ??개 캔들 불러올때 계산해서 push 해줌
+     */
     public void registerNewCandle(Candle item) {
         double ma5 = calMA(item, 5);
         double ma10 = calMA(item, 10);
@@ -96,53 +102,60 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
 
     private double calMA(Candle item, int period){
         double closeSum=0;
+        double ma = 0;
 
-        if(period<super.size()){
+        if(period>super.size()){
             return 0;
 
         }else{
-
             for(int i =super.size()-1; i>=super.size()-period+1; i--){
+              
               
                closeSum = closeSum + super.elementAt(i).getClose();
             }
             closeSum = item.getClose() + closeSum;
-            closeSum = closeSum/period;
-    
-            return closeSum;
+            ma = closeSum/period;
+            
+            return ma;
         }
         
     }
 
     private double calUpperBB(Candle item, int period){
-        return item.getClose() + calMiddleBB(item, period) + calStandardDeviation(item, period)*2; 
+        return calMiddleBB(item, period) + calStandardDeviation(item, period)*2; 
     }
     private double calMiddleBB(Candle item, int period){
         return calMA(item, period);
     }
     private double calLowerBB(Candle item, int period ){
-        return item.getClose() + calMiddleBB(item, period) - calStandardDeviation(item, period)*2;
+        return  calMiddleBB(item, period) - calStandardDeviation(item, period)*2;
     }
 
     private double calStandardDeviation(Candle item, int period){
-        double closeSum=0;
-        double deviationSum=0;
-        ArrayList<Candle> closeArray = new ArrayList<>();
-        ArrayList<Double> deviationArray = new ArrayList<>();
-        for(int i = super.size()-1; i>=super.size()-period+1; i--){
-            closeArray.add(super.elementAt(i));
-            closeSum = closeSum+ super.elementAt(i).getClose();
-         }
-         closeArray.add(item);
-         closeSum = item.getClose() + closeSum;
-         closeSum = closeSum/period;
-         
-         for(int i = 0; i<closeArray.size(); i++){
-             deviationArray.add(Math.pow(closeSum-closeArray.get(i).getClose(), 2));
-         }
-         for(int i = 0; i< deviationArray.size(); i++){
-             deviationSum = deviationSum + deviationArray.get(i);
-         }
-         return Math.sqrt(deviationSum/period);
+       
+        if(period>super.size()){
+            return 0;
+        }else{
+
+            double closeSum=0;
+            double deviationSum=0;
+            ArrayList<Candle> closeArray = new ArrayList<>();
+            ArrayList<Double> deviationArray = new ArrayList<>();
+            for(int i = super.size()-1; i>=super.size()-period+1; i--){
+                closeArray.add(super.elementAt(i));
+                closeSum = closeSum+ super.elementAt(i).getClose();
+             }
+             closeArray.add(item);
+             closeSum = item.getClose() + closeSum;
+             closeSum = closeSum/period;
+             
+             for(int i = 0; i<closeArray.size(); i++){
+                 deviationArray.add(Math.pow(closeSum-closeArray.get(i).getClose(), 2));
+             }
+             for(int i = 0; i< deviationArray.size(); i++){
+                 deviationSum = deviationSum + deviationArray.get(i);
+             }
+             return Math.sqrt(deviationSum/period);
+        }
     }
 }
