@@ -1,6 +1,7 @@
 package org.tenok.coin.data.impl;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -9,6 +10,7 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.Map;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -18,6 +20,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -26,18 +29,32 @@ import org.json.simple.parser.ParseException;
  * API Key, Secret Key 복호화 클래스
  */
 public class AuthDecryptor {
+    private static Logger logger = Logger.getLogger(AuthDecryptor.class);
     private String apiKeyEncrypted;
     private String secretKeyEncrypted;
     private String validationEncrypted;
+    private String slackWebhookURLEncrypted;
     private String pw = null;
 
-    private AuthDecryptor(File authFile) {
+    private AuthDecryptor(File... authFile) {
         try {
+            File authExistFile = null;
+            for (File file : authFile) {
+                if (file.getCanonicalFile().exists()) {
+                    authExistFile = file;
+                    logger.info(String.format("auth file found in path: %s", authExistFile.getCanonicalPath()));
+                    break;
+                }
+            }
+            if (authExistFile == null) {
+                throw new FileNotFoundException("Auth Secret File 못 찾겠음.");
+            }
             JSONParser parser = new JSONParser();
-            JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(authFile));
+            JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(authExistFile.getCanonicalFile()));
             this.apiKeyEncrypted = (String) jsonObject.get("apiKey");
             this.secretKeyEncrypted = (String) jsonObject.get("secretKey");
             this.validationEncrypted = (String) jsonObject.get("validation");
+            this.slackWebhookURLEncrypted = (String) jsonObject.get("slackWebhookURL");
         } catch (IOException | ParseException e) {
             e.printStackTrace();
             throw new RuntimeException("Secret Key File Path 체크 요망", e);
@@ -45,7 +62,7 @@ public class AuthDecryptor {
     }
 
     private static class AuthHolder {
-        public static final AuthDecryptor INSTANCE = new AuthDecryptor(new File("./secret.auth"));
+        public static final AuthDecryptor INSTANCE = new AuthDecryptor(new File("./../secret.auth"), new File("./secret.auth"));  // 상대주소 입력
     }
 
     public static AuthDecryptor getInstance() {
@@ -64,7 +81,7 @@ public class AuthDecryptor {
         return decrypt(this.secretKeyEncrypted, password);
     }
 
-    private static String decrypt(String cipherText, String password) {
+    private String decrypt(String cipherText, String password) {
         Cipher cipher;
         try {
             cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
@@ -104,8 +121,35 @@ public class AuthDecryptor {
      * Bybit Signature
      * @return Bybit Signature
      */
-    public String generate_signature() {
-        return sha256_HMAC("GET/realtime" + String.valueOf(System.currentTimeMillis() + 1000), getApiSecretKey(pw));
+    public String generate_signature(long expires) {
+        return sha256_HMAC("GET/realtime" + String.valueOf(expires), getApiSecretKey(pw));
+    }
+
+    /**
+     * rest에서 query parameter를 토대로 암호키 생성
+     * @param param query parameter
+     * @return signature
+     */
+    public String generate_signature(Map<String, Object> param) {
+        StringBuilder sb = new StringBuilder();
+        param.entrySet().stream().sorted((ent1, ent2) -> {
+            return ent1.getKey().compareTo(ent2.getKey());
+        }).map(ent -> {
+            if (ent.getValue() instanceof Boolean) {
+                return String.format("%s=%b&", ent.getKey(), ent.getValue());
+            } else {
+                return String.format("%s=%s&", ent.getKey(), ent.getValue());
+            }
+        }).forEachOrdered(sb::append);
+        return sha256_HMAC(sb.deleteCharAt(sb.length()-1).toString(), getApiSecretKey(pw));
+    }
+
+    /**
+     * auth 만기일
+     * @return 현재시간 + 1000 [ms]
+     */
+    public long generate_expire() {
+        return System.currentTimeMillis() + 1000L;
     }
 
     /**
@@ -117,6 +161,14 @@ public class AuthDecryptor {
             throw new RuntimeException("비밀번호 set 요망");
         }
         return decrypt(validationEncrypted, this.pw).equals("success");
+    }
+
+    /**
+     * slack webhook 전용 url
+     * @return slack webhook url in String
+     */
+    public String getSlackWebhookURL() {
+        return decrypt(this.slackWebhookURLEncrypted, pw);
     }
 
     private String byteArrayToHexString(byte[] b) {

@@ -10,8 +10,12 @@ public interface Strategy {
     public double testOpenRBI();
 
     /**
-     * 포지션 청산 조건해 해당하는 지를 반환
+     * 포지션 청산 조건에 해당하는 지를 반환
      * @return true: 청산, false: 관망
      */
-    public boolean testLiqRBI();
+    public boolean testCloseRBI();
+
+    public boolean isOpened();
+
+    public boolean isNotOpened();
 }

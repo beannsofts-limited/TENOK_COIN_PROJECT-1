@@ -3,18 +3,12 @@ package org.tenok.coin.data.entity.impl;
 import java.util.ArrayList;
 import java.util.Stack;
 
-import javax.swing.plaf.TreeUI;
-
-import com.google.gson.JsonObject;
 
 import org.tenok.coin.data.RealtimeAccessable;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
-
-
 
 @Getter
 @SuppressWarnings("serial")
@@ -30,15 +24,21 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
         this.interval = interval;
     }
 
+    /**
+     * 
+     * confirm 이 true 일때 캔들을 확정지음
+     * or
+     * kline으로 ??개 캔들 불러올때 계산해서 push 해줌
+     */
     public void registerNewCandle(Candle item) {
         double ma5 = calMA(item, 5);
         double ma10 = calMA(item, 10);
         double ma20 = calMA(item, 20);
         double ma60 = calMA(item, 60);
         double ma120 = calMA(item, 120);
-        double lowerBB=calLowerBB(item, 20);
-        double middleBB=calMiddleBB(item, 20);
-        double upperBB=calUpperBB(item, 20);
+        double lowerBB = calLowerBB(item, 20);
+        double middleBB = calMiddleBB(item, 20);
+        double upperBB = calUpperBB(item, 20);
         
         item.setMa5(ma5);
         item.setMa10(ma10);
@@ -63,9 +63,9 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
         double ma20 = calMA(item, 20);
         double ma60 = calMA(item, 60);
         double ma120 = calMA(item, 120);
-        double lowerBB=calLowerBB(item, 20);
-        double middleBB=calMiddleBB(item, 20);
-        double upperBB=calUpperBB(item, 20);
+        double lowerBB = calLowerBB(item, 20);
+        double middleBB = calMiddleBB(item, 20);
+        double upperBB = calUpperBB(item, 20);
         
         item.setMa5(ma5);
         item.setMa10(ma10);
@@ -95,23 +95,28 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
         throw new RuntimeException("호출하지 마세요.");
     }
 
+    @Override
+    public Candle get(int index) {
+        return super.get(this.size() - index - 1);
+    }
 
     private double calMA(Candle item, int period){
         double closeSum=0;
+        double ma = 0;
 
-        if(period<super.size()){
+        if(period>super.size()){
             return 0;
 
         }else{
-
             for(int i =super.size()-1; i>=super.size()-period+1; i--){
               
-               closeSum = closeSum+ super.elementAt(i).getClose();
+              
+               closeSum = closeSum + super.elementAt(i).getClose();
             }
             closeSum = item.getClose() + closeSum;
-            closeSum = closeSum/period;
-    
-            return closeSum;
+            ma = closeSum/period;
+            
+            return ma;
         }
         
     }
@@ -123,28 +128,34 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
         return calMA(item, period);
     }
     private double calLowerBB(Candle item, int period ){
-        return calMiddleBB(item, period) - calStandardDeviation(item, period)*2;
+        return  calMiddleBB(item, period) - calStandardDeviation(item, period)*2;
     }
 
     private double calStandardDeviation(Candle item, int period){
-        double closeSum=0;
-        double deviationSum=0;
-        ArrayList<Candle> closeArray = new ArrayList<>();
-        ArrayList<Double> deviationArray = new ArrayList<>();
-        for(int i =super.size()-1; i>=super.size()-period+1; i--){
-            closeArray.add(super.elementAt(i));
-            closeSum = closeSum+ super.elementAt(i).getClose();
-         }
-         closeArray.add(item);
-         closeSum = item.getClose() + closeSum;
-         closeSum = closeSum/period;
-         
-         for(int i = 0; i<closeArray.size(); i++){
-             deviationArray.add(Math.pow(closeSum-closeArray.get(i).getClose(), 2));
-         }
-         for(int i = 0; i< deviationArray.size(); i++){
-             deviationSum = deviationSum + deviationArray.get(i);
-         }
-         return Math.sqrt(deviationSum/period);
+       
+        if(period>super.size()){
+            return 0;
+        }else{
+
+            double closeSum=0;
+            double deviationSum=0;
+            ArrayList<Candle> closeArray = new ArrayList<>();
+            ArrayList<Double> deviationArray = new ArrayList<>();
+            for(int i = super.size()-1; i>=super.size()-period+1; i--){
+                closeArray.add(super.elementAt(i));
+                closeSum = closeSum+ super.elementAt(i).getClose();
+             }
+             closeArray.add(item);
+             closeSum = item.getClose() + closeSum;
+             closeSum = closeSum/period;
+             
+             for(int i = 0; i<closeArray.size(); i++){
+                 deviationArray.add(Math.pow(closeSum-closeArray.get(i).getClose(), 2));
+             }
+             for(int i = 0; i< deviationArray.size(); i++){
+                 deviationSum = deviationSum + deviationArray.get(i);
+             }
+             return Math.sqrt(deviationSum/period);
+        }
     }
 }

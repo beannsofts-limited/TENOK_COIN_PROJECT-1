@@ -8,8 +8,8 @@ import java.net.MalformedURLException;
 
 import java.net.URL;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -17,7 +17,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.tenok.coin.data.impl.AuthDecryptor;
-import org.tenok.coin.data.impl.BybitDAO;
+
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 import org.tenok.coin.type.OrderTypeEnum;
@@ -27,9 +27,9 @@ import org.tenok.coin.type.TIFEnum;
 public class BybitRestDAO {
 
     public JSONObject requestKline(CoinEnum coinType, IntervalEnum interval, int limit, Date from) {
-        Map<String, String> request = new HashMap<>();
-        request.put("symbol", coinType.toString());
-        request.put("interval", interval.getLiteral());
+        Map<String, Object> request = new TreeMap<>();
+        request.put("symbol", coinType.name());
+        request.put("interval", interval.getApiString());
         request.put("limit", Integer.toString(limit));
         request.put("from", Long.toString(from.getTime() / 1000L));
         StringBuilder url = new StringBuilder("https://api.bybit.com/public/linear/kline?");
@@ -42,11 +42,11 @@ public class BybitRestDAO {
     }
 
     public JSONObject getActiveOrder(CoinEnum coinType) {
-        Map<String, String> request = new HashMap<>();
-        request.put("api_key", BybitDAO.getInstance().getApiKey());
+        Map<String, Object> request = new TreeMap<>();
+        request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
-        request.put("sign", BybitDAO.getInstance().getSign());
-        request.put("symbol", coinType.toString());
+        request.put("symbol", coinType.name());
+        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
         StringBuilder url = new StringBuilder("https://api.bybit.com/private/linear/order/list?");
         StringBuilder loadData = getRestApi(request, url);
         JSONObject jsonResponse = stringToJSON((loadData.toString()));
@@ -57,10 +57,10 @@ public class BybitRestDAO {
     }
 
     public JSONObject getConditionalOrder() {
-        Map<String, String> request = new HashMap<>();
-        request.put("api_key", BybitDAO.getInstance().getApiKey());
+        Map<String, Object> request = new TreeMap<>();
+        request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
-        request.put("sign", BybitDAO.getInstance().getSign());
+        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
         StringBuilder url = new StringBuilder("https://api.bybit.com/private/linear/stop-order/list?");
         StringBuilder loadData = getRestApi(request, url);
         JSONObject jsonResponse = stringToJSON((loadData.toString()));
@@ -70,16 +70,46 @@ public class BybitRestDAO {
 
     }
 
-    public JSONObject placeActiveOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum oderType, int qty, TIFEnum tif) {
-        Map<String, String> request = new HashMap<>();
-        request.put("api_key", BybitDAO.getInstance().getApiKey());
-        request.put("side", side.toString());
-        request.put("symbol", coinType.toString());
-        request.put("order_type", oderType.toString());
-        request.put("qty", Integer.toString(qty));
-        request.put("time_in_force", tif.toString());
+    public JSONObject getMyPositionList(CoinEnum coinType) {
+        Map<String, Object> request = new TreeMap<>();
+        request.put("api_key", AuthDecryptor.getInstance().getApiKey());
+        request.put("symbol", coinType.name());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
-        request.put("sign", BybitDAO.getInstance().getSign());
+        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
+        StringBuilder url = new StringBuilder("https://api.bybit.com/private/linear/position/list?");
+        StringBuilder loadData = getRestApi(request, url);
+        JSONObject jsonResponse = stringToJSON((loadData.toString()));
+        System.out.println("restAPI: My Position 불러오기\n");
+
+        return jsonResponse;
+
+    }
+
+    public JSONObject placeActiveOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum oderType,  double qty, TIFEnum tif) {
+        Boolean reduceOnly = null;
+        switch (side) {
+            case OPEN_BUY:
+            case OPEN_SELL:
+                reduceOnly = false;
+                break;
+			case CLOSE_BUY:
+            case CLOSE_SELL:
+                reduceOnly = true;
+				break;
+			default:
+				break;
+        }
+        Map<String, Object> request = new TreeMap<>();
+        request.put("api_key", AuthDecryptor.getInstance().getApiKey());
+        request.put("side", side.getApiString());
+        request.put("symbol", coinType.name());
+        request.put("order_type", oderType.getApiString());
+        request.put("qty", Double.toString(qty));
+        request.put("time_in_force", tif.getApiString());
+        request.put("reduce_only", Boolean.valueOf(reduceOnly));
+        request.put("close_on_trigger", Boolean.valueOf(false));
+        request.put("timestamp", Long.toString(System.currentTimeMillis()));
+        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/order/create");
@@ -91,20 +121,23 @@ public class BybitRestDAO {
             e.printStackTrace();
         }
         throw new RuntimeException("place active order 실패");
-
+    }
+    public JSONObject placeActiveOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum oderType,  double qty, TIFEnum tif, int leverage) {
+        setLeverage(coinType, leverage, leverage);
+        return placeActiveOrder(side, coinType, oderType, qty, tif);
     }
 
-    public JSONObject placeConditionalOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum orderType, int qty,
+    public JSONObject placeConditionalOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum orderType, double qty,
             TIFEnum tif) {
-        Map<String, String> request = new HashMap<>();
-        request.put("api_key", BybitDAO.getInstance().getApiKey());
-        request.put("side", side.toString());
-        request.put("symbol", coinType.toString());
-        request.put("order_type", orderType.toString());
-        request.put("qty", Integer.toString(qty));
-        request.put("time_in_force", tif.toString());
+        Map<String, Object> request = new TreeMap<>();
+        request.put("api_key", AuthDecryptor.getInstance().getApiKey());
+        request.put("side", side.getApiString());
+        request.put("symbol", coinType.name());
+        request.put("order_type", orderType.getApiString());
+        request.put("qty", Double.toString(qty));
+        request.put("time_in_force", tif.getApiString());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
-        request.put("sign", BybitDAO.getInstance().getSign());
+        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/stop-order/create");
@@ -119,12 +152,12 @@ public class BybitRestDAO {
     }
 
     public JSONObject cancelActiveOrder(CoinEnum coinType, String orderID) {
-        Map<String, String> request = new HashMap<>();
-        request.put("api_key", BybitDAO.getInstance().getApiKey());
-        request.put("symbol", coinType.toString());
+        Map<String, Object> request = new TreeMap<>();
+        request.put("api_key", AuthDecryptor.getInstance().getApiKey());
+        request.put("symbol", coinType.name());
         request.put("order_id", orderID);
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
-        request.put("sign", BybitDAO.getInstance().getSign());
+        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/order/cancel");
@@ -139,12 +172,12 @@ public class BybitRestDAO {
     }
 
     public JSONObject cancelConditionalOrder(CoinEnum coinType, String orderID) {
-        Map<String, String> request = new HashMap<>();
-        request.put("api_key", BybitDAO.getInstance().getApiKey());
-        request.put("symbol", coinType.toString());
+        Map<String, Object> request = new TreeMap<>();
+        request.put("api_key", AuthDecryptor.getInstance().getApiKey());
+        request.put("symbol", coinType.name());
         request.put("order_id", orderID);
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
-        request.put("sign", BybitDAO.getInstance().getSign());
+        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/stop-order/cancel");
@@ -159,12 +192,12 @@ public class BybitRestDAO {
     }
 
     public JSONObject cancelAllActiveOrder(CoinEnum coinType, String orderID) {
-        Map<String, String> request = new HashMap<>();
+        Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
-        request.put("symbol", coinType.toString());
+        request.put("symbol", coinType.name());
         request.put("order_id", orderID);
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
-        request.put("sign", BybitDAO.getInstance().getSign());
+        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/order/cancel-all");
@@ -180,12 +213,12 @@ public class BybitRestDAO {
     }
 
     public JSONObject cancelAllConditionalOrder(CoinEnum coinType, String orderID) {
-        Map<String, String> request = new HashMap<>();
-        request.put("api_key", BybitDAO.getInstance().getApiKey());
-        request.put("symbol", coinType.toString());
+        Map<String, Object> request = new TreeMap<>();
+        request.put("api_key", AuthDecryptor.getInstance().getApiKey());
+        request.put("symbol", coinType.name());
         request.put("order_id", orderID);
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
-        request.put("sign", BybitDAO.getInstance().getSign());
+        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/stop-order/cancel-all");
@@ -200,12 +233,12 @@ public class BybitRestDAO {
     }
 
     public JSONObject setLeverage(CoinEnum coinType, int buyLeverage, int sellLeverage) {
-        Map<String, String> request = new HashMap<>();
-        request.put("api_key", BybitDAO.getInstance().getApiKey());
-        request.put("symbol", coinType.toString());
+        Map<String, Object> request = new TreeMap<>();
+        request.put("api_key", AuthDecryptor.getInstance().getApiKey());
+        request.put("symbol", coinType.name());
         request.put("buy_leverage", Integer.toString(buyLeverage));
         request.put("sell_leverage", Integer.toString(sellLeverage));
-        request.put("sign", BybitDAO.getInstance().getSign());
+        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/position/set-leverage");
@@ -220,7 +253,7 @@ public class BybitRestDAO {
         throw new RuntimeException("leverage setting 실패");
     }
 
-    private StringBuilder getRestApi(Map<String, String> request, StringBuilder url) {
+    private StringBuilder getRestApi(Map<String, Object> request, StringBuilder url) {
         request.forEach((k, v) -> {
             url.append(String.format("%s=%s&", k, v));
         });
@@ -248,21 +281,23 @@ public class BybitRestDAO {
         throw new RuntimeException("RestApi get 호출 실패");
     }
 
-    private StringBuilder postRestApi(Map<String, String> request, URL url) {
-        StringBuilder jsonInputString = new StringBuilder("{");
-        request.forEach((k, v) -> {
-            jsonInputString.append(String.format("\"%s\":\"%s\",", k, v));
-        });
-        jsonInputString.deleteCharAt(jsonInputString.length() - 1);
-        jsonInputString.append("}");
+    private StringBuilder postRestApi(Map<String, Object> request, URL url) {
+        // StringBuilder jsonInputString = new StringBuilder("{");
+        JSONObject jsonInputObject = new JSONObject(request);
+        // request.forEach((k, v) -> {
+        //     jsonInputString.append(String.format("\"%s\":\"%s\",", k, v));
+        // });
+        // jsonInputString.deleteCharAt(jsonInputString.length() - 1);
+        // jsonInputString.append("}");
         HttpsURLConnection conn;
         try {
             conn = (HttpsURLConnection) url.openConnection();
             conn.setDoInput(true);
+            conn.setDoOutput(true);
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
             OutputStream os = conn.getOutputStream();
-            os.write(jsonInputString.toString().getBytes());
+            os.write(jsonInputObject.toJSONString().getBytes());
             conn.connect();
             StringBuilder sb = new StringBuilder();
             BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));

@@ -4,46 +4,75 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Date;
 
 import javax.websocket.ContainerProvider;
 import javax.websocket.DeploymentException;
+import javax.websocket.EncodeException;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 
+import org.apache.log4j.Logger;
+import org.json.simple.JSONObject;
 import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
-import org.tenok.coin.data.entity.impl.OrderList;
+import org.tenok.coin.data.entity.impl.OrderedData;
+import org.tenok.coin.data.entity.impl.OrderedList;
+import org.tenok.coin.data.impl.AuthDecryptor;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
+import org.tenok.coin.type.OrderTypeEnum;
+import org.tenok.coin.type.SideEnum;
+import org.tenok.coin.type.TIFEnum;
+
 
 public class BybitWebsocketProcessor implements Closeable {
-    private Session websocketSession = null;
-    private BybitWebsocket websocketInstance = null;
-    private Thread heartBeatThread = null;
+    private static Logger logger = Logger.getLogger(BybitWebsocketProcessor.class);
+    private Session websocketPublicSession;
+    private Session websocketPrivateSession;
+    private BybitWebsocket websocketPublicInstance;
+    private BybitWebsocket websocketPrivateInstance;
+    private Thread heartBeatThread;
 
     public BybitWebsocketProcessor() {
     }
 
+    /**
+     * 웹소켓 연결 및 heart deat 스레드 등록.
+     */
+    @SuppressWarnings("unchecked")
     public void init() {
         WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-        this.websocketInstance = new BybitWebsocket();
+        this.websocketPublicInstance = new BybitWebsocket();
+        this.websocketPrivateInstance = new BybitWebsocket();
 
         try {
-            this.websocketSession = container.connectToServer(websocketInstance, new URI("wss://stream.bybit.com/realtime_public"));
+            this.websocketPublicSession = container.connectToServer(websocketPublicInstance, new URI("wss://stream.bybit.com/realtime_public"));
+            this.websocketPrivateSession = container.connectToServer(websocketPrivateInstance, new URI("wss://stream.bybit.com/realtime_private"));
+            JSONObject authObject = new JSONObject();
+            authObject.put("op", "auth");
+            long expires = AuthDecryptor.getInstance().generate_expire();
+            authObject.put("args", Arrays.asList(new String[] {AuthDecryptor.getInstance().getApiKey(),
+                                                               Long.toString(expires),
+                                                               AuthDecryptor.getInstance().generate_signature(expires)}));
+            websocketPrivateSession.getBasicRemote().sendObject(authObject);
         } catch (DeploymentException e) {
-            e.printStackTrace();
+            logger.error(e);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e);
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            logger.error(e);
+        } catch (EncodeException e) {
+            logger.error(e);
         }
         heartBeatThread = new Thread() {
             @Override
             public void run() {
                 while (true) {
-                    websocketSession.getAsyncRemote().sendText("{\"op\":\"ping\"}");
+                    websocketPublicSession.getAsyncRemote().sendText("{\"op\":\"ping\"}");
+                    websocketPrivateSession.getAsyncRemote().sendText("{\"op\":\"ping\"}");
                     if (interrupted()) {
                         break;
                     }
@@ -60,18 +89,18 @@ public class BybitWebsocketProcessor implements Closeable {
 
     /**
      * kLine 실시간 처리 등록
-     * @param coinType
-     * @param interval
-     * @param candleList
+     * @param coinType coin type
+     * @param interval interval
+     * @param candleList CandleList instance
      */
     public void subscribeCandle(CoinEnum coinType, IntervalEnum interval, CandleList candleList) {
-        this.websocketInstance.registerKLineCallback(coinType, interval, (data) -> {
-            double open = (double) data.get("open");
-            double close = (double) data.get("close");
-            double high = (double) data.get("high");
-            double low = (double) data.get("low");
-            double volume = (double) data.get("volume");
-            Date startAt = new Date((long) data.get("start"));
+        this.websocketPublicInstance.registerKLineCallback(coinType, interval, (data) -> {
+            double open = ((Number) data.get("open")).doubleValue();
+            double close = ((Number) data.get("close")).doubleValue();
+            double high = ((Number) data.get("high")).doubleValue();
+            double low = ((Number) data.get("low")).doubleValue();
+            double volume = Double.valueOf((String) data.get("volume"));
+            Date startAt = new Date(((Number) data.get("start")).longValue() * 1000L);
             boolean confirm = (boolean) data.get("confirm");
 
             if (confirm) {
@@ -93,7 +122,7 @@ public class BybitWebsocketProcessor implements Closeable {
     }
 
     public void subscribeWalletInfo(WalletAccessable walletInfo) {
-        this.websocketInstance.registerWalletInfo(data -> {
+        this.websocketPrivateInstance.registerWalletInfo(data -> {
             double walletBalance = (double) data.get("wallet_balance");
             double availableBalance = (double) data.get("available_balance");
             walletInfo.setWalletBalance(walletBalance)
@@ -101,18 +130,46 @@ public class BybitWebsocketProcessor implements Closeable {
         });
     }
 
-    public void subscribeOrder(CoinEnum coinType, IntervalEnum interval, OrderList orderList) {
-
+    public void subscribeOrder(OrderedList orderedList) {
+        this.websocketPrivateInstance.registerOrder(data -> {
+            CoinEnum coin = CoinEnum.valueOf((String) data.get("symbol"));
+            TIFEnum tif = TIFEnum.valueOfApiString((String) data.get("time_in_force"));
+            double qty = ((Number) data.get("qty")).doubleValue();
+            OrderTypeEnum orderType = OrderTypeEnum.valueOfApiString((String) data.get("order_type"));
+            SideEnum sideEnum = null;
+            boolean reduceOnly = (boolean) data.get("reduce_only");
+            String side = (String) data.get("side");
+            if (reduceOnly && side.equals("Buy")) {
+                // 공매수
+                sideEnum = SideEnum.OPEN_BUY;
+            } else if (reduceOnly && side.equals("Sell")) {
+                // 공매도
+                sideEnum = SideEnum.OPEN_SELL;
+            } else if ((!reduceOnly) && side.equals("Buy")) {
+                // 매수로 청산
+                sideEnum = SideEnum.CLOSE_BUY;
+            } else if ((!reduceOnly) && side.equals("Sell")) {
+                // 매도로 청산
+                sideEnum = SideEnum.CLOSE_SELL;
+            }
+            orderedList.add(OrderedData.builder()
+                                     .coinType(coin)
+                                     .tif(tif)
+                                     .qty(qty)
+                                     .side(sideEnum)
+                                     .orderType(orderType)
+                                     .build());
+        });
     }
 
     public void unsubscribeKLine(CoinEnum coinType, IntervalEnum interval) {
-        this.websocketInstance.unregisterKLine(coinType, interval);
+        this.websocketPublicInstance.unregisterKLine(coinType, interval);
     }
 
     @Override
     public void close() throws IOException {
         this.heartBeatThread.interrupt();   // heart beat 세션 유지용 스레드 인터럽트
-        this.websocketInstance.close();
+        this.websocketPublicInstance.close();
     }
 
 }
