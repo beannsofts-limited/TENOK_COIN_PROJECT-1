@@ -45,8 +45,8 @@ public class BybitRestDAO {
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
-        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
         request.put("symbol", coinType.name());
+        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
         StringBuilder url = new StringBuilder("https://api.bybit.com/private/linear/order/list?");
         StringBuilder loadData = getRestApi(request, url);
         JSONObject jsonResponse = stringToJSON((loadData.toString()));
