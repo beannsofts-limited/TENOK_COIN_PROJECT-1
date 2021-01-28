@@ -55,6 +55,10 @@ public class SlackDAO {
         // send(String.format("Exception 발생 %s", t.getMessage());
     }
 
+    public WebhookResponse sendText(String text) {
+        return null;    // TODO
+    }
+
     private static class SlackDAOHolder {
         public static final SlackDAO INSTANCE = new SlackDAO();
     }
