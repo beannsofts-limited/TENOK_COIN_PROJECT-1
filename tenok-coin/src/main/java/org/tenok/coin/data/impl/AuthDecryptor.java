@@ -1,6 +1,7 @@
 package org.tenok.coin.data.impl;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -19,6 +20,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -27,16 +29,28 @@ import org.json.simple.parser.ParseException;
  * API Key, Secret Key 복호화 클래스
  */
 public class AuthDecryptor {
+    private static Logger logger = Logger.getLogger(AuthDecryptor.class);
     private String apiKeyEncrypted;
     private String secretKeyEncrypted;
     private String validationEncrypted;
     private String slackWebhookURLEncrypted;
     private String pw = null;
 
-    private AuthDecryptor(File authFile) {
+    private AuthDecryptor(File... authFile) {
         try {
+            File authExistFile = null;
+            for (File file : authFile) {
+                if (file.getCanonicalFile().exists()) {
+                    authExistFile = file;
+                    logger.info(String.format("auth file found in path: %s", authExistFile.getCanonicalPath()));
+                    break;
+                }
+            }
+            if (authExistFile == null) {
+                throw new FileNotFoundException("Auth Secret File 못 찾겠음.");
+            }
             JSONParser parser = new JSONParser();
-            JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(authFile.getCanonicalFile()));
+            JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(authExistFile.getCanonicalFile()));
             this.apiKeyEncrypted = (String) jsonObject.get("apiKey");
             this.secretKeyEncrypted = (String) jsonObject.get("secretKey");
             this.validationEncrypted = (String) jsonObject.get("validation");
@@ -48,7 +62,7 @@ public class AuthDecryptor {
     }
 
     private static class AuthHolder {
-        public static final AuthDecryptor INSTANCE = new AuthDecryptor(new File("./secret.auth"));  // 상대주소 입력
+        public static final AuthDecryptor INSTANCE = new AuthDecryptor(new File("./../secret.auth"), new File("./secret.auth"));  // 상대주소 입력
     }
 
     public static AuthDecryptor getInstance() {
@@ -116,12 +130,16 @@ public class AuthDecryptor {
      * @param param query parameter
      * @return signature
      */
-    public String generate_signature(Map<String, String> param) {
+    public String generate_signature(Map<String, Object> param) {
         StringBuilder sb = new StringBuilder();
         param.entrySet().stream().sorted((ent1, ent2) -> {
             return ent1.getKey().compareTo(ent2.getKey());
         }).map(ent -> {
-            return String.format("%s=%s&", ent.getKey(), ent.getValue());
+            if (ent.getValue() instanceof Boolean) {
+                return String.format("%s=%b&", ent.getKey(), ent.getValue());
+            } else {
+                return String.format("%s=%s&", ent.getKey(), ent.getValue());
+            }
         }).forEachOrdered(sb::append);
         return sha256_HMAC(sb.deleteCharAt(sb.length()-1).toString(), getApiSecretKey(pw));
     }

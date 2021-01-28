@@ -85,7 +85,8 @@ public class BybitWebsocket implements Closeable {
                     break;
 
                 case "wallet":
-                    walletInfoConsumer.accept((JSONObject) ((JSONArray) response.get("data")).get(0));
+                    this.walletInfoConsumer.accept((JSONObject) ((JSONArray) response.get("data")).get(0));
+                    break;
 
                 default:
                     throw new RuntimeException("Websocket Topic Parse Failed" + topicParsed.toString());

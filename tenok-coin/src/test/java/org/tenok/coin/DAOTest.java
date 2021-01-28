@@ -6,7 +6,6 @@ import javax.security.auth.login.LoginException;
 
 import com.slack.api.webhook.WebhookResponse;
 
-import org.apache.log4j.Logger;
 import org.junit.Test;
 import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.impl.ActiveOrder;
@@ -32,13 +31,15 @@ public class DAOTest {
     }
 
     @Test
-    public void candleListTest() throws InterruptedException {
+    public void candleListTest() throws InterruptedException, LoginException {
+        BybitDAO.getInstance().login("tenok2019");
         CandleList candleList = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
         assertEquals(candleList.size(), 200);
 
         candleList.stream().forEachOrdered(System.out::println);
-        for (int i = 0; i < 50; i++) {
-            System.out.println(candleList.get(0).toString());
+        for (int i = 0; i < 100; i++) {
+            var cl = candleList.get(0);
+            System.out.println(String.format("u bb: %f\nm bb: %f\nl bb: %f", cl.getUpperBB(), cl.getMiddleBB(), cl.getLowerBB()));
             Thread.sleep(1000);
         }
     }
@@ -51,17 +52,18 @@ public class DAOTest {
         } catch (LoginException e1) {
             e1.printStackTrace();
         }
-        WebhookResponse response = SlackDAO.getInstance().sendTradingMessage(CoinEnum.BTCUSDT, SideEnum.BUY, 1);
+        WebhookResponse response = SlackDAO.getInstance().sendTradingMessage(CoinEnum.BTCUSDT, SideEnum.OPEN_BUY, 1);
         assertEquals(response.getCode().intValue(), 200);
     }
 
     @Test
     public void orderTest() throws LoginException {
         BybitDAO.getInstance().login("tenok2019");
+
         Orderable order = ActiveOrder.builder()
                                      .coinType(CoinEnum.LTCUSDT)
                                      .orderType(OrderTypeEnum.MARKET)
-                                     .side(SideEnum.BUY)
+                                     .side(SideEnum.CLOSE_SELL)
                                      .qty(0.1)
                                      .tif(TIFEnum.GTC)
                                      .build();

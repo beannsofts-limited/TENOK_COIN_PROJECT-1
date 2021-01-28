@@ -25,6 +25,8 @@ public class ActiveOrder implements Orderable {
     @NonNull
     private TIFEnum tif;
 
+    private boolean isOpen;
+
     private double qty;
 
     private Date timeStamp;
@@ -57,6 +59,11 @@ public class ActiveOrder implements Orderable {
     @Override
     public Date getTimeStamp() {
         return timeStamp;
+    }
+
+    @Override
+    public boolean isOpen() {
+        return isOpen;
     }
     
 }
