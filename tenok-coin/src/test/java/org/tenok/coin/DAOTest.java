@@ -31,13 +31,15 @@ public class DAOTest {
     }
 
     @Test
-    public void candleListTest() throws InterruptedException {
+    public void candleListTest() throws InterruptedException, LoginException {
+        BybitDAO.getInstance().login("tenok2019");
         CandleList candleList = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
         assertEquals(candleList.size(), 200);
 
         candleList.stream().forEachOrdered(System.out::println);
-        for (int i = 0; i < 50; i++) {
-            System.out.println(candleList.get(0).toString());
+        for (int i = 0; i < 100; i++) {
+            var cl = candleList.get(0);
+            System.out.println(String.format("u bb: %f\nm bb: %f\nl bb: %f", cl.getUpperBB(), cl.getMiddleBB(), cl.getLowerBB()));
             Thread.sleep(1000);
         }
     }

@@ -121,7 +121,10 @@ public class BybitRestDAO {
             e.printStackTrace();
         }
         throw new RuntimeException("place active order 실패");
-
+    }
+    public JSONObject placeActiveOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum oderType,  double qty, TIFEnum tif, int leverage) {
+        setLeverage(coinType, leverage, leverage);
+        return placeActiveOrder(side, coinType, oderType, qty, tif);
     }
 
     public JSONObject placeConditionalOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum orderType, double qty,

@@ -30,9 +30,9 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
         double ma20 = calMA(item, 20);
         double ma60 = calMA(item, 60);
         double ma120 = calMA(item, 120);
-        double lowerBB=calLowerBB(item, 20);
-        double middleBB=calMiddleBB(item, 20);
-        double upperBB=calUpperBB(item, 20);
+        double lowerBB = calLowerBB(item, 20);
+        double middleBB = calMiddleBB(item, 20);
+        double upperBB = calUpperBB(item, 20);
         
         item.setMa5(ma5);
         item.setMa10(ma10);
@@ -57,9 +57,9 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
         double ma20 = calMA(item, 20);
         double ma60 = calMA(item, 60);
         double ma120 = calMA(item, 120);
-        double lowerBB=calLowerBB(item, 20);
-        double middleBB=calMiddleBB(item, 20);
-        double upperBB=calUpperBB(item, 20);
+        double lowerBB = calLowerBB(item, 20);
+        double middleBB = calMiddleBB(item, 20);
+        double upperBB = calUpperBB(item, 20);
         
         item.setMa5(ma5);
         item.setMa10(ma10);
@@ -104,7 +104,7 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
 
             for(int i =super.size()-1; i>=super.size()-period+1; i--){
               
-               closeSum = closeSum+ super.elementAt(i).getClose();
+               closeSum = closeSum + super.elementAt(i).getClose();
             }
             closeSum = item.getClose() + closeSum;
             closeSum = closeSum/period;
@@ -115,13 +115,13 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
     }
 
     private double calUpperBB(Candle item, int period){
-        return calMiddleBB(item, period) + calStandardDeviation(item, period)*2; 
+        return item.getClose() + calMiddleBB(item, period) + calStandardDeviation(item, period)*2; 
     }
     private double calMiddleBB(Candle item, int period){
         return calMA(item, period);
     }
     private double calLowerBB(Candle item, int period ){
-        return calMiddleBB(item, period) - calStandardDeviation(item, period)*2;
+        return item.getClose() + calMiddleBB(item, period) - calStandardDeviation(item, period)*2;
     }
 
     private double calStandardDeviation(Candle item, int period){
