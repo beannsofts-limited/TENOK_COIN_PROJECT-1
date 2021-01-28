@@ -71,7 +71,7 @@ public class BybitRestDAO {
 
     }
 
-    public JSONObject getMyPosition(CoinEnum coinType) {
+    public JSONObject getMyPositionList(CoinEnum coinType) {
         Map<String, String> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
