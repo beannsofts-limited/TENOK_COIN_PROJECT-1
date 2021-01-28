@@ -48,7 +48,7 @@ public class AuthDecryptor {
     }
 
     private static class AuthHolder {
-        public static final AuthDecryptor INSTANCE = new AuthDecryptor(new File("./../secret.auth"));  // 상대주소 입력
+        public static final AuthDecryptor INSTANCE = new AuthDecryptor(new File("./secret.auth"));  // 상대주소 입력
     }
 
     public static AuthDecryptor getInstance() {
@@ -111,8 +111,27 @@ public class AuthDecryptor {
         return sha256_HMAC("GET/realtime" + String.valueOf(System.currentTimeMillis()/1000L + 1000), getApiSecretKey(pw));
     }
 
+    /**
+     * rest에서 query parameter를 토대로 암호키 생성
+     * @param param query parameter
+     * @return signature
+     */
     public String generate_signature(Map<String, String> param) {
-        return null;    // TODO
+        StringBuilder sb = new StringBuilder();
+        param.entrySet().stream().sorted((ent1, ent2) -> {
+            return ent1.getKey().compareTo(ent2.getKey());
+        }).map(ent -> {
+            return String.format("%s=%s&", ent.getKey(), ent.getValue());
+        }).forEachOrdered(sb::append);
+        return sha256_HMAC(sb.deleteCharAt(sb.length()-1).toString(), getApiSecretKey(pw));
+    }
+
+    /**
+     * auth 만기일
+     * @return 현재시간 + 1000 [ms]
+     */
+    public long generate_expire() {
+        return System.currentTimeMillis() + 1000L;
     }
 
     /**

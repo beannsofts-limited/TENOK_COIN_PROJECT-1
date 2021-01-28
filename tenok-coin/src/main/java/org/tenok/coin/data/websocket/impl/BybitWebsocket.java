@@ -19,6 +19,7 @@ import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.tenok.coin.data.websocket.WebsocketResponseEnum;
+import org.tenok.coin.slack.SlackDAO;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 
@@ -49,8 +50,9 @@ public class BybitWebsocket implements Closeable {
             boolean success = (boolean) response.get("success");
             if (!success) {
                 logger.fatal("Websocket Ping or Subscription failed");
+                // SlackDAO.getInstance().  sendMessage가 없노????
             } else {
-                logger.info(String.format("Websocket %s success", resType.name()));
+                logger.debug(String.format("Websocket %s success", resType.name()));
             }
             return;
         }
@@ -94,13 +96,13 @@ public class BybitWebsocket implements Closeable {
 
     @OnClose
     public void onClose() {
-
+        logger.info("websocket 연결 종료");
     }
 
     @OnError
     public void onError(Throwable t) {
         logger.error("Websocket Error", t);
-        t.printStackTrace();
+        SlackDAO.getInstance().sendException(t);
     }
 
     /**

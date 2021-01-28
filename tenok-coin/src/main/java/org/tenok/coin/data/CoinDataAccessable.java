@@ -4,7 +4,7 @@ import org.tenok.coin.data.entity.InstrumentInfo;
 import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.data.entity.impl.CandleList;
-import org.tenok.coin.data.entity.impl.OrderList;
+import org.tenok.coin.data.entity.impl.OrderedList;
 import org.tenok.coin.data.entity.impl.PositionList;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
@@ -14,7 +14,7 @@ import org.tenok.coin.type.IntervalEnum;
  */
 public interface CoinDataAccessable {
     public CandleList getCandleList(CoinEnum coinType, IntervalEnum interval);
-    public OrderList getOrderList();
+    public OrderedList getOrderList();
     public PositionList getPositionList();
     public InstrumentInfo getInsturmentInfo(CoinEnum coinType);
     public WalletAccessable getWalletInfo();

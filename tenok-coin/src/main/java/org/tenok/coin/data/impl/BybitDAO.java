@@ -21,7 +21,7 @@ import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.data.entity.impl.BybitWalletInfo;
 import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
-import org.tenok.coin.data.entity.impl.OrderList;
+import org.tenok.coin.data.entity.impl.OrderedList;
 import org.tenok.coin.data.websocket.impl.BybitWebsocketProcessor;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
@@ -30,7 +30,7 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
     // cached data field
     private Map<CoinEnum, Map<IntervalEnum, CandleList>> candleListIsCachedMap;
     private WalletAccessable walletInfo;
-    private OrderList orderList;
+    private OrderedList orderList;
     private PositionList positionList;
 
     // data accessable instance field
@@ -94,9 +94,9 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
     }
 
     @Override
-    public OrderList getOrderList() {
+    public OrderedList getOrderList() {
         if (orderList == null) {
-            orderList = new OrderList();
+            orderList = new OrderedList();
             // TODO
         }
         return null;
