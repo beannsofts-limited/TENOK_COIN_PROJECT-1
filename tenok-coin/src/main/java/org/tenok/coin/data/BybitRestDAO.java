@@ -8,7 +8,6 @@ import java.net.MalformedURLException;
 
 import java.net.URL;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -28,7 +27,7 @@ import org.tenok.coin.type.TIFEnum;
 public class BybitRestDAO {
 
     public JSONObject requestKline(CoinEnum coinType, IntervalEnum interval, int limit, Date from) {
-        Map<String, String> request = new TreeMap<>();
+        Map<String, Object> request = new TreeMap<>();
         request.put("symbol", coinType.name());
         request.put("interval", interval.getApiString());
         request.put("limit", Integer.toString(limit));
@@ -43,7 +42,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject getActiveOrder(CoinEnum coinType) {
-        Map<String, String> request = new TreeMap<>();
+        Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
         request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
@@ -58,7 +57,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject getConditionalOrder() {
-        Map<String, String> request = new TreeMap<>();
+        Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
         request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
@@ -72,7 +71,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject getMyPositionList(CoinEnum coinType) {
-        Map<String, String> request = new TreeMap<>();
+        Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
@@ -87,13 +86,28 @@ public class BybitRestDAO {
     }
 
     public JSONObject placeActiveOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum oderType,  double qty, TIFEnum tif) {
-        Map<String, String> request = new TreeMap<>();
+        Boolean reduceOnly = null;
+        switch (side) {
+            case OPEN_BUY:
+            case OPEN_SELL:
+                reduceOnly = false;
+                break;
+			case CLOSE_BUY:
+            case CLOSE_SELL:
+                reduceOnly = true;
+				break;
+			default:
+				break;
+        }
+        Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("side", side.getApiString());
         request.put("symbol", coinType.name());
         request.put("order_type", oderType.getApiString());
         request.put("qty", Double.toString(qty));
         request.put("time_in_force", tif.getApiString());
+        request.put("reduce_only", Boolean.valueOf(reduceOnly));
+        request.put("close_on_trigger", Boolean.valueOf(false));
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
         request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
         URL url;
@@ -112,13 +126,13 @@ public class BybitRestDAO {
 
     public JSONObject placeConditionalOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum orderType, double qty,
             TIFEnum tif) {
-        Map<String, String> request = new TreeMap<>();
+        Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("side", side.getApiString());
         request.put("symbol", coinType.name());
         request.put("order_type", orderType.getApiString());
         request.put("qty", Double.toString(qty));
-        request.put("time_in_force", tif.getApiString();
+        request.put("time_in_force", tif.getApiString());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
         request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
         URL url;
@@ -135,7 +149,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject cancelActiveOrder(CoinEnum coinType, String orderID) {
-        Map<String, String> request = new TreeMap<>();
+        Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
         request.put("order_id", orderID);
@@ -155,7 +169,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject cancelConditionalOrder(CoinEnum coinType, String orderID) {
-        Map<String, String> request = new TreeMap<>();
+        Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
         request.put("order_id", orderID);
@@ -175,7 +189,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject cancelAllActiveOrder(CoinEnum coinType, String orderID) {
-        Map<String, String> request = new TreeMap<>();
+        Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
         request.put("order_id", orderID);
@@ -196,7 +210,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject cancelAllConditionalOrder(CoinEnum coinType, String orderID) {
-        Map<String, String> request = new TreeMap<>();
+        Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
         request.put("order_id", orderID);
@@ -216,7 +230,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject setLeverage(CoinEnum coinType, int buyLeverage, int sellLeverage) {
-        Map<String, String> request = new TreeMap<>();
+        Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
         request.put("buy_leverage", Integer.toString(buyLeverage));
@@ -236,7 +250,7 @@ public class BybitRestDAO {
         throw new RuntimeException("leverage setting 실패");
     }
 
-    private StringBuilder getRestApi(Map<String, String> request, StringBuilder url) {
+    private StringBuilder getRestApi(Map<String, Object> request, StringBuilder url) {
         request.forEach((k, v) -> {
             url.append(String.format("%s=%s&", k, v));
         });
@@ -264,7 +278,7 @@ public class BybitRestDAO {
         throw new RuntimeException("RestApi get 호출 실패");
     }
 
-    private StringBuilder postRestApi(Map<String, String> request, URL url) {
+    private StringBuilder postRestApi(Map<String, Object> request, URL url) {
         // StringBuilder jsonInputString = new StringBuilder("{");
         JSONObject jsonInputObject = new JSONObject(request);
         // request.forEach((k, v) -> {

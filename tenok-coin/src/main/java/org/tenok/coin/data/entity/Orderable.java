@@ -41,4 +41,5 @@ public interface Orderable {
      * @return timestamp
      */
     public Date getTimeStamp();
+    public boolean isOpen();
 }

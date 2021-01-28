@@ -6,7 +6,6 @@ import javax.security.auth.login.LoginException;
 
 import com.slack.api.webhook.WebhookResponse;
 
-import org.apache.log4j.Logger;
 import org.junit.Test;
 import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.impl.ActiveOrder;
@@ -51,17 +50,18 @@ public class DAOTest {
         } catch (LoginException e1) {
             e1.printStackTrace();
         }
-        WebhookResponse response = SlackDAO.getInstance().sendTradingMessage(CoinEnum.BTCUSDT, SideEnum.BUY, 1);
+        WebhookResponse response = SlackDAO.getInstance().sendTradingMessage(CoinEnum.BTCUSDT, SideEnum.OPEN_BUY, 1);
         assertEquals(response.getCode().intValue(), 200);
     }
 
     @Test
     public void orderTest() throws LoginException {
         BybitDAO.getInstance().login("tenok2019");
+
         Orderable order = ActiveOrder.builder()
                                      .coinType(CoinEnum.LTCUSDT)
                                      .orderType(OrderTypeEnum.MARKET)
-                                     .side(SideEnum.BUY)
+                                     .side(SideEnum.CLOSE_SELL)
                                      .qty(0.1)
                                      .tif(TIFEnum.GTC)
                                      .build();

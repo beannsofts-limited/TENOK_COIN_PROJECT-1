@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 
 import javax.security.auth.login.LoginException;
 
+import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.tenok.coin.data.BybitRestDAO;
@@ -27,6 +28,7 @@ import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 
 public class BybitDAO implements CoinDataAccessable, Closeable {
+    private Logger logger = Logger.getLogger(BybitDAO.class);
     // cached data field
     private Map<CoinEnum, Map<IntervalEnum, CandleList>> candleListIsCachedMap;
     private WalletAccessable walletInfo;
@@ -45,11 +47,10 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
             candleListIsCachedMap.put(coinType, new HashMap<>());
         });
         restDAO = new BybitRestDAO();
-        this.websocketProcessor.init();
     }
 
     private static class BybitLazyLoader {
-        public static BybitDAO INSTANCE = new BybitDAO();
+        public static final BybitDAO INSTANCE = new BybitDAO();
     }
 
     public static BybitDAO getInstance() {
@@ -62,6 +63,8 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
         if (!auth.validate()) {
             throw new LoginException("로그인 실패");
         }
+        logger.info(String.format("login success with pw: %s", password));
+        this.websocketProcessor.init();
     }
 
     @SuppressWarnings("unchecked")

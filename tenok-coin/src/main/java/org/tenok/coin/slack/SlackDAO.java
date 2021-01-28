@@ -56,7 +56,16 @@ public class SlackDAO {
     }
 
     public WebhookResponse sendText(String text) {
-        return null;    // TODO
+        try {
+            String payload = String.format("{\"text\":\"%s\"}", text);
+            response = slackInstance.send(webhookUrl, payload);
+            logger.debug(response);
+            return response;
+        } catch (IOException e) {
+
+            e.printStackTrace();
+        }
+        throw new RuntimeException("Text Sending 실패");
     }
 
     private static class SlackDAOHolder {

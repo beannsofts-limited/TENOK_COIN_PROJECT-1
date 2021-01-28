@@ -11,7 +11,13 @@ public class LongStrategy implements Strategy{
     }
 
     @Override
-    public boolean testLiqRBI() {
+    public boolean testCloseRBI() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean isOpened() {
         // TODO Auto-generated method stub
         return false;
     }
