@@ -16,4 +16,6 @@ public interface Strategy {
     public boolean testCloseRBI();
 
     public boolean isOpened();
+
+    public boolean isNotOpened();
 }

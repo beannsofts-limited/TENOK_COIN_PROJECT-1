@@ -18,4 +18,13 @@ public enum TIFEnum {
     public String getApiString() {
         return apiString;
     }
+
+    public static TIFEnum valueOfApiString(String value) {
+        for (TIFEnum tif : TIFEnum.values()) {
+            if (tif.getApiString().equals(value)) {
+                return tif;
+            }
+        }
+        throw new IllegalArgumentException(String.format("No enum constant %s", value));
+    }
 }

@@ -34,13 +34,11 @@ public class DAOTest {
     public void candleListTest() throws InterruptedException, LoginException {
         BybitDAO.getInstance().login("tenok2019");
         CandleList candleList = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
+        CandleList candleLidst = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.TWOHUNDREDFORTY);
         assertEquals(candleList.size(), 200);
 
-        candleList.stream().forEachOrdered(cl -> {
-            System.out.println(String.format("u bb: %f\nm bb: %f\nl bb: %f", cl.getUpperBB(), cl.getMiddleBB(), cl.getLowerBB()));
-            System.out.println(String.format("ma5: %f ma10: %f ma20: %f ma60: %f ma120: %f\nstart at: %s\n", cl.getMa5(), cl.getMa10(), cl.getMa20(), cl.getMa60(), cl.getMa120(), cl.getStartAt().toString()));
-        });
-        for (int i = 0; i < 50; i++) {
+        candleList.stream().forEachOrdered(System.out::println);
+        for (int i = 0; i < 20; i++) {
             var cl = candleList.get(0);
             System.out.println(String.format("u bb: %f\nm bb: %f\nl bb: %f", cl.getUpperBB(), cl.getMiddleBB(), cl.getLowerBB()));
             System.out.println(String.format("ma5: %f ma10: %f ma20: %f ma60: %f ma120: %f\n", cl.getMa5(), cl.getMa10(), cl.getMa20(), cl.getMa60(), cl.getMa120()));
@@ -67,7 +65,7 @@ public class DAOTest {
         Orderable order = ActiveOrder.builder()
                                      .coinType(CoinEnum.LTCUSDT)
                                      .orderType(OrderTypeEnum.MARKET)
-                                     .side(SideEnum.CLOSE_SELL)
+                                     .side(SideEnum.CLOSE_BUY)
                                      .qty(0.1)
                                      .tif(TIFEnum.GTC)
                                      .build();
@@ -81,5 +79,12 @@ public class DAOTest {
         
         WebhookResponse res = SlackDAO.getInstance().sendException(new RuntimeException("something went wrong!"));
         assertEquals(res.getCode().intValue(), 200);
+    }
+
+    @Test
+    public void getOrderTest() throws LoginException {
+        BybitDAO.getInstance().login("tenok2019");
+
+        BybitDAO.getInstance().getOrderList();
     }
 }

@@ -18,10 +18,14 @@ import org.json.simple.JSONObject;
 import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
+import org.tenok.coin.data.entity.impl.OrderedData;
 import org.tenok.coin.data.entity.impl.OrderedList;
 import org.tenok.coin.data.impl.AuthDecryptor;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
+import org.tenok.coin.type.OrderTypeEnum;
+import org.tenok.coin.type.SideEnum;
+import org.tenok.coin.type.TIFEnum;
 
 
 public class BybitWebsocketProcessor implements Closeable {
@@ -49,9 +53,10 @@ public class BybitWebsocketProcessor implements Closeable {
             this.websocketPrivateSession = container.connectToServer(websocketPrivateInstance, new URI("wss://stream.bybit.com/realtime_private"));
             JSONObject authObject = new JSONObject();
             authObject.put("op", "auth");
+            long expires = AuthDecryptor.getInstance().generate_expire();
             authObject.put("args", Arrays.asList(new String[] {AuthDecryptor.getInstance().getApiKey(),
-                                                               Long.toString(System.currentTimeMillis()+1000L),
-                                                               AuthDecryptor.getInstance().generate_signature()}));
+                                                               Long.toString(expires),
+                                                               AuthDecryptor.getInstance().generate_signature(expires)}));
             websocketPrivateSession.getBasicRemote().sendObject(authObject);
         } catch (DeploymentException e) {
             logger.error(e);
@@ -125,8 +130,36 @@ public class BybitWebsocketProcessor implements Closeable {
         });
     }
 
-    public void subscribeOrder(CoinEnum coinType, IntervalEnum interval, OrderedList orderList) {
-
+    public void subscribeOrder(OrderedList orderedList) {
+        this.websocketPrivateInstance.registerOrder(data -> {
+            CoinEnum coin = CoinEnum.valueOf((String) data.get("symbol"));
+            TIFEnum tif = TIFEnum.valueOfApiString((String) data.get("time_in_force"));
+            double qty = ((Number) data.get("qty")).doubleValue();
+            OrderTypeEnum orderType = OrderTypeEnum.valueOfApiString((String) data.get("order_type"));
+            SideEnum sideEnum = null;
+            boolean reduceOnly = (boolean) data.get("reduce_only");
+            String side = (String) data.get("side");
+            if (reduceOnly && side.equals("Buy")) {
+                // 공매수
+                sideEnum = SideEnum.OPEN_BUY;
+            } else if (reduceOnly && side.equals("Sell")) {
+                // 공매도
+                sideEnum = SideEnum.OPEN_SELL;
+            } else if ((!reduceOnly) && side.equals("Buy")) {
+                // 매수로 청산
+                sideEnum = SideEnum.CLOSE_BUY;
+            } else if ((!reduceOnly) && side.equals("Sell")) {
+                // 매도로 청산
+                sideEnum = SideEnum.CLOSE_SELL;
+            }
+            orderedList.add(OrderedData.builder()
+                                     .coinType(coin)
+                                     .tif(tif)
+                                     .qty(qty)
+                                     .side(sideEnum)
+                                     .orderType(orderType)
+                                     .build());
+        });
     }
 
     public void unsubscribeKLine(CoinEnum coinType, IntervalEnum interval) {

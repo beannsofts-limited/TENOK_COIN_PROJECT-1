@@ -2,7 +2,7 @@ package org.tenok.coin.data.entity.impl;
 
 import java.util.Date;
 
-import org.tenok.coin.data.entity.Orderable;
+import org.tenok.coin.data.entity.OrderDataAccessable;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.OrderTypeEnum;
 import org.tenok.coin.type.SideEnum;
@@ -12,58 +12,69 @@ import lombok.Builder;
 import lombok.NonNull;
 
 @Builder
-public class ActiveOrder implements Orderable {
+public class OrderedData implements OrderDataAccessable {
     @NonNull
     private SideEnum side;
-
     @NonNull
     private CoinEnum coinType;
-
     @NonNull
     private OrderTypeEnum orderType;
-
     @NonNull
     private TIFEnum tif;
-
-    private boolean isOpen;
-
     private double qty;
-
-    private Date timeStamp;
 
     @Override
     public SideEnum getSide() {
-        return side;
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public CoinEnum getCoinType() {
-        return coinType;
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public OrderTypeEnum getOrderType() {
-        return orderType;
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public TIFEnum getTIF() {
-        return tif;
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public double getQty() {
-        return qty;
+        // TODO Auto-generated method stub
+        return 0;
     }
 
     @Override
     public Date getTimeStamp() {
-        return timeStamp;
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public boolean isOpen() {
-        return isOpen;
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public double getEntryPrice() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public double getExitPrice() {
+        // TODO Auto-generated method stub
+        return 0;
     }
     
 }

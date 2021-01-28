@@ -9,7 +9,10 @@ public class StrategyRunner {
     public StrategyRunner() {
         strategyTestThread = new Thread(() -> {
             while (true) {
-                strategyList.parallelStream().filter(Strategy::isOpened).forEach(Strategy::testOpenRBI);
+                strategyList.parallelStream().filter(Strategy::isNotOpened).forEach(Strategy::testOpenRBI);
+                strategyList.parallelStream().filter(Strategy::isOpened).filter(Strategy::testCloseRBI).forEach((strategy) -> {
+
+                });;
                 if (Thread.interrupted()) {
                     break;
                 }
@@ -21,6 +24,7 @@ public class StrategyRunner {
                 }
             }
         });
+        strategyTestThread.start();
     }
 
     public void init() {

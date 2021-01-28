@@ -21,5 +21,11 @@ public class LongStrategy implements Strategy{
         // TODO Auto-generated method stub
         return false;
     }
+
+    @Override
+    public boolean isNotOpened() {
+        // TODO Auto-generated method stub
+        return false;
+    }
     
 }
