@@ -18,7 +18,7 @@ import org.json.simple.JSONObject;
 import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
-import org.tenok.coin.data.entity.impl.OrderList;
+import org.tenok.coin.data.entity.impl.OrderedList;
 import org.tenok.coin.data.impl.AuthDecryptor;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
@@ -125,7 +125,7 @@ public class BybitWebsocketProcessor implements Closeable {
         });
     }
 
-    public void subscribeOrder(CoinEnum coinType, IntervalEnum interval, OrderList orderList) {
+    public void subscribeOrder(CoinEnum coinType, IntervalEnum interval, OrderedList orderList) {
 
     }
 
