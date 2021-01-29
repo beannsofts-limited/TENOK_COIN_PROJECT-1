@@ -82,7 +82,10 @@ public class BybitRestDAO {
         System.out.println("restAPI: My Position 불러오기\n");
 
         return jsonResponse;
+    }
 
+    public JSONObject getInstrumentInfo(CoinEnum coinType) {
+        // TODO
     }
 
     public JSONObject placeActiveOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum oderType,  double qty, TIFEnum tif) {
