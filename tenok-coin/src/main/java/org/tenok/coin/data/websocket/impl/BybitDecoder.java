@@ -26,7 +26,7 @@ public class BybitDecoder implements Decoder.Text<JSONObject> {
             if (jsonObject.containsKey("ret_msg")) {
                 String retMsg = (String) jsonObject.get("ret_msg");
 
-                resEnum = retMsg.equals("ping") ? WebsocketResponseEnum.PING : WebsocketResponseEnum.SUBSCRIPTION;
+                resEnum = retMsg.equals("pong") ? WebsocketResponseEnum.PING : WebsocketResponseEnum.SUBSCRIPTION;
             } else {
                 resEnum = WebsocketResponseEnum.TOPIC;
             }

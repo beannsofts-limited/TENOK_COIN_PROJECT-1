@@ -46,8 +46,8 @@ public class BybitWebsocket implements Closeable {
 
     @OnMessage
     public void onMessage(JSONObject response) {
+        logger.debug(response);
         WebsocketResponseEnum resType = (WebsocketResponseEnum) response.get("response_type");
-        logger.info(response);
         if (resType.equals(WebsocketResponseEnum.PING) || resType.equals(WebsocketResponseEnum.SUBSCRIPTION)) {
             boolean success = (boolean) response.get("success");    // TODO ping??
             if (!success) {
