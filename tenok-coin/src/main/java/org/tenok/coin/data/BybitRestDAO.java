@@ -86,6 +86,7 @@ public class BybitRestDAO {
 
     public JSONObject getInstrumentInfo(CoinEnum coinType) {
         // TODO
+        return null;
     }
 
     public JSONObject placeActiveOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum oderType,  double qty, TIFEnum tif) {
