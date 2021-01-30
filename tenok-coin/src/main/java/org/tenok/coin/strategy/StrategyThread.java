@@ -8,9 +8,13 @@ public class StrategyThread implements Runnable {
     private CoinDataAccessable coinDAOInstance;
     private Strategy strategyInstance;
 
-    public StrategyThread(Class<CoinDataAccessable> coinDaoClass, Class<? extends Strategy> strategyClass) throws InstantiationException, IllegalAccessException,
-            IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-        coinDAOInstance = coinDaoClass.getDeclaredConstructor().newInstance();
+    public StrategyThread(Class<? extends CoinDataAccessable> coinDaoClass, Class<? extends Strategy> strategyClass)
+            throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+            NoSuchMethodException, SecurityException {
+
+        coinDAOInstance = (CoinDataAccessable) coinDaoClass.getDeclaredMethod("getInstance", (Class<?>[]) null)
+                .invoke((Object) null, (Object) null);
+
         strategyInstance = strategyClass.getDeclaredConstructor(CoinDataAccessable.class).newInstance(coinDAOInstance);
     }
 
