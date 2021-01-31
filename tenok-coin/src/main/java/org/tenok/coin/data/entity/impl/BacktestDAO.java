@@ -57,6 +57,12 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable {
 
     }
 
+    @Override
+    public double getCurrentPrice(CoinEnum coinType) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
     
     
 }
