@@ -74,14 +74,24 @@ public class AuthDecryptor {
     }
 
     private String getApiKey(String password) {
-        return decrypt(this.apiKeyEncrypted, password);
+        try {
+            return decrypt(this.apiKeyEncrypted, password);
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        }
+        throw new RuntimeException();
     }
 
     private String getApiSecretKey(String password) {
-        return decrypt(this.secretKeyEncrypted, password);
+        try {
+            return decrypt(this.secretKeyEncrypted, password);
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        }
+        throw new RuntimeException();
     }
 
-    private String decrypt(String cipherText, String password) {
+    private String decrypt(String cipherText, String password) throws BadPaddingException {
         Cipher cipher;
         try {
             cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
@@ -102,8 +112,6 @@ public class AuthDecryptor {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
             e.printStackTrace();
         }
         throw new RuntimeException("복호화 실패");
@@ -160,7 +168,13 @@ public class AuthDecryptor {
         if (this.pw == null) {
             throw new RuntimeException("비밀번호 set 요망");
         }
-        return decrypt(validationEncrypted, this.pw).equals("success");
+        boolean success = false;
+        try {
+            success = decrypt(validationEncrypted, this.pw).equals("success");
+        } catch (BadPaddingException e) {
+            success = false;
+        }
+        return success;
     }
 
     /**
@@ -168,7 +182,12 @@ public class AuthDecryptor {
      * @return slack webhook url in String
      */
     public String getSlackWebhookURL() {
-        return decrypt(this.slackWebhookURLEncrypted, pw);
+        try {
+            return decrypt(this.slackWebhookURLEncrypted, pw);
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        }
+        throw new RuntimeException();
     }
 
     private String byteArrayToHexString(byte[] b) {
