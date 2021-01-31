@@ -8,6 +8,7 @@ import java.net.MalformedURLException;
 
 import java.net.URL;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -25,7 +26,6 @@ import org.tenok.coin.type.SideEnum;
 import org.tenok.coin.type.TIFEnum;
 
 public class BybitRestDAO {
-
     public JSONObject requestKline(CoinEnum coinType, IntervalEnum interval, int limit, Date from) {
         Map<String, Object> request = new TreeMap<>();
         request.put("symbol", coinType.name());
@@ -84,9 +84,15 @@ public class BybitRestDAO {
         return jsonResponse;
     }
 
+    /**
+     * Query Symbol
+     * @param coinType coin Enum
+     * @return response json object
+     */
     public JSONObject getInstrumentInfo(CoinEnum coinType) {
-        // TODO
-        return null;
+        Map<String, Object> request = new TreeMap<>();
+        String response = getRestApi(request, new StringBuilder("https://api.bybit.com/v2/public/symbols")).toString();
+        return stringToJSON(response);
     }
 
     public JSONObject placeActiveOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum oderType,  double qty, TIFEnum tif) {
