@@ -18,6 +18,7 @@ public class Candle {
     private double upperBB;
     private double middleBB;
     private double lowerBB;
+    private boolean isConfirmed;
 
     public Candle(Date startAt, double volume, double open, double high, double low, double close) {
         this.startAt = startAt;
@@ -84,6 +85,10 @@ public class Candle {
         return this.lowerBB;
     }
 
+    public boolean isConfirmed() {
+        return this.isConfirmed;
+    }
+
     void setMa5(double ma5) {
         this.ma5 = ma5;
     }
@@ -91,7 +96,6 @@ public class Candle {
     void setMa10(double ma10) {
         this.ma10 = ma10;
     }
-
 
     void setMa20(double ma20) {
         this.ma20 = ma20;
@@ -116,6 +120,11 @@ public class Candle {
     void setLowerBB(double lowerBB) {
         this.lowerBB = lowerBB;
     }
+
+    void setConfirmed(boolean isConfirmed) {
+        this.isConfirmed = isConfirmed;
+    }
+
     @Override
     public String toString() {
         return String.format("open: %f, high:%f, close: %f, low: %f", open, high, close, low);

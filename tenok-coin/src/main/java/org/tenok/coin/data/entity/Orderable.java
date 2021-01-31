@@ -17,7 +17,7 @@ public interface Orderable {
     /**
      * @return 주문한 코인
      */
-    public CoinEnum getCoin();
+    public CoinEnum getCoinType();
 
     /**
      * Market, limit 인지 아닌지

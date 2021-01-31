@@ -13,4 +13,13 @@ public enum OrderTypeEnum {
     public String getApiString() {
         return this.apiString;
     }
+
+    public static OrderTypeEnum valueOfApiString(String value) {
+        for (OrderTypeEnum orderType : OrderTypeEnum.values()) {
+            if (orderType.getApiString().equals(value)) {
+                return orderType;
+            }
+        }
+        throw new IllegalArgumentException(String.format("No enum constant %s", value));
+    }
 }

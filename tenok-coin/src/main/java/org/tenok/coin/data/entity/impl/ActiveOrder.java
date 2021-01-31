@@ -37,7 +37,7 @@ public class ActiveOrder implements Orderable {
     }
 
     @Override
-    public CoinEnum getCoin() {
+    public CoinEnum getCoinType() {
         return coinType;
     }
 

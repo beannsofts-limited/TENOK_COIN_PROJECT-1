@@ -9,72 +9,66 @@ import org.tenok.coin.type.SideEnum;
 import org.tenok.coin.type.TIFEnum;
 
 import lombok.Builder;
-
+import lombok.NonNull;
 
 @Builder
-public class BacktestOrder implements OrderDataAccessable {
-    private String name;
-    private String d;
+public class OrderedData implements OrderDataAccessable {
+    @NonNull
+    private SideEnum side;
+    @NonNull
+    private CoinEnum coinType;
+    @NonNull
+    private OrderTypeEnum orderType;
+    @NonNull
+    private TIFEnum tif;
+    private double qty;
+
     @Override
     public SideEnum getSide() {
-        // TODO Auto-generated method stub
-        return null;
+        return side;
     }
 
     @Override
     public CoinEnum getCoinType() {
-        // TODO Auto-generated method stub
-        return null;
+        return coinType;
     }
 
     @Override
     public OrderTypeEnum getOrderType() {
-        // TODO Auto-generated method stub
-        return null;
+        return orderType;
     }
 
     @Override
     public TIFEnum getTIF() {
-        // TODO Auto-generated method stub
-        return null;
+        return tif;
     }
 
     @Override
     public double getQty() {
-        // TODO Auto-generated method stub
-        return 0;
+        return qty;
     }
 
     @Override
     public Date getTimeStamp() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
+    @Deprecated
     public boolean isOpen() {
-        // TODO Auto-generated method stub
         return false;
     }
 
     @Override
+    @Deprecated
     public double getEntryPrice() {
-        // TODO Auto-generated method stub
         return 0;
     }
 
     @Override
+    @Deprecated
     public double getExitPrice() {
-        // TODO Auto-generated method stub
         return 0;
-    }
-
-    public Date getEntryDate() {
-        return null;
-    }
-
-    public Date getExitDate() {
-        return null;
     }
     
 }

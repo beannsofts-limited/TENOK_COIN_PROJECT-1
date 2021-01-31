@@ -272,9 +272,8 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable {
     }
 
     @Override
-    @Deprecated
-    public InstrumentInfo getInsturmentInfo(CoinEnum coinType) {
-
+    public InstrumentInfo getInstrumentInfo(CoinEnum coinType) {
+        // TODO Auto-generated method stub
         return null;
     }
 
@@ -302,6 +301,13 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable {
 
         return null;
     }
+    public double getCurrentPrice(CoinEnum coinType) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    
+    
 }
 
 // while(true){

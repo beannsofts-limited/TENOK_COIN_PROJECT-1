@@ -1,33 +1,23 @@
 package org.tenok.coin.strategy;
 
-import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import org.tenok.coin.data.CoinDataAccessable;
+import org.tenok.coin.type.CoinEnum;
 
 public class StrategyRunner {
-    private List<Strategy> strategyList;
-    private Thread strategyTestThread;
+    ExecutorService threadPool = Executors.newFixedThreadPool(10);
 
-    public StrategyRunner() {
-        strategyTestThread = new Thread(() -> {
-            while (true) {
-                strategyList.parallelStream().filter(Strategy::isOpened).forEach(Strategy::testOpenRBI);
-                if (Thread.interrupted()) {
-                    break;
-                }
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    break;
-                }
-            }
-        });
+    public StrategyRunner(Class<? extends CoinDataAccessable> coinDaoClass) {
+
     }
 
     public void init() {
 
     }
 
-    public void runStrategy(Strategy strategy) {
+    public void runStrategy(Class<? extends Strategy> strategyClass, CoinEnum coinType) {
 
     }
 

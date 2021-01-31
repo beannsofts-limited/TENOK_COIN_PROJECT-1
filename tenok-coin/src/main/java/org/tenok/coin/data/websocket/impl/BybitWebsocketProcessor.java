@@ -15,14 +15,20 @@ import javax.websocket.WebSocketContainer;
 
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
+import org.tenok.coin.data.entity.InstrumentInfo;
 import org.tenok.coin.data.entity.WalletAccessable;
+import org.tenok.coin.data.entity.impl.BybitInstrumentInfo;
 import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
+import org.tenok.coin.data.entity.impl.OrderedData;
 import org.tenok.coin.data.entity.impl.OrderedList;
 import org.tenok.coin.data.impl.AuthDecryptor;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
-
+import org.tenok.coin.type.OrderTypeEnum;
+import org.tenok.coin.type.SideEnum;
+import org.tenok.coin.type.TIFEnum;
+import org.tenok.coin.type.TickDirectionEnum;
 
 public class BybitWebsocketProcessor implements Closeable {
     private static Logger logger = Logger.getLogger(BybitWebsocketProcessor.class);
@@ -45,13 +51,15 @@ public class BybitWebsocketProcessor implements Closeable {
         this.websocketPrivateInstance = new BybitWebsocket();
 
         try {
-            this.websocketPublicSession = container.connectToServer(websocketPublicInstance, new URI("wss://stream.bybit.com/realtime_public"));
-            this.websocketPrivateSession = container.connectToServer(websocketPrivateInstance, new URI("wss://stream.bybit.com/realtime_private"));
+            this.websocketPublicSession = container.connectToServer(websocketPublicInstance,
+                    new URI("wss://stream.bybit.com/realtime_public"));
+            this.websocketPrivateSession = container.connectToServer(websocketPrivateInstance,
+                    new URI("wss://stream.bybit.com/realtime_private"));
             JSONObject authObject = new JSONObject();
             authObject.put("op", "auth");
-            authObject.put("args", Arrays.asList(new String[] {AuthDecryptor.getInstance().getApiKey(),
-                                                               Long.toString(System.currentTimeMillis()+1000L),
-                                                               AuthDecryptor.getInstance().generate_signature()}));
+            long expires = AuthDecryptor.getInstance().generate_expire();
+            authObject.put("args", Arrays.asList(new String[] { AuthDecryptor.getInstance().getApiKey(),
+                    Long.toString(expires), AuthDecryptor.getInstance().generate_signature(expires) }));
             websocketPrivateSession.getBasicRemote().sendObject(authObject);
         } catch (DeploymentException e) {
             logger.error(e);
@@ -84,8 +92,9 @@ public class BybitWebsocketProcessor implements Closeable {
 
     /**
      * kLine 실시간 처리 등록
-     * @param coinType coin type
-     * @param interval interval
+     * 
+     * @param coinType   coin type
+     * @param interval   interval
      * @param candleList CandleList instance
      */
     public void subscribeCandle(CoinEnum coinType, IntervalEnum interval, CandleList candleList) {
@@ -108,8 +117,34 @@ public class BybitWebsocketProcessor implements Closeable {
         });
     }
 
-    public void subscribeInsturmentInfo() {
-
+    public void subscribeInsturmentInfo(CoinEnum coinType, InstrumentInfo instrumentInfo) {
+        this.websocketPublicInstance.registerInsturmentInfo(coinType, data -> {
+            var insInfo = (BybitInstrumentInfo) instrumentInfo;
+            if (data.containsKey("last_tick_direction")) {
+                insInfo.lastTickDirection(TickDirectionEnum.valueOfApiString((String) data.get("last_tick_direction")));
+            }
+            if (data.containsKey("last_price_e4")) {
+                insInfo.lastPriceE4((long) data.get("last_price_e4"));
+            }
+            if (data.containsKey("price_24h_pcnt_e6")) {
+                insInfo.price24hPcntE6((long) data.get("price_24h_pcnt_e6"));
+            }
+            if (data.containsKey("high_price_24h_e4")) {
+                insInfo.price24hPcntE6((long) data.get("high_price_24h_e4"));
+            }
+            if (data.containsKey("low_price_24h_e4")) {
+                insInfo.lowPrice24hE4((long) data.get("low_price_24h_e4"));
+            }
+            if (data.containsKey("price_1h_pcnt_e6")) {
+                insInfo.price1hPcntE6((long) data.get("price_1h_pcnt_e6"));
+            }
+            if (data.containsKey("high_price_1h_e4")) {
+                insInfo.highPrice1hE4((long) data.get("high_price_1h_e4"));
+            }
+            if (data.containsKey("low_price_1h_e4")) {
+                insInfo.lowPrice1hE4((long) data.get("low_price_1h_e4"));
+            }
+        });
     }
 
     public void subscribePosition() {
@@ -120,23 +155,42 @@ public class BybitWebsocketProcessor implements Closeable {
         this.websocketPrivateInstance.registerWalletInfo(data -> {
             double walletBalance = (double) data.get("wallet_balance");
             double availableBalance = (double) data.get("available_balance");
-            walletInfo.setWalletBalance(walletBalance)
-                      .setWalletAvailableBalance(availableBalance);
+            walletInfo.setWalletBalance(walletBalance).setWalletAvailableBalance(availableBalance);
         });
     }
 
-    public void subscribeOrder(CoinEnum coinType, IntervalEnum interval, OrderedList orderList) {
-
-    }
-
-    public void unsubscribeKLine(CoinEnum coinType, IntervalEnum interval) {
-        this.websocketPublicInstance.unregisterKLine(coinType, interval);
+    public void subscribeOrder(OrderedList orderedList) {
+        this.websocketPrivateInstance.registerOrder(data -> {
+            CoinEnum coin = CoinEnum.valueOf((String) data.get("symbol"));
+            TIFEnum tif = TIFEnum.valueOfApiString((String) data.get("time_in_force"));
+            double qty = ((Number) data.get("qty")).doubleValue();
+            OrderTypeEnum orderType = OrderTypeEnum.valueOfApiString((String) data.get("order_type"));
+            SideEnum sideEnum = null;
+            boolean reduceOnly = (boolean) data.get("reduce_only");
+            String side = (String) data.get("side");
+            if (reduceOnly && side.equals("Buy")) {
+                // 공매수
+                sideEnum = SideEnum.OPEN_BUY;
+            } else if (reduceOnly && side.equals("Sell")) {
+                // 공매도
+                sideEnum = SideEnum.OPEN_SELL;
+            } else if ((!reduceOnly) && side.equals("Buy")) {
+                // 매수로 청산
+                sideEnum = SideEnum.CLOSE_BUY;
+            } else if ((!reduceOnly) && side.equals("Sell")) {
+                // 매도로 청산
+                sideEnum = SideEnum.CLOSE_SELL;
+            }
+            orderedList.add(
+                    OrderedData.builder().coinType(coin).tif(tif).qty(qty).side(sideEnum).orderType(orderType).build());
+        });
     }
 
     @Override
     public void close() throws IOException {
-        this.heartBeatThread.interrupt();   // heart beat 세션 유지용 스레드 인터럽트
+        this.heartBeatThread.interrupt(); // heart beat 세션 유지용 스레드 인터럽트
         this.websocketPublicInstance.close();
+        this.websocketPrivateInstance.close();
     }
 
 }

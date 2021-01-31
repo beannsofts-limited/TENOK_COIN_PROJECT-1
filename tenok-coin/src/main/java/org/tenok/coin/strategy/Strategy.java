@@ -1,5 +1,7 @@
 package org.tenok.coin.strategy;
 
+import org.tenok.coin.type.CoinEnum;
+
 public interface Strategy {
     /**
      * 포지션 오픈 조건에 해당하는 지를 반환.
@@ -15,5 +17,9 @@ public interface Strategy {
      */
     public boolean testCloseRBI();
 
+    public CoinEnum getCoinType();
+
     public boolean isOpened();
+
+    public boolean isNotOpened();
 }

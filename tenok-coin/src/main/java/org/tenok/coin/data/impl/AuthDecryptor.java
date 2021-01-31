@@ -121,8 +121,8 @@ public class AuthDecryptor {
      * Bybit Signature
      * @return Bybit Signature
      */
-    public String generate_signature() {
-        return sha256_HMAC("GET/realtime" + String.valueOf(System.currentTimeMillis()/1000L + 1000), getApiSecretKey(pw));
+    public String generate_signature(long expires) {
+        return sha256_HMAC("GET/realtime" + String.valueOf(expires), getApiSecretKey(pw));
     }
 
     /**

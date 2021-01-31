@@ -48,6 +48,7 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
         item.setLowerBB(lowerBB);
         item.setMiddleBB(middleBB);
         item.setUpperBB(upperBB);
+        item.setConfirmed(true);
 
         super.push(item);
     }
@@ -75,8 +76,8 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
         item.setLowerBB(lowerBB);
         item.setMiddleBB(middleBB);
         item.setUpperBB(upperBB);
-
-    
+        item.setConfirmed(false);
+        
         super.push(item);
 
       //0봉전 pop -> 0봉전 실시간데이터 변경 볼린저 ,ma 계산 -> 다시  0봉전 push 
@@ -95,8 +96,12 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
         throw new RuntimeException("호출하지 마세요.");
     }
 
-    @Override
-    public Candle get(int index) {
+    /**
+     * 역배열 순서로 캔들을 가져온다. ex) HTS의 0봉전, 1봉전
+     * @param index index of the element to return in reversed order
+     * @return 역배열된 index 번 째의 candle
+     */
+    public Candle getReversed(int index) {
         return super.get(this.size() - index - 1);
     }
 
@@ -109,8 +114,6 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
 
         }else{
             for(int i =super.size()-1; i>=super.size()-period+1; i--){
-              
-              
                closeSum = closeSum + super.elementAt(i).getClose();
             }
             closeSum = item.getClose() + closeSum;

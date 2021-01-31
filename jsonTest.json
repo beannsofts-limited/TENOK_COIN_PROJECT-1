@@ -1,0 +1,19 @@
+{
+  "data": {
+    "update": [
+      {
+        "symbol": "BTCUSDT",
+        "updated_at": "2021-01-28T17:16:49.000Z",
+        "created_at": "1970-01-01T00:00:00.000Z",
+        "id": 1,
+        "index_price_e4": "322514500",
+        "cross_seq": "2379996169"
+      }
+    ]
+  },
+  "topic": "instrument_info.100ms.BTCUSDT",
+  "response_type": "TOPIC",
+  "type": "delta",
+  "cross_seq": "2379996630",
+  "timestamp_e6": "1611854211845546"
+}
