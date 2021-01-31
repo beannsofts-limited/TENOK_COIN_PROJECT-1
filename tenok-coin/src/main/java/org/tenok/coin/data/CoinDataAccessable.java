@@ -20,4 +20,5 @@ public interface CoinDataAccessable {
     public WalletAccessable getWalletInfo();
     public void orderCoin(Orderable order);
     public void getPaidLimit(CoinEnum coinType);
+    public double getCurrentPrice(CoinEnum coinType);
 }

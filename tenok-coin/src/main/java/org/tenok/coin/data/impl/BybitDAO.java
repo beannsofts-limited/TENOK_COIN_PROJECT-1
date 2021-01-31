@@ -229,6 +229,7 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
      * 
      * @param coinType 조회할 코인
      */
+    @Override
     public double getCurrentPrice(CoinEnum coinType) {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");
