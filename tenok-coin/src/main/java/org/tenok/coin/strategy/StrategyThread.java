@@ -1,34 +1,36 @@
 package org.tenok.coin.strategy;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
 
 import org.tenok.coin.data.CoinDataAccessable;
-import org.tenok.coin.data.impl.BybitDAO;
+import org.tenok.coin.data.entity.WalletAccessable;
 
 public class StrategyThread implements Runnable {
-    private CoinDataAccessable daoInstance;
-    private List<Strategy> strategyList;
+    private CoinDataAccessable coinDAOInstance;
+    private Strategy strategyInstance;
+    private WalletAccessable wallet;
 
-    public StrategyThread(Class<CoinDataAccessable> daoClass) throws InstantiationException, IllegalAccessException,
-            IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-        daoInstance = daoClass.getDeclaredConstructor().newInstance();
+    public StrategyThread(Class<? extends CoinDataAccessable> coinDaoClass, Class<? extends Strategy> strategyClass)
+            throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+            NoSuchMethodException, SecurityException {
+
+        coinDAOInstance = (CoinDataAccessable) coinDaoClass.getDeclaredMethod("getInstance", (Class<?>[]) null)
+                .invoke((Object) null, (Object) null);
+
+        strategyInstance = strategyClass.getDeclaredConstructor(CoinDataAccessable.class).newInstance(coinDAOInstance);
+        wallet = coinDAOInstance.getWalletInfo();
     }
 
     @Override
     public void run() {
-        strategyList.parallelStream().filter(Strategy::isNotOpened).forEach(strategy -> {
-            double openRBI = strategy.testOpenRBI();
+        
 
-            if (openRBI != 0.0) {
-                BybitDAO.getInstance().orderCoin(null);
-            }
-        });
-        strategyList.parallelStream().filter(Strategy::isOpened).forEach(strategy -> {
-            if (strategy.testCloseRBI()) {
-                BybitDAO.getInstance().orderCoin(null);
-            }
-        });
+        if (strategyInstance.isNotOpened()) {
+            double openRBI = strategyInstance.testOpenRBI();
+            double currentAvailable = wallet.getWalletAvailableBalance();
+            coinDAOInstance.orderCoin(null);
+        } else {
+            coinDAOInstance.orderCoin(null);
+        }
     }
-
 }
