@@ -3,6 +3,7 @@ package org.tenok.coin.strategy;
 import java.lang.reflect.InvocationTargetException;
 
 import org.tenok.coin.data.CoinDataAccessable;
+import org.tenok.coin.data.entity.BacktestOrderable;
 import org.tenok.coin.data.entity.WalletAccessable;
 
 public class StrategyThread implements Runnable {
@@ -23,14 +24,16 @@ public class StrategyThread implements Runnable {
 
     @Override
     public void run() {
-        
-
         if (strategyInstance.isNotOpened()) {
             double openRBI = strategyInstance.testOpenRBI();
             double currentAvailable = wallet.getWalletAvailableBalance();
             coinDAOInstance.orderCoin(null);
         } else {
             coinDAOInstance.orderCoin(null);
+        }
+
+        if (coinDAOInstance instanceof BacktestOrderable) {
+            ((BacktestOrderable) coinDAOInstance).nextSeq();
         }
     }
 }
