@@ -1,6 +1,14 @@
 package org.tenok.coin.data.entity.impl;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.tenok.coin.data.CoinDataAccessable;
+import org.tenok.coin.data.entity.BacktestOrderable;
 import org.tenok.coin.data.entity.Backtestable;
 import org.tenok.coin.data.entity.InstrumentInfo;
 import org.tenok.coin.data.entity.Orderable;
@@ -8,61 +16,225 @@ import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 
-public class BacktestDAO implements CoinDataAccessable, Backtestable {
+import lombok.var;
 
+import org.tenok.coin.data.BybitRestDAO;
+
+public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOrderable {
+
+    private PositionList myPosition = new PositionList();
+    private Map<CoinEnum, Map<IntervalEnum, CandleList>> candleListCachedMap; // 실시간 처럼 보이는 기만용 캔들
+    private Map<CoinEnum, Map<IntervalEnum, CandleList>> candleListWholeCachedMap; // 전체 캔들 데이터
+    private WalletAccessable wallet = new BybitWalletInfo(1000000, 1000000);
+    private long currentIndex = 0;
+   
+    private double wholeProfit = 0;
+    private double realTimeProfit = 0;
+    private BybitRestDAO restDAO = new BybitRestDAO();
+
+    public BacktestDAO() {
+        candleListCachedMap = new HashMap<>();
+        candleListWholeCachedMap = new HashMap<>();
+
+        for (var coinType : CoinEnum.values()) {
+            candleListCachedMap.put(coinType, new HashMap<>());
+            candleListWholeCachedMap.put(coinType, new HashMap<>());
+        }
+    
+    }
+
+    /**
+     * 
+     * 
+     * @return candleList
+     * 
+     */
     @Override
+    @SuppressWarnings("unchecked")
     public CandleList getCandleList(CoinEnum coinType, IntervalEnum interval) {
-        // TODO Auto-generated method stub
-        return null;
+        // loadCandleList(coinType, interval)
+        if (!candleListCachedMap.get(coinType).containsKey(interval)) {
+            // 캐시 되어 있지 않은 경우.
+            // json 파일에 불러오기\
+            long intervalSec = interval.getSec();
+            CandleList finalCandleList = new CandleList(coinType, interval);
+            CandleList tempCandleList = new CandleList(coinType, interval);
+            Date prevFrom = null;
+            JSONObject firstCandleObject = restDAO.requestKline(coinType, interval, 200,
+                    new Date(System.currentTimeMillis() - intervalSec * 200000L));
+            JSONArray kLineArray = (JSONArray) firstCandleObject.get("result");
+            CandleList candleList = new CandleList(coinType, interval);
+
+            Stream<JSONObject> map = kLineArray.stream().map((kLineObject) -> {
+                return (JSONObject) kLineObject;
+            });
+            map.forEachOrdered((JSONObject kLineObject) -> {
+                double open = ((Number) kLineObject.get("open")).doubleValue();
+                double high = ((Number) kLineObject.get("high")).doubleValue();
+                double low = ((Number) kLineObject.get("low")).doubleValue();
+                double close = ((Number) kLineObject.get("close")).doubleValue();
+                double volume = ((Number) kLineObject.get("volume")).doubleValue();
+                Date startAt = new Date(((long) kLineObject.get("start_at")) * 1000L);
+                Candle candle = (new Candle(startAt, volume, open, high, low, close));
+                candleList.registerNewCandle(candle);
+            });
+            Date from = candleList.get(0).getStartAt();
+            System.out.println(from);
+            while (true) {
+
+                JSONObject updateCandleObject = restDAO.requestKline(coinType, interval, 200,
+                        new Date(from.getTime() - intervalSec * 200000L));
+                kLineArray = (JSONArray) updateCandleObject.get("result");
+                CandleList updateCandleList = new CandleList(coinType, interval);
+
+                map = kLineArray.stream().map((kLineObject) -> {
+                    return (JSONObject) kLineObject;
+                });
+                map.forEachOrdered((JSONObject kLineObject) -> {
+                    double open = ((Number) kLineObject.get("open")).doubleValue();
+                    double high = ((Number) kLineObject.get("high")).doubleValue();
+                    double low = ((Number) kLineObject.get("low")).doubleValue();
+                    double close = ((Number) kLineObject.get("close")).doubleValue();
+                    double volume = ((Number) kLineObject.get("volume")).doubleValue();
+                    Date startAt = new Date(((long) kLineObject.get("start_at")) * 1000L);
+                    Candle candle = (new Candle(startAt, volume, open, high, low, close));
+                    updateCandleList.registerNewCandle(candle);
+                });
+
+                // updateCandleList.addAll(candleList);
+                from = updateCandleList.get(0).getStartAt();
+                System.out.println(from);
+                if (from.equals(prevFrom)) {
+                    System.out.println("파일의 끝");
+                    break;
+
+                }
+                prevFrom = from;
+                tempCandleList = finalCandleList;
+                updateCandleList.addAll(tempCandleList);
+                finalCandleList = updateCandleList;
+                // System.out.println(finalCandleList.get(0).getStartAt());
+            }
+            finalCandleList.addAll(candleList);
+            candleListWholeCachedMap.get(coinType).put(interval, finalCandleList);
+            candleListCachedMap.get(coinType).get(interval)
+                    .add(candleListWholeCachedMap.get(coinType).get(interval).get(0));
+            // candleListCachedMap.get(coinType).get(interval)
+            return candleListCachedMap.get(coinType).get(interval);
+        } else {
+
+            return candleListCachedMap.get(coinType).get(interval);
+        }
     }
 
     @Override
-    public OrderedList getOrderList() {
-        // TODO Auto-generated method stub
-        return null;
+    public void orderCoin(Orderable order) {
+
+        if (order.getSide().getKorean().equals("매수/오픈") || order.getSide().getKorean().equals("매도/오픈")) {
+            // 포지션 오픈 arrayList에 등록
+           
+            Position pos = Position.builder().coinType(order.getCoinType()).
+                                        entryPrice(getCurrentPrice(order.getCoinType())).side(order.getSide()).liqPrice(0)
+                                        .qty(order.getQty()).leverage(1).build();
+            //positionList에 여러코인에 대한 정보를 저장해야하나????
+            myPosition.add(pos);
+            wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance()-(order.getQty()*getCurrentPrice(order.getCoinType())));
+
+        } else {
+            // 포지션 청산 -> close 값 업데이트
+
+            myPosition.parallelStream().filter(pred -> {
+                return pred.getCoinType().equals(order.getCoinType()) && pred.getSide().equals(order.getSide());
+            }).peek(action -> {
+                wholeProfit = wholeProfit + (((getCurrentPrice(order.getCoinType())/action.getEntryPrice())-1)* 100);
+                wallet.setWalletBalance(wallet.getWalletBalance() + ((getCurrentPrice(order.getCoinType())*order.getQty())-(action.getEntryPrice()*action.getQty())));
+                wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance()+((getCurrentPrice(order.getCoinType())*order.getQty())-(action.getEntryPrice()*action.getQty())));
+            });
+
+        }
     }
 
+    
+    /**
+     * 
+     * @return 현재 오픈중인 코인의 실시간 수익률
+     */
     @Override
-    public PositionList getPositionList() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public InstrumentInfo getInstrumentInfo(CoinEnum coinType) {
-        // TODO Auto-generated method stub
-        return null;
+    public double getRealtimeProfit(CoinEnum coinType, Orderable order) {
+        realTimeProfit = 0;
+        //myPosition 에서 현재 close가 0인 coinType을 가진 position 
+        myPosition.parallelStream().filter(pred -> {
+            return pred.getCoinType().equals(order.getCoinType()) && pred.getSide().equals(order.getSide());
+        }).peek(action -> {
+            realTimeProfit = realTimeProfit + ((getCurrentPrice(coinType)/action.getEntryPrice())-1) * 100; 
+            
+        });
+        return realTimeProfit;
     }
 
     @Override
     public WalletAccessable getWalletInfo() {
-        // TODO Auto-generated method stub
+        return wallet;
+    }
+
+    @Override
+    public PositionList getPositionList() {
+
+        return myPosition;
+    }
+
+    @Override
+    public double getCurrentPrice(CoinEnum coinType) {
+        Candle currentCandle = this.getCandleList(coinType, IntervalEnum.ONE).get(0);
+        return currentCandle.getClose();
+    }
+    
+    @Override
+    public double getWholeProfit() {
+            
+        return wholeProfit;
+    }
+
+    /**
+     * 시간 축이 1칸 우측으로.
+     */
+    @Override
+    public void nextSeq() {
+        if (currentIndex == 0) {
+            return;
+        }
+        for (var coinType : CoinEnum.values()) {
+
+            for (var interval : IntervalEnum.values()) {
+                if (currentIndex % interval.getBacktestNumber() == 0) {
+                    candleListCachedMap.get(coinType).get(interval)
+                            .add(candleListWholeCachedMap.get(coinType).get(interval).get((int) currentIndex));
+                }
+            }
+
+        }
+
+        currentIndex++;
+    }
+
+    @Override
+    @Deprecated
+    public OrderedList getOrderList() {
+
         return null;
     }
 
     @Override
     @Deprecated
-    public void orderCoin(Orderable order) {
-        // TODO Auto-generated method stub
-
-    }
-
-    public void orderCoin(Orderable order, Candle candle) {
-        // 진입가. 청산가. 주문 시간.
+    public InstrumentInfo getInstrumentInfo(CoinEnum coinType) {
+        return null;
     }
 
     @Override
+    @Deprecated
     public void getPaidLimit(CoinEnum coinType) {
-        // TODO Auto-generated method stub
 
     }
 
-    @Override
-    public double getCurrentPrice(CoinEnum coinType) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    
-    
+   
 }
