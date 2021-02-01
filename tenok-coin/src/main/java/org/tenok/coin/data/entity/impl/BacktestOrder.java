@@ -13,8 +13,6 @@ import lombok.Builder;
 
 @Builder
 public class BacktestOrder implements OrderDataAccessable {
-    private String name;
-    private String d;
     @Override
     public SideEnum getSide() {
         // TODO Auto-generated method stub

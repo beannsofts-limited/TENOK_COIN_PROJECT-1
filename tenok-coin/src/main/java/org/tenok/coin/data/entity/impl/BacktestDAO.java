@@ -1,65 +1,93 @@
 package org.tenok.coin.data.entity.impl;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.stream.Stream;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.tenok.coin.data.CoinDataAccessable;
+import org.tenok.coin.data.entity.BacktestOrderable;
 import org.tenok.coin.data.entity.Backtestable;
 import org.tenok.coin.data.entity.InstrumentInfo;
 import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
+
+import lombok.var;
+
 import org.tenok.coin.data.BybitRestDAO;
 
-public class BacktestDAO implements CoinDataAccessable, Backtestable {
+public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOrderable {
 
-    private Map<String, String> myPosition = new HashMap<String, String>();
-    private double walletBalance = 1000000;
-    private double profit = 0;
+    private PositionList myPosition = new PositionList();
+    private Map<CoinEnum, Map<IntervalEnum, CandleList>> candleListCachedMap; // 실시간 처럼 보이는 기만용 캔들
+    private Map<CoinEnum, Map<IntervalEnum, CandleList>> candleListWholeCachedMap; // 전체 캔들 데이터
+    private WalletAccessable wallet = new BybitWalletInfo(1000000, 1000000);
+    private long currentIndex = 0;
+   
+    private double wholeProfit = 0;
+    private double realTimeProfit = 0;
     private BybitRestDAO restDAO = new BybitRestDAO();
 
+    public BacktestDAO() {
+        candleListCachedMap = new HashMap<>();
+        candleListWholeCachedMap = new HashMap<>();
+
+        for (var coinType : CoinEnum.values()) {
+            candleListCachedMap.put(coinType, new HashMap<>());
+            candleListWholeCachedMap.put(coinType, new HashMap<>());
+        }
+    
+    }
 
     /**
-     * implNote 데이터가 담긴 json 파일 업데이트
-     * json 파일 파싱 후 candle 데이터 return
+     * 
+     * 
      * @return candleList
      * 
      */
     @Override
+    @SuppressWarnings("unchecked")
     public CandleList getCandleList(CoinEnum coinType, IntervalEnum interval) {
-        // loadCandleList(coinType, interval);
+        // loadCandleList(coinType, interval)
+        if (!candleListCachedMap.get(coinType).containsKey(interval)) {
+            // 캐시 되어 있지 않은 경우.
+            // json 파일에 불러오기\
+            long intervalSec = interval.getSec();
+            CandleList finalCandleList = new CandleList(coinType, interval);
+            CandleList tempCandleList = new CandleList(coinType, interval);
+            Date prevFrom = null;
+            JSONObject firstCandleObject = restDAO.requestKline(coinType, interval, 200,
+                    new Date(System.currentTimeMillis() - intervalSec * 200000L));
+            JSONArray kLineArray = (JSONArray) firstCandleObject.get("result");
+            CandleList candleList = new CandleList(coinType, interval);
 
-        try {
-            updateCandleList(coinType, interval);
-            String path = "./../";
-            String filePath = path.concat(coinType.name() + "_" + interval.getApiString() + ".txt");
-            JSONParser parser = new JSONParser();
-            Object obj;
-            obj = parser.parse(new FileReader(filePath));
-            JSONArray jsonObject = (JSONArray) obj;
-            String load = jsonObject.toString();
-            Object kLineobj;
-            kLineobj = parser.parse(load);
-            JSONArray kLineArray = (JSONArray) kLineobj;
-    
-                CandleList candleList = new CandleList(coinType, interval);
-    
-                Stream<JSONObject> map = kLineArray.stream().map((kLineObject) -> {
+            Stream<JSONObject> map = kLineArray.stream().map((kLineObject) -> {
+                return (JSONObject) kLineObject;
+            });
+            map.forEachOrdered((JSONObject kLineObject) -> {
+                double open = ((Number) kLineObject.get("open")).doubleValue();
+                double high = ((Number) kLineObject.get("high")).doubleValue();
+                double low = ((Number) kLineObject.get("low")).doubleValue();
+                double close = ((Number) kLineObject.get("close")).doubleValue();
+                double volume = ((Number) kLineObject.get("volume")).doubleValue();
+                Date startAt = new Date(((long) kLineObject.get("start_at")) * 1000L);
+                Candle candle = (new Candle(startAt, volume, open, high, low, close));
+                candleList.registerNewCandle(candle);
+            });
+            Date from = candleList.get(0).getStartAt();
+            System.out.println(from);
+            while (true) {
+
+                JSONObject updateCandleObject = restDAO.requestKline(coinType, interval, 200,
+                        new Date(from.getTime() - intervalSec * 200000L));
+                kLineArray = (JSONArray) updateCandleObject.get("result");
+                CandleList updateCandleList = new CandleList(coinType, interval);
+
+                map = kLineArray.stream().map((kLineObject) -> {
                     return (JSONObject) kLineObject;
                 });
                 map.forEachOrdered((JSONObject kLineObject) -> {
@@ -70,198 +98,123 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable {
                     double volume = ((Number) kLineObject.get("volume")).doubleValue();
                     Date startAt = new Date(((long) kLineObject.get("start_at")) * 1000L);
                     Candle candle = (new Candle(startAt, volume, open, high, low, close));
-                    candleList.registerNewCandle(candle);
+                    updateCandleList.registerNewCandle(candle);
                 });
-                return candleList;
-        } catch (ParseException e) {
-            
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            
-            e.printStackTrace();
-        } catch (IOException e) {
-            
-            e.printStackTrace();
-        }
-        return null;
-    }
-    /**
-     * 
-     *  candle 데이터가 담긴 json 파일 update
-     *  캐시된 데이터가 없을 경우 최신부터 처음까지 데이터 load
-     *  캐시된 데이터가 있을 경우 최신부터 기록된 데이터 까지 load
-     */
-    public void updateCandleList(CoinEnum coinType, IntervalEnum interval) {
 
-        try {
-            long intervalSec = interval.getSec();
-            Scanner scan;
-            String candleData = null;
-            String path = "./../";
-            String filePath = path.concat(coinType.name() + "_" + interval.getApiString() + ".txt");
-            JSONParser parser = new JSONParser();
-            Object obj;
-            File file = new File(filePath);
-            scan = new Scanner(file);
-            Date prevFrom = null;
-            String load ;
-            if (!scan.hasNextLine()) { // 캐시된 데이터가 비어 있을 경우 현재 데이터 부터 처음 데이터까지 불러오기
-                //최신의 200개 가져오기
-                
-                JSONObject firstCandleObject = restDAO.requestKline(coinType, interval, 200, new Date(System.currentTimeMillis() - intervalSec * 200000L));
-                JSONArray kLineArray = (JSONArray) firstCandleObject.get("result");
-                BufferedWriter bufferedWriter;
-                
-                bufferedWriter = new BufferedWriter(new FileWriter(file));
-                    // 쓰기
-                bufferedWriter.write(kLineArray.toString());
-                bufferedWriter.close();
-                
-                while (true) { // 그다음 반복해서 가져오기  날짜 이어서 불러오기
+                // updateCandleList.addAll(candleList);
+                from = updateCandleList.get(0).getStartAt();
+                System.out.println(from);
+                if (from.equals(prevFrom)) {
+                    System.out.println("파일의 끝");
+                    break;
 
-                    // obj = parser.parse(new FileReader(filePath));
-                    // JSONArray jsonObject = (JSONArray) obj;
-                    file = new File(filePath);
-                    scan = new Scanner(file);
-                    load = scan.nextLine();
-                    Object kLineobj = parser.parse(load);
-                    kLineArray = (JSONArray) kLineobj;
-    
-                    CandleList candleList = new CandleList(coinType, interval);
-
-                    Stream<JSONObject> map = kLineArray.stream().map((kLineObject) -> {
-                        return (JSONObject) kLineObject;
-                    });
-                    map.forEachOrdered((JSONObject kLineObject) -> {
-                        double open = ((Number) kLineObject.get("open")).doubleValue();
-                        double high = ((Number) kLineObject.get("high")).doubleValue();
-                        double low = ((Number) kLineObject.get("low")).doubleValue();
-                        double close = ((Number) kLineObject.get("close")).doubleValue();
-                        double volume = ((Number) kLineObject.get("volume")).doubleValue();
-                        Date startAt = new Date(((long) kLineObject.get("start_at")) * 1000L);
-                        Candle candle = (new Candle(startAt, volume, open, high, low, close));
-                        candleList.registerNewCandle(candle);
-                    });
-                    
-                    Date newFrom = candleList.get(candleList.size()-1).getStartAt();
-                    System.out.println(newFrom);
-                    if(newFrom.equals(prevFrom) ){
-                        System.out.println("파일의 끝");
-                        break;
-                        
-                    }
-                    prevFrom = newFrom;
-
-                    JSONObject jsonObj = restDAO.requestKline(coinType, interval, 200,
-                            new Date(newFrom.getTime() - intervalSec * 200000L));
-                    JSONArray newKlineArray = (JSONArray) jsonObj.get("result");
-                    
-                    // 한번에 합치기
-                    candleData = newKlineArray.toString();
-                    load = load.substring(1, load.length() - 1);
-                    candleData = candleData.substring(0, candleData.length() - 1);
-                    candleData = candleData.concat(",");
-                    candleData = candleData.concat(load);
-                    candleData = candleData.concat("]");
-                    
-                    file = new File(filePath);
-                    bufferedWriter = new BufferedWriter(new FileWriter(file));
-                    bufferedWriter.write(candleData);
-                    bufferedWriter.close();
-                    
                 }
-
-            } else {// 캐시된 데이터가 있을 경우
-
-            
-
+                prevFrom = from;
+                tempCandleList = finalCandleList;
+                updateCandleList.addAll(tempCandleList);
+                finalCandleList = updateCandleList;
+                // System.out.println(finalCandleList.get(0).getStartAt());
             }
-            scan.close();
+            finalCandleList.addAll(candleList);
+            candleListWholeCachedMap.get(coinType).put(interval, finalCandleList);
+            candleListCachedMap.get(coinType).get(interval)
+                    .add(candleListWholeCachedMap.get(coinType).get(interval).get(0));
+            // candleListCachedMap.get(coinType).get(interval)
+            return candleListCachedMap.get(coinType).get(interval);
+        } else {
 
-
-        } catch (FileNotFoundException e1) {
-            
-            e1.printStackTrace();
-        } catch (IOException e1) {
-            
-            e1.printStackTrace();
-        } catch (ParseException e1) {
-            
-            e1.printStackTrace();
+            return candleListCachedMap.get(coinType).get(interval);
         }
-      
     }
 
-    public void orderCoin(Orderable order, Candle candle) {
+    @Override
+    public void orderCoin(Orderable order) {
 
         if (order.getSide().getKorean().equals("매수/오픈") || order.getSide().getKorean().equals("매도/오픈")) {
-            // 포지션 오픈 -> 진입가, 주문시간 등록
-            myPosition.put("open", Double.toString(candle.getClose()));
-            myPosition.put("startAt", candle.getStartAt().toString());
-            myPosition.put("qty", Double.toString(order.getQty()));
+            // 포지션 오픈 arrayList에 등록
+           
+            Position pos = Position.builder().coinType(order.getCoinType()).
+                                        entryPrice(getCurrentPrice(order.getCoinType())).side(order.getSide()).liqPrice(0)
+                                        .qty(order.getQty()).leverage(1).build();
+            //positionList에 여러코인에 대한 정보를 저장해야하나????
+            myPosition.add(pos);
+            wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance()-(order.getQty()*getCurrentPrice(order.getCoinType())));
 
         } else {
-            // 포지션 청산 -> myPosition 초기화/ 총수익률 계산
-            calProfit(candle);
-            myPosition.clear();
+            // 포지션 청산 -> close 값 업데이트
+
+            myPosition.parallelStream().filter(pred -> {
+                return pred.getCoinType().equals(order.getCoinType()) && pred.getSide().equals(order.getSide());
+            }).peek(action -> {
+                wholeProfit = wholeProfit + (((getCurrentPrice(order.getCoinType())/action.getEntryPrice())-1)* 100);
+                wallet.setWalletBalance(wallet.getWalletBalance() + ((getCurrentPrice(order.getCoinType())*order.getQty())-(action.getEntryPrice()*action.getQty())));
+                wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance()+((getCurrentPrice(order.getCoinType())*order.getQty())-(action.getEntryPrice()*action.getQty())));
+            });
+
+        }
+    }
+
+    
+    /**
+     * 
+     * @return 현재 오픈중인 코인의 실시간 수익률
+     */
+    @Override
+    public double getRealtimeProfit(CoinEnum coinType, Orderable order) {
+        realTimeProfit = 0;
+        //myPosition 에서 현재 close가 0인 coinType을 가진 position 
+        myPosition.parallelStream().filter(pred -> {
+            return pred.getCoinType().equals(order.getCoinType()) && pred.getSide().equals(order.getSide());
+        }).peek(action -> {
+            realTimeProfit = realTimeProfit + ((getCurrentPrice(coinType)/action.getEntryPrice())-1) * 100; 
+            
+        });
+        return realTimeProfit;
+    }
+
+    @Override
+    public WalletAccessable getWalletInfo() {
+        return wallet;
+    }
+
+    @Override
+    public PositionList getPositionList() {
+
+        return myPosition;
+    }
+
+    @Override
+    public double getCurrentPrice(CoinEnum coinType) {
+        Candle currentCandle = this.getCandleList(coinType, IntervalEnum.ONE).get(0);
+        return currentCandle.getClose();
+    }
+    
+    @Override
+    public double getWholeProfit() {
+            
+        return wholeProfit;
+    }
+
+    /**
+     * 시간 축이 1칸 우측으로.
+     */
+    @Override
+    public void nextSeq() {
+        if (currentIndex == 0) {
+            return;
+        }
+        for (var coinType : CoinEnum.values()) {
+
+            for (var interval : IntervalEnum.values()) {
+                if (currentIndex % interval.getBacktestNumber() == 0) {
+                    candleListCachedMap.get(coinType).get(interval)
+                            .add(candleListWholeCachedMap.get(coinType).get(interval).get((int) currentIndex));
+                }
+            }
 
         }
 
-    }
-
-    /**
-     * 
-     * @return 수익률 총합 계산
-     */
-    private void calProfit(Candle candle) {
-        double nowProfit = (Double.parseDouble(myPosition.get("qty")) * candle.getClose()
-                - Double.parseDouble(myPosition.get("qty")) * Double.parseDouble(myPosition.get("open")));
-        profit = profit + (Math.round(nowProfit * 100) / 100);
-
-    }
-
-    public Map<String, String> getMyPosition() {
-        return this.myPosition;
-    }
-
-    /**
-     * 
-     * @return 실시간 수익률
-     */
-    public double getRealtimeProfit(Candle candle) {
-        return (Double.parseDouble(myPosition.get("qty")) * candle.getClose()
-                - Double.parseDouble(myPosition.get("qty")) * Double.parseDouble(myPosition.get("open")));
-    }
-
-    /**
-     * 
-     * 수익률 총합 호출
-     * 
-     * @return 수익률 총합
-     */
-    public double getProfit() {
-        return profit;
-    }
-
-    /**
-     * 
-     * 계좌에 있는 돈 호출 return 계좌 잔액
-     */
-    public double getWalletBalance() {
-        return walletBalance;
-    }
-
-    /**
-     * 
-     * 살수 있는 코인의 개수를 계산해 준다.
-     * 
-     * return qty 개수
-     */
-    public double calQTY(Candle candle) {
-        // 포지션 오픈 -> order qty에 저장시켜준다.
-
-        return (Math.round(walletBalance / candle.getClose() * 1000) / 1000);
-
+        currentIndex++;
     }
 
     @Override
@@ -272,21 +225,9 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable {
     }
 
     @Override
+    @Deprecated
     public InstrumentInfo getInstrumentInfo(CoinEnum coinType) {
-        // TODO Auto-generated method stub
         return null;
-    }
-
-    @Override
-    @Deprecated
-    public WalletAccessable getWalletInfo() {
-        return null;
-    }
-
-    @Override
-    @Deprecated
-    public void orderCoin(Orderable order) {
-
     }
 
     @Override
@@ -295,83 +236,5 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable {
 
     }
 
-    @Override
-    @Deprecated
-    public PositionList getPositionList() {
-
-        return null;
-    }
-    public double getCurrentPrice(CoinEnum coinType) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    
-    
+   
 }
-
-// while(true){
-
-// long intervalSec = interval.getSec();
-
-// if (!candleListIsCachedMap.get(coinType).containsKey(interval)) {
-// // 해당 캔들 리스트가 캐시되어 있지 않을 경우.
-// JSONObject jsonObject = restDAO.requestKline(coinType, interval, 200, new
-// Date(System.currentTimeMillis() - intervalSec*200000L));
-// JSONArray kLineArray = (JSONArray) jsonObject.get("result");
-// CandleList candleList = new CandleList(coinType, interval);
-
-// Stream<JSONObject> map = kLineArray.stream().map((kLineObject) -> {
-// return (JSONObject) kLineObject;
-// });
-// map.forEachOrdered((JSONObject kLineObject) -> {
-// double open = ((Number) kLineObject.get("open")).doubleValue();
-// double high = ((Number) kLineObject.get("high")).doubleValue();
-// double low = ((Number) kLineObject.get("low")).doubleValue();
-// double close = ((Number) kLineObject.get("close")).doubleValue();
-// double volume = ((Number) kLineObject.get("volume")).doubleValue();
-// Date startAt = new Date(((long) kLineObject.get("start_at")) * 1000L);
-// Candle candle = (new Candle(startAt, volume, open, high, low, close));
-// candleList.registerNewCandle(candle);
-// });
-
-// candleListIsCachedMap.get(coinType).put(interval, candleList);
-
-// // return candleListIsCachedMap.get(coinType).get(interval);
-// }else{
-// CandleList backupCandleList =
-// candleListIsCachedMap.get(coinType).get(interval);
-// JSONObject tempCandleList = restDAO.requestKline(coinType, interval, 200, new
-// Date(backupCandleList.elementAt(0).getStartAt().getTime() -
-// intervalSec*200000L));
-// JSONArray kLineArray = (JSONArray) tempCandleList.get("result");
-// CandleList newCandleList = new CandleList(coinType, interval);
-
-// Stream<JSONObject> map = kLineArray.stream().map((kLineObject) -> {
-// return (JSONObject) kLineObject;
-// });
-// map.forEachOrdered((JSONObject kLineObject) -> {
-// double open = ((Number) kLineObject.get("open")).doubleValue();
-// double high = ((Number) kLineObject.get("high")).doubleValue();
-// double low = ((Number) kLineObject.get("low")).doubleValue();
-// double close = ((Number) kLineObject.get("close")).doubleValue();
-// double volume = ((Number) kLineObject.get("volume")).doubleValue();
-// Date startAt = new Date(((long) kLineObject.get("start_at")) * 1000L);
-// Candle candle = (new Candle(startAt, volume, open, high, low, close));
-// newCandleList.registerNewCandle(candle);
-// });
-// if(newCandleList.elementAt(newCandleList.size()-1).getClose()==0){
-// //추가되는 최신정보가 비어있으므로 추가할 필요가 없음.
-// break;
-// }
-
-// else{
-
-// candleListIsCachedMap.get(coinType).put(interval, newCandleList);
-
-// }
-
-// }
-
-// }
-// return candleListIsCachedMap.get(coinType).get(interval);
