@@ -5,6 +5,9 @@ import java.util.concurrent.Future;
 
 import org.apache.log4j.Logger;
 import org.tenok.coin.data.entity.impl.BacktestDAO;
+import org.tenok.coin.data.impl.BybitDAO;
+import org.tenok.coin.strategy.StrategyConfig;
+import org.tenok.coin.strategy.StrategyHandler;
 import org.tenok.coin.strategy.StrategyRunner;
 import org.tenok.coin.strategy.impl.LongStrategy;
 import org.tenok.coin.strategy.impl.ShortStrategy;
@@ -12,14 +15,15 @@ import org.tenok.coin.type.CoinEnum;
 
 public class BacktestIndex {
     public static void main(String[] args) throws InterruptedException, ExecutionException {
-        StrategyRunner strategyRunner = new StrategyRunner(BacktestDAO.class);
-        Future a = strategyRunner.runStrategy(LongStrategy.class, CoinEnum.BTCUSDT);
-        a.get();
-        Future b = strategyRunner.runStrategy(ShortStrategy.class, CoinEnum.BTCUSDT);
-        b.get();
-        
-        double profit = BacktestDAO.getInstance(null).getWholeProfit();
+        StrategyRunner runner = new StrategyRunner();
 
-        System.out.println(profit);
+        StrategyConfig config = new StrategyConfig(CoinEnum.BTCUSDT, BacktestDAO.class, LongStrategy.class, 1, 0.5);
+
+        StrategyHandler handler = runner.runStrategy(config);
+
+        Thread.sleep(500000000000L);
+        handler.updateLeverage(5);
+
+        runner.stopStrategy(handler);
     }
 }

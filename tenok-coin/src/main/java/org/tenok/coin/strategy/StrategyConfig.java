@@ -3,19 +3,20 @@ package org.tenok.coin.strategy;
 import org.tenok.coin.data.CoinDataAccessable;
 import org.tenok.coin.type.CoinEnum;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PUBLIC)
 @Getter
 public class StrategyConfig implements Cloneable {
     @NonNull
     private CoinEnum coinType;
     @NonNull
-    private Class<CoinDataAccessable> coinDataAccessableClass;
+    private Class<? extends CoinDataAccessable> coinDataAccessableClass;
     @NonNull
-    private Class<Strategy> strategyClass;
+    private Class<? extends Strategy> strategyClass;
 
     private int leverage;
     private double availableRate;

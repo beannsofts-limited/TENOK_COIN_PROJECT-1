@@ -74,5 +74,11 @@ public class BacktestOrder implements OrderDataAccessable {
     public Date getExitDate() {
         return null;
     }
+
+    @Override
+    public int getLeverage() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
     
 }
