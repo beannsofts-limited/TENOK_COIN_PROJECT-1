@@ -33,6 +33,8 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
     private double realTimeProfit = 0;
     private BybitRestDAO restDAO = new BybitRestDAO();
 
+    private static double wholeThreadProfit = 0.0;
+
     private BacktestDAO() {
         candleListCachedMap = new HashMap<>();
         candleListWholeCachedMap = new HashMap<>();
@@ -209,8 +211,11 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
 
     @Override
     public double getWholeProfit() {
-
         return wholeProfit;
+    }
+
+    public double getWholeThreadProfit() {
+        return 0.0;
     }
 
     /**

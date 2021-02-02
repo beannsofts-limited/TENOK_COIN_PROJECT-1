@@ -65,5 +65,11 @@ public class ActiveOrder implements Orderable {
     public boolean isOpen() {
         return isOpen;
     }
+
+    @Override
+    public int getLeverage() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
     
 }

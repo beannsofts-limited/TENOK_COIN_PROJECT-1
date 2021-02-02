@@ -1,28 +1,32 @@
 package org.tenok.coin.strategy;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.Map;
 
-import org.tenok.coin.data.CoinDataAccessable;
-import org.tenok.coin.type.CoinEnum;
+import org.apache.log4j.Logger;
 
 public class StrategyRunner {
-    ExecutorService threadPool = Executors.newFixedThreadPool(10);
+    private static Logger logger = Logger.getLogger(StrategyRunner.class);
+    Map<StrategyHandler, StrategyThread> strategyThreadMap;
 
-    public StrategyRunner(Class<? extends CoinDataAccessable> coinDaoClass) {
-
+    public StrategyRunner() {
     }
 
-    public void init() {
+    public StrategyHandler runStrategy(StrategyConfig config) {
+        StrategyThread strategy = new StrategyThread(config.clone());
+        StrategyHandler handler = new StrategyHandler(config, strategy);
 
+        logger.info(
+                String.format("Run Strategy Thread [%s, %s, %s]", config.getCoinDataAccessableClass().getSimpleName(),
+                        config.getStrategyClass().getSimpleName(), config.getCoinType().getKorean()));
+
+        strategyThreadMap.put(handler, strategy);
+
+        Thread strategyThread = new Thread(strategy);
+        strategyThread.start();
+        return handler;
     }
 
-    public Future<?> runStrategy(Class<? extends Strategy> strategyClass, CoinEnum coinType) {
-        return null;
-    }
-
-    public void stopStrategy() {
+    public void stopStrategy(StrategyHandler handler) {
 
     }
 }
