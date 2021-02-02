@@ -133,7 +133,7 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
                     .add(candleListWholeCachedMap.get(coinType).get(interval).get(0));
 
             if(!candleListCachedMap.get(coinType).containsKey(interval)||!candleListWholeCachedMap.get(coinType).containsKey(interval)){
-                logger.fatal(String.format("getCandleList(%s,%s) : ERROR load CandleList from restAPI", coinType, interval);
+                logger.fatal(String.format("getCandleList(%s,%s) : ERROR load CandleList from restAPI", coinType, interval));
 
             }
             logger.debug(String.format("getCandleList(%s,%s) : load CandleList from restAPI", coinType,
@@ -158,7 +158,7 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
             //positionList에 여러코인에 대한 정보를 저장해야하나????
             myPosition.add(pos);
             wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance()-(order.getQty()*getCurrentPrice(order.getCoinType())));
-            logger.debug(String.format("orderCoin : Open Position(coin: %s, entryPrice: %lf, side: %s, qty: %lf)", pos.getCoinType().getKorean(), pos.getEntryPrice(), pos.getSide().getKorean(), pos.getQty());
+            logger.debug(String.format("orderCoin : Open Position(coin: %s, entryPrice: %lf, side: %s, qty: %lf)", pos.getCoinType().getKorean(), pos.getEntryPrice(), pos.getSide().getKorean(), pos.getQty()));
         } else {
             // 포지션 청산 -> close 값 업데이트
 
