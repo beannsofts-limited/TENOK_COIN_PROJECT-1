@@ -2,6 +2,7 @@ package org.tenok.coin.data.entity.impl;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -28,7 +29,7 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
     private Map<CoinEnum, Map<IntervalEnum, CandleList>> candleListWholeCachedMap; // 전체 캔들 데이터
     private WalletAccessable wallet = new BybitWalletInfo(1000000, 1000000);
     private long currentIndex = 0;
-
+    private List<BacktestOrder> orderedList;
     private double wholeProfit = 0;
     private double realTimeProfit = 0;
     private BybitRestDAO restDAO = new BybitRestDAO();
@@ -170,6 +171,7 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
                 wholeProfit = wholeProfit + (((getCurrentPrice(order.getCoinType())/action.getEntryPrice())-1)* 100);
                 wallet.setWalletBalance(wallet.getWalletBalance() + ((getCurrentPrice(order.getCoinType())*order.getQty())-(action.getEntryPrice()*action.getQty())));
                 wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance()+((getCurrentPrice(order.getCoinType())*order.getQty())-(action.getEntryPrice()*action.getQty())));
+                wholeThreadProfit = wholeThreadProfit + (((getCurrentPrice(order.getCoinType())/action.getEntryPrice())-1)* 100);
                 logger.debug(String.format("orderCoin : Close Position(coin: %s, entryPrice: %lf closePrice: %lf, side: %s, qty: %lf, profit : %lf)", action.getCoinType().getKorean(), action.getEntryPrice(), getCurrentPrice(order.getCoinType()), order.getSide().getKorean(), order.getQty(), getRealtimeProfit(action.getCoinType(), order)));
             });
         }
@@ -215,7 +217,7 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
     }
 
     public double getWholeThreadProfit() {
-        return 0.0;
+        return wholeThreadProfit;
     }
 
     /**
