@@ -98,9 +98,9 @@ public class DAOTest {
 
     @Test
     public void BacktestCandleTest() {
-        BacktestDAO back = new BacktestDAO();
+        // BacktestDAO back = new BacktestDAO();
         //back.inputTest(CoinEnum.BTCUSDT, IntervalEnum.FIFTEEN);
-        back.getCandleList(CoinEnum.BTCUSDT, IntervalEnum.FIFTEEN);  
+        // back.getCandleList(CoinEnum.BTCUSDT, IntervalEnum.FIFTEEN);  
         // CandleList candle = back.getCandleList(CoinEnum.BTCUSDT, IntervalEnum.DAY);
         // for (int i = 0; i<1000; i++){
         //     System.out.println(candle.get(i));
