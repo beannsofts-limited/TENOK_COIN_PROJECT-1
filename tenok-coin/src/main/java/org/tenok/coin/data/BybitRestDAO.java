@@ -1,6 +1,5 @@
 package org.tenok.coin.data;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -35,55 +34,42 @@ public class BybitRestDAO {
         request.put("limit", Integer.toString(limit));
         request.put("from", Long.toString(from.getTime() / 1000L));
         StringBuilder url = new StringBuilder("https://api.bybit.com/public/linear/kline?");
-        StringBuilder loadData = getRestApi(request, url);
-        JSONObject jsonResponse = stringToJSON((loadData.toString()));
-
-        return jsonResponse;
+        return requestByGet(request, url);
 
     }
 
     public JSONObject getActiveOrder(CoinEnum coinType) {
+        logger.debug("getActiveOrder: active Order List 불러오기");
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
         request.put("symbol", coinType.name());
         request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
         StringBuilder url = new StringBuilder("https://api.bybit.com/private/linear/order/list?");
-        StringBuilder loadData = getRestApi(request, url);
-        JSONObject jsonResponse = stringToJSON((loadData.toString()));
-
-        logger.debug("getActiveOrder: active Order List 불러오기");
-
-        return jsonResponse;
+        return requestByGet(request, url);
 
     }
 
     public JSONObject getConditionalOrder() {
+        logger.debug("getConditionalOrder: Conditional Order List 불러오기");
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
         request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
         StringBuilder url = new StringBuilder("https://api.bybit.com/private/linear/stop-order/list?");
-        StringBuilder loadData = getRestApi(request, url);
-        JSONObject jsonResponse = stringToJSON((loadData.toString()));
-        logger.debug("getConditionalOrder: Conditional Order List 불러오기");
-
-        return jsonResponse;
+        return requestByGet(request, url);
 
     }
 
     public JSONObject getMyPositionList(CoinEnum coinType) {
+        logger.debug("getMyPositionList: My Position 불러오기");
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
         request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
         StringBuilder url = new StringBuilder("https://api.bybit.com/private/linear/position/list?");
-        StringBuilder loadData = getRestApi(request, url);
-        JSONObject jsonResponse = stringToJSON((loadData.toString()));
-        logger.debug("getMyPositionList: My Position 불러오기");
-
-        return jsonResponse;
+        return requestByGet(request, url);
     }
 
     /**
@@ -94,8 +80,7 @@ public class BybitRestDAO {
      */
     public JSONObject getInstrumentInfo(CoinEnum coinType) {
         Map<String, Object> request = new TreeMap<>();
-        String response = getRestApi(request, new StringBuilder("https://api.bybit.com/v2/public/symbols")).toString();
-        return stringToJSON(response);
+        return requestByGet(request, new StringBuilder("https://api.bybit.com/v2/public/symbols"));
     }
 
     public JSONObject placeActiveOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum oderType, double qty,
@@ -114,6 +99,7 @@ public class BybitRestDAO {
                 break;
         }
         Map<String, Object> request = new TreeMap<>();
+        logger.debug("placeActiveOrder: active order 주문");
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("side", side.getApiString());
         request.put("symbol", coinType.name());
@@ -127,11 +113,7 @@ public class BybitRestDAO {
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/order/create");
-            StringBuilder loadData = postRestApi(request, url);
-            JSONObject jsonResponse = stringToJSON((loadData.toString()));
-
-            logger.debug("placeActiveOrder: active order 주문");
-            return jsonResponse;
+            return requestByPost(request, url);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -146,6 +128,7 @@ public class BybitRestDAO {
 
     public JSONObject placeConditionalOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum orderType, double qty,
             TIFEnum tif) {
+        logger.debug("placeConditionalOrder: condition order 주문");
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("side", side.getApiString());
@@ -158,10 +141,7 @@ public class BybitRestDAO {
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/stop-order/create");
-            StringBuilder loadData = postRestApi(request, url);
-            JSONObject jsonResponse = stringToJSON((loadData.toString()));
-            logger.debug("placeConditionalOrder: condition order 주문");
-            return jsonResponse;
+            return requestByPost(request, url);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -169,6 +149,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject cancelActiveOrder(CoinEnum coinType, String orderID) {
+        logger.debug("cancelActiveOrder: active order 주문 취소");
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
@@ -178,11 +159,7 @@ public class BybitRestDAO {
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/order/cancel");
-            StringBuilder loadData = postRestApi(request, url);
-            JSONObject jsonResponse = stringToJSON((loadData.toString()));
-
-            logger.debug("cancelActiveOrder: active order 주문 취소");
-            return jsonResponse;
+            return requestByPost(request, url);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -190,6 +167,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject cancelConditionalOrder(CoinEnum coinType, String orderID) {
+        logger.debug("cancelConditionalOrder: conditional order 주문 취소");
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
@@ -199,10 +177,7 @@ public class BybitRestDAO {
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/stop-order/cancel");
-            StringBuilder loadData = postRestApi(request, url);
-            JSONObject jsonResponse = stringToJSON((loadData.toString()));
-            logger.debug("cancelConditionalOrder: conditional order 주문 취소");
-            return jsonResponse;
+            return requestByPost(request, url);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -210,6 +185,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject cancelAllActiveOrder(CoinEnum coinType, String orderID) {
+        logger.debug("cancelAllActiveOrder: 모든 active order 취소");
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
@@ -219,11 +195,7 @@ public class BybitRestDAO {
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/order/cancel-all");
-            StringBuilder loadData = postRestApi(request, url);
-            JSONObject jsonResponse = stringToJSON((loadData.toString()));
-
-            logger.debug("cancelAllActiveOrder: 모든 active order 취소");
-            return jsonResponse;
+            return requestByPost(request, url);
         } catch (MalformedURLException e) {
 
             e.printStackTrace();
@@ -232,6 +204,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject cancelAllConditionalOrder(CoinEnum coinType, String orderID) {
+        logger.debug("cancelAllConditionalOrder: 모든 conditional order 취소");
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
@@ -241,11 +214,7 @@ public class BybitRestDAO {
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/stop-order/cancel-all");
-            StringBuilder loadData = postRestApi(request, url);
-            JSONObject jsonResponse = stringToJSON((loadData.toString()));
-
-            logger.debug("cancelAllConditionalOrder: 모든 conditional order 취소");
-            return jsonResponse;
+            return requestByPost(request, url);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -253,6 +222,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject setLeverage(CoinEnum coinType, int buyLeverage, int sellLeverage) {
+        logger.debug("setLeverage: 레버리지 설정");
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
@@ -262,11 +232,8 @@ public class BybitRestDAO {
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/position/set-leverage");
-            StringBuilder loadData = postRestApi(request, url);
-            JSONObject jsonResponse = stringToJSON((loadData.toString()));
 
-            logger.debug("setLeverage: 레버리지 설정");
-            return jsonResponse;
+            return requestByPost(request, url);
         } catch (MalformedURLException e) {
 
             e.printStackTrace();
@@ -274,7 +241,7 @@ public class BybitRestDAO {
         throw new RuntimeException("leverage setting 실패");
     }
 
-    private StringBuilder getRestApi(Map<String, Object> request, StringBuilder url) {
+    private JSONObject requestByGet(Map<String, Object> request, StringBuilder url) {
         request.forEach((k, v) -> {
             url.append(String.format("%s=%s&", k, v));
         });
@@ -286,30 +253,18 @@ public class BybitRestDAO {
             conn.setRequestMethod("GET");
             conn.setDoInput(true);
 
-            BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-
-            StringBuilder sb = new StringBuilder();
-            String line = null;
-            while ((line = br.readLine()) != null) {
-                sb.append(line).append("\n");
-
-            }
-            br.close();
-            return sb;
+            return (JSONObject) new JSONParser().parse(new InputStreamReader(conn.getInputStream()));
         } catch (IOException e1) {
             e1.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
         throw new RuntimeException("RestApi get 호출 실패");
     }
 
-    private StringBuilder postRestApi(Map<String, Object> request, URL url) {
-        // StringBuilder jsonInputString = new StringBuilder("{");
+    private JSONObject requestByPost(Map<String, Object> request, URL url) {
         JSONObject jsonInputObject = new JSONObject(request);
-        // request.forEach((k, v) -> {
-        // jsonInputString.append(String.format("\"%s\":\"%s\",", k, v));
-        // });
-        // jsonInputString.deleteCharAt(jsonInputString.length() - 1);
-        // jsonInputString.append("}");
+
         HttpsURLConnection conn;
         try {
             conn = (HttpsURLConnection) url.openConnection();
@@ -320,33 +275,17 @@ public class BybitRestDAO {
             OutputStream os = conn.getOutputStream();
             os.write(jsonInputObject.toJSONString().getBytes());
             conn.connect();
-            StringBuilder sb = new StringBuilder();
-            BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            String line = null;
-            while ((line = br.readLine()) != null) {
-                sb.append(line).append("\n");
-            }
-            br.close();
+            JSONObject response = (JSONObject) new JSONParser().parse(new InputStreamReader(conn.getInputStream()));
             os.flush();
+
             conn.disconnect();
-            return sb;
+            return response;
 
         } catch (IOException e) {
             e.printStackTrace();
-        }
-        throw new RuntimeException("RestApi post 호출 실패");
-    }
-
-    private JSONObject stringToJSON(String restSTR) {
-        JSONParser parser = new JSONParser();
-        Object obj;
-        try {
-            obj = parser.parse(restSTR);
-            JSONObject jsonObj = (JSONObject) obj;
-            return jsonObj;
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        throw new RuntimeException("ReatApi JSON 파싱 실패");
+        throw new RuntimeException("RestApi post 호출 실패");
     }
 }
