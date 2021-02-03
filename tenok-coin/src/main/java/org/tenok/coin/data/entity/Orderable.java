@@ -10,10 +10,11 @@ import org.tenok.coin.type.TIFEnum;
 public interface Orderable {
     /**
      * Sell, Buy인지 아닌지
+     * 
      * @return
      */
     public SideEnum getSide();
-    
+
     /**
      * @return 주문한 코인
      */
@@ -21,7 +22,8 @@ public interface Orderable {
 
     /**
      * Market, limit 인지 아닌지
-     * @return 
+     * 
+     * @return
      */
     public OrderTypeEnum getOrderType();
 
@@ -36,10 +38,14 @@ public interface Orderable {
      * 
      */
     public double getQty();
+
     /**
      * 
      * @return timestamp
      */
     public Date getTimeStamp();
+
     public boolean isOpen();
+
+    public int getLeverage();
 }

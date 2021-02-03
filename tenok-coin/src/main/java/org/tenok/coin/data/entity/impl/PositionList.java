@@ -1,12 +1,11 @@
 package org.tenok.coin.data.entity.impl;
 
-import java.util.List;
-
-import javax.swing.text.Position;
+import java.util.LinkedList;
 
 import lombok.Getter;
 
 @Getter
-public class PositionList {
-    private List<Position> positionList = null;
+@SuppressWarnings("serial")
+public class PositionList extends LinkedList<Position> {
+
 }

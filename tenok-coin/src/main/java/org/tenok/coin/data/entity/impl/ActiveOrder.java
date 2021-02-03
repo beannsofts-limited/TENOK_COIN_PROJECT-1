@@ -31,6 +31,8 @@ public class ActiveOrder implements Orderable {
 
     private Date timeStamp;
 
+    private int leverage;
+
     @Override
     public SideEnum getSide() {
         return side;
@@ -65,5 +67,10 @@ public class ActiveOrder implements Orderable {
     public boolean isOpen() {
         return isOpen;
     }
-    
+
+    @Override
+    public int getLeverage() {
+        return leverage;
+    }
+
 }

@@ -13,9 +13,3 @@ public class App {
         BybitDAO.getInstance().login("tenok2019");
     }
 }
-
-
-
-
-
-

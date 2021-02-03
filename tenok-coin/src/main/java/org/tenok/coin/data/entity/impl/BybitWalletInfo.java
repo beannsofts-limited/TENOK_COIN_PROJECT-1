@@ -4,7 +4,6 @@ import org.tenok.coin.data.RealtimeAccessable;
 import org.tenok.coin.data.entity.WalletAccessable;
 
 public class BybitWalletInfo implements WalletAccessable, RealtimeAccessable {
-
     private double walletBalance;
     private double walletAvailableBalance;
 

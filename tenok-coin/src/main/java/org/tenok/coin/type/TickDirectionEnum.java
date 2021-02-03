@@ -1,10 +1,7 @@
 package org.tenok.coin.type;
 
 public enum TickDirectionEnum {
-    PLUS("PlusTick"),
-    ZERO_PLUS("ZeroPlusTick"),
-    MINUS("MinusTick"),
-    ZERO_MINUS("ZeroMinusTick");
+    PLUS("PlusTick"), ZERO_PLUS("ZeroPlusTick"), MINUS("MinusTick"), ZERO_MINUS("ZeroMinusTick");
 
     private String apiString;
 

@@ -2,7 +2,6 @@ package org.tenok.coin;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,11 +43,13 @@ public class DAOTest {
     public void candleListTest() throws InterruptedException, LoginException {
         BybitDAO.getInstance().login("tenok2019");
         CandleList candleList = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
-        CandleList candleLidst = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.TWOHUNDREDFORTY);
         assertEquals(candleList.size(), 200);
-
-        candleList.stream().forEachOrdered(System.out::println);
-        for (int i = 0; i < 20; i++) {
+        
+        candleList.stream().forEachOrdered(cl -> {
+            System.out.println(String.format("u bb: %f\nm bb: %f\nl bb: %f", cl.getUpperBB(), cl.getMiddleBB(), cl.getLowerBB()));
+            System.out.println(String.format("ma5: %f ma10: %f ma20: %f ma60: %f ma120: %f\nstart at: %s\n", cl.getMa5(), cl.getMa10(), cl.getMa20(), cl.getMa60(), cl.getMa120(), cl.getStartAt().toString()));
+        });
+        for (int i = 0; i < 50; i++) {
             var cl = candleList.get(0);
             System.out.println(String.format("u bb: %f\nm bb: %f\nl bb: %f", cl.getUpperBB(), cl.getMiddleBB(), cl.getLowerBB()));
             System.out.println(String.format("ma5: %f ma10: %f ma20: %f ma60: %f ma120: %f\n", cl.getMa5(), cl.getMa10(), cl.getMa20(), cl.getMa60(), cl.getMa120()));
@@ -92,6 +93,29 @@ public class DAOTest {
     }
 
     @Test
+    public void BacktestCandleTest() {
+        // BacktestDAO back = new BacktestDAO();
+        //back.inputTest(CoinEnum.BTCUSDT, IntervalEnum.FIFTEEN);
+        // back.getCandleList(CoinEnum.BTCUSDT, IntervalEnum.FIFTEEN);  
+        // CandleList candle = back.getCandleList(CoinEnum.BTCUSDT, IntervalEnum.DAY);
+        // for (int i = 0; i<1000; i++){
+        //     System.out.println(candle.get(i));
+            
+        // }
+    }
+
+       
+        // CandleList candle = back.test(CoinEnum.BTCUSDT, IntervalEnum.FIFTEEN);
+        // System.out.println(candle.size());
+        // CandleList candle = back.getCandleList(CoinEnum.BTCUSDT,IntervalEnum.FIFTEEN);
+        // System.out.println(candle.size());
+        // for(int i =0; i<candle.size(); i++){
+        //     System.out.println(candle.elementAt(i).getStartAt());
+        //     System.out.println("\n");
+        //     // System.out.println(System.currentTimeMillis() - IntervalEnum.FIFTEEN.getSec()*200000L+"\n");
+
+        // }
+
     public void getOrderTest() throws LoginException {
         BybitDAO.getInstance().login("tenok2019");
 

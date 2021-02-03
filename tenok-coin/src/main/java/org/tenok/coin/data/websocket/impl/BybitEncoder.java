@@ -9,14 +9,16 @@ import org.json.simple.JSONObject;
 public class BybitEncoder implements Encoder.Text<JSONObject> {
 
     @Override
-    public void init(EndpointConfig config) { }
+    public void init(EndpointConfig config) {
+    }
 
     @Override
-    public void destroy() { }
+    public void destroy() {
+    }
 
     @Override
     public String encode(JSONObject object) throws EncodeException {
         return object.toJSONString();
     }
-    
+
 }

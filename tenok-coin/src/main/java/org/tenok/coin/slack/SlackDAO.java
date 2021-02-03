@@ -22,12 +22,11 @@ public class SlackDAO {
         this.webhookUrl = AuthDecryptor.getInstance().getSlackWebhookURL();
     }
 
-
     public WebhookResponse sendTradingMessage(CoinEnum coinType, SideEnum side, double qty) {
         // send(String.format("%s을 %s개 %s하였습니다.", coinType.getLiteral(),
         // orderType.name(), side.getKorean());
         try {
-            
+
             String payload = String.format("{\"text\":\"%s %f개 %s\"}", coinType.getKorean(), qty, side.getKorean());
             response = slackInstance.send(webhookUrl, payload);
             logger.debug(response);

@@ -1,8 +1,7 @@
 package org.tenok.coin.type;
 
 public enum OrderTypeEnum {
-    MARKET("Market"),
-    LIMIT("Limit");
+    MARKET("Market"), LIMIT("Limit");
 
     private String apiString;
 

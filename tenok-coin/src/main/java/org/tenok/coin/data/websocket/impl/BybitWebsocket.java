@@ -49,7 +49,7 @@ public class BybitWebsocket implements Closeable {
         logger.debug(response);
         WebsocketResponseEnum resType = (WebsocketResponseEnum) response.get("response_type");
         if (resType.equals(WebsocketResponseEnum.PING) || resType.equals(WebsocketResponseEnum.SUBSCRIPTION)) {
-            boolean success = (boolean) response.get("success");    // TODO ping??
+            boolean success = (boolean) response.get("success"); // TODO ping??
             if (!success) {
                 logger.fatal("Websocket Ping or Subscription failed");
                 logger.fatal(response.toJSONString());
