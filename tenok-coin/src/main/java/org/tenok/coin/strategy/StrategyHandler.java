@@ -32,6 +32,14 @@ public class StrategyHandler {
         strategyThread.interrupt();
     }
 
+    public void join() throws InterruptedException {
+        strategyThread.join();
+    }
+
+    public void join(long millis) throws InterruptedException {
+        strategyThread.join(millis);
+    }
+
     public boolean isOpened() {
         return strategyInstance.isOpened();
     }

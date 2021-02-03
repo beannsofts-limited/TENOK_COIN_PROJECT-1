@@ -7,5 +7,5 @@ public interface BacktestOrderable {
 
     public double getWholeProfit();
 
-    public void nextSeq();
+    public boolean nextSeq();
 }

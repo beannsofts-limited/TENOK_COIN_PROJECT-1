@@ -9,6 +9,7 @@ import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.data.entity.impl.ActiveOrder;
 import org.tenok.coin.data.entity.impl.Position;
+import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.OrderTypeEnum;
 import org.tenok.coin.type.SideEnum;
 import org.tenok.coin.type.TIFEnum;
@@ -29,7 +30,7 @@ class StrategyThread implements Runnable {
             if (Backtestable.class.isAssignableFrom(config.getCoinDataAccessableClass())) {
                 // backtestable 클래스 일 경우 Runnable 객체 집어넣고 getInstance 호출
                 coinDAOInstance = (CoinDataAccessable) config.getCoinDataAccessableClass()
-                        .getDeclaredMethod("getInstance", new Class<?>[] { this.getClass() })
+                        .getDeclaredMethod("getInstance", new Class<?>[] { Runnable.class })
                         .invoke((Object) null, this);
                 log.info("get instance from Backtestable DAO Object");
             } else {
@@ -37,8 +38,8 @@ class StrategyThread implements Runnable {
                         .getDeclaredMethod("getInstance", (Class<?>[]) null).invoke((Object) null, (Object) null);
                 log.info("get instance from Bybit DAO Object");
             }
-            strategyInstance = config.getStrategyClass().getDeclaredConstructor(CoinDataAccessable.class)
-                    .newInstance(coinDAOInstance);
+            strategyInstance = config.getStrategyClass().getDeclaredConstructor(CoinDataAccessable.class, CoinEnum.class)
+                    .newInstance(coinDAOInstance, config.getCoinType());
             this.config = config;
         } catch (IllegalAccessException e) {
             e.printStackTrace();
@@ -60,32 +61,32 @@ class StrategyThread implements Runnable {
     @Override
     public void run() {
         thisThread = Thread.currentThread();
+
         while (true) {
             if (strategyInstance.isNotOpened()) {
                 double openRBI = strategyInstance.testOpenRBI();
-                if (openRBI == 0) {
-                    // openRBI가 0 이면, 매수신호 아님.
-                    continue;
+                if (openRBI != 0.0) {
+                    double currentAvailable = wallet.getWalletAvailableBalance();
+                    SideEnum side;
+                    if (config.getLeverage() > 0) {
+                        side = SideEnum.OPEN_BUY;
+                    } else {
+                        side = SideEnum.OPEN_SELL;
+                    }
+    
+                    double currentPrice = coinDAOInstance.getCurrentPrice(config.getCoinType());
+                    double qty = currentAvailable / currentPrice;
+                    Orderable order = ActiveOrder.builder().coinType(config.getCoinType()).orderType(OrderTypeEnum.MARKET)
+                            .qty(qty).side(side).tif(TIFEnum.IOC).build();
+                    coinDAOInstance.orderCoin(order);
+    
+                    myPosition = Position.builder().coinType(config.getCoinType())
+                            .entryPrice(coinDAOInstance.getCurrentPrice(config.getCoinType()))
+                            .leverage(config.getLeverage()).liqPrice(0).qty(qty).side(side).build();
+    
+                    strategyInstance.setIsopened(true);
                 }
-                double currentAvailable = wallet.getWalletAvailableBalance();
-                SideEnum side;
-                if (config.getLeverage() > 0) {
-                    side = SideEnum.OPEN_BUY;
-                } else {
-                    side = SideEnum.OPEN_SELL;
-                }
-
-                double currentPrice = coinDAOInstance.getCurrentPrice(config.getCoinType());
-                double qty = currentAvailable / currentPrice;
-                Orderable order = ActiveOrder.builder().coinType(config.getCoinType()).orderType(OrderTypeEnum.MARKET)
-                        .qty(qty).side(side).tif(TIFEnum.IOC).build();
-                coinDAOInstance.orderCoin(order);
-
-                myPosition = Position.builder().coinType(config.getCoinType())
-                        .entryPrice(coinDAOInstance.getCurrentPrice(config.getCoinType()))
-                        .leverage(config.getLeverage()).liqPrice(0).qty(qty).side(side).build();
-
-                strategyInstance.setIsopened(true);
+                
             } else {
                 if (strategyInstance.testCloseRBI()) {
                     SideEnum side;
@@ -106,7 +107,11 @@ class StrategyThread implements Runnable {
 
             if (coinDAOInstance instanceof BacktestOrderable) {
                 // Next seq 호출하여 다음 시간으로 이동
-                ((BacktestOrderable) coinDAOInstance).nextSeq();
+                boolean isEnd = ((BacktestOrderable) coinDAOInstance).nextSeq();
+                if (isEnd) {
+                    log.info("Backtest exceed");
+                    break;
+                }
             }
 
             if (thisThread.isInterrupted()) {
@@ -114,7 +119,7 @@ class StrategyThread implements Runnable {
                 return; // TODO instrrupted 되면 그대로 끝낼지. 아님 자동매도 할지.
             }
             try {
-                Thread.sleep(100);
+                Thread.sleep(5);
             } catch (InterruptedException e) {
                 log.info(String.format("%s strategy thread interrupted", thisThread.getName()));
                 return;

@@ -43,7 +43,12 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
         for (var coinType : CoinEnum.values()) {
             candleListCachedMap.put(coinType, new HashMap<>());
             candleListWholeCachedMap.put(coinType, new HashMap<>());
+            for (var interval : IntervalEnum.values()) {
+                candleListCachedMap.get(coinType).put(interval, new CandleList(coinType, interval));
+                candleListWholeCachedMap.get(coinType).put(interval, new CandleList(coinType, interval));
+            }
         }
+        
 
     }
 
@@ -74,13 +79,12 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
             // json 파일에 불러오기\
             long intervalSec = interval.getSec();
             CandleList finalCandleList = new CandleList(coinType, interval);
-            CandleList tempCandleList = new CandleList(coinType, interval);
+            CandleList tempCandleList;
             Date prevFrom = null;
             JSONObject firstCandleObject = restDAO.requestKline(coinType, interval, 200,
                     new Date(System.currentTimeMillis() - intervalSec * 200000L));
             JSONArray kLineArray = (JSONArray) firstCandleObject.get("result");
             CandleList candleList = new CandleList(coinType, interval);
-
             Stream<JSONObject> map = kLineArray.stream().map((kLineObject) -> {
                 return (JSONObject) kLineObject;
             });
@@ -128,10 +132,15 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
                 tempCandleList = finalCandleList;
                 updateCandleList.addAll(tempCandleList);
                 finalCandleList = updateCandleList;
-
+                System.out.println("loading");
             }
+
+            // assert candleListCachedMap != null;
+            // assert candleListWholeCachedMap != null;
             finalCandleList.addAll(candleList);
-            candleListWholeCachedMap.get(coinType).put(interval, finalCandleList);
+            candleListWholeCachedMap.get(coinType).get(interval).addAll(finalCandleList);
+            
+            
             candleListCachedMap.get(coinType).get(interval)
                     .add(candleListWholeCachedMap.get(coinType).get(interval).get(0));
 
@@ -162,7 +171,7 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
             myPosition.add(pos);
             wallet.setWalletAvailableBalance(
                     wallet.getWalletAvailableBalance() - (order.getQty() * getCurrentPrice(order.getCoinType())));
-            logger.debug(String.format("orderCoin : Open Position(coin: %s, entryPrice: %lf, side: %s, qty: %lf)",
+            logger.info(String.format("orderCoin : Open Position(coin: %s, entryPrice: %lf, side: %s, qty: %lf)",
                     pos.getCoinType().getKorean(), pos.getEntryPrice(), pos.getSide().getKorean(), pos.getQty()));
         } else {
             // 포지션 청산 -> close 값 업데이트
@@ -192,7 +201,7 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
                                     - (action.getEntryPrice() * action.getQty())));
                 }
 
-                logger.debug(String.format(
+                logger.info(String.format(
                         "orderCoin : Close Position(coin: %s, entryPrice: %lf closePrice: %lf, side: %s, qty: %lf, profit : %lf)",
                         action.getCoinType().getKorean(), action.getEntryPrice(), getCurrentPrice(order.getCoinType()),
                         order.getSide().getKorean(), order.getQty(), getRealtimeProfit(action.getCoinType(), order)));
@@ -239,7 +248,7 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
         return wholeProfit;
     }
 
-    public double getWholeThreadProfit() {
+    public static double getWholeThreadProfit() {
         return wholeThreadProfit;
     }
 
@@ -247,22 +256,30 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
      * 시간 축이 1칸 우측으로.
      */
     @Override
-    public void nextSeq() {
-        if (currentIndex == 0) {
-            return;
+    public boolean nextSeq() {
+        if (currentIndex++ == 0L) {
+            return false;
         }
         for (var coinType : CoinEnum.values()) {
 
             for (var interval : IntervalEnum.values()) {
                 if (currentIndex % interval.getBacktestNumber() == 0) {
+                    if (candleListWholeCachedMap.get(coinType).get(interval).size() == 0) {
+                        continue;
+                    }
                     candleListCachedMap.get(coinType).get(interval)
-                            .add(candleListWholeCachedMap.get(coinType).get(interval).get((int) currentIndex));
+                            .add(candleListWholeCachedMap.get(coinType).get(interval).get((int) currentIndex-1));
                 }
             }
 
         }
 
-        currentIndex++;
+        // TODO MAXIMUM of Current Index
+        if (currentIndex > 1000) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
