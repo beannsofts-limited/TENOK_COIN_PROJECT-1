@@ -22,4 +22,6 @@ public interface Strategy {
     public boolean isOpened();
 
     public boolean isNotOpened();
+
+    public void setIsopened(boolean isOpened);
 }

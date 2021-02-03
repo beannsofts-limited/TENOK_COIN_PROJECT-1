@@ -36,10 +36,12 @@ public interface Orderable {
      * 
      */
     public double getQty();
+
     /**
      * 
      * @return timestamp
      */
     public Date getTimeStamp();
     public boolean isOpen();
+    public int getLeverage();
 }

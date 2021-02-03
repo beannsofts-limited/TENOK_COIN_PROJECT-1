@@ -70,5 +70,11 @@ public class OrderedData implements OrderDataAccessable {
     public double getExitPrice() {
         return 0;
     }
+
+    @Override
+    public int getLeverage() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
     
 }

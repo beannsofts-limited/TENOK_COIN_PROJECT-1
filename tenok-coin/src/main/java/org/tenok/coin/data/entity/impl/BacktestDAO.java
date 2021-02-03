@@ -2,9 +2,11 @@ package org.tenok.coin.data.entity.impl;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.tenok.coin.data.CoinDataAccessable;
@@ -15,24 +17,26 @@ import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
-
-import lombok.var;
-
 import org.tenok.coin.data.BybitRestDAO;
 
+/**
+ * this class aint thread safe
+ */
 public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOrderable {
-
+    private static Logger logger = Logger.getLogger(BacktestDAO.class);
     private PositionList myPosition = new PositionList();
     private Map<CoinEnum, Map<IntervalEnum, CandleList>> candleListCachedMap; // 실시간 처럼 보이는 기만용 캔들
     private Map<CoinEnum, Map<IntervalEnum, CandleList>> candleListWholeCachedMap; // 전체 캔들 데이터
     private WalletAccessable wallet = new BybitWalletInfo(1000000, 1000000);
     private long currentIndex = 0;
-   
+    private List<BacktestOrder> orderedList;
     private double wholeProfit = 0;
     private double realTimeProfit = 0;
     private BybitRestDAO restDAO = new BybitRestDAO();
 
-    public BacktestDAO() {
+    private static double wholeThreadProfit = 0.0;
+
+    private BacktestDAO() {
         candleListCachedMap = new HashMap<>();
         candleListWholeCachedMap = new HashMap<>();
 
@@ -40,7 +44,18 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
             candleListCachedMap.put(coinType, new HashMap<>());
             candleListWholeCachedMap.put(coinType, new HashMap<>());
         }
-    
+
+    }
+
+    private static class BacktestLazyLoader {
+        public static final Map<Runnable, BacktestDAO> INSTANCE = new HashMap<>();
+    }
+
+    public static BacktestDAO getInstance(Runnable thread) {
+        if (!BacktestLazyLoader.INSTANCE.containsKey(thread)) {
+            BacktestLazyLoader.INSTANCE.put(thread, new BacktestDAO());
+        }
+        return BacktestLazyLoader.INSTANCE.get(thread);
     }
 
     /**
@@ -53,7 +68,8 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
     @SuppressWarnings("unchecked")
     public CandleList getCandleList(CoinEnum coinType, IntervalEnum interval) {
         // loadCandleList(coinType, interval)
-        if (!candleListCachedMap.get(coinType).containsKey(interval)) {
+        if (!candleListCachedMap.get(coinType).containsKey(interval)
+                || (candleListCachedMap.get(coinType).get(interval).size() == 0)) {
             // 캐시 되어 있지 않은 경우.
             // json 파일에 불러오기\
             long intervalSec = interval.getSec();
@@ -79,7 +95,7 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
                 candleList.registerNewCandle(candle);
             });
             Date from = candleList.get(0).getStartAt();
-            System.out.println(from);
+
             while (true) {
 
                 JSONObject updateCandleObject = restDAO.requestKline(coinType, interval, 200,
@@ -103,9 +119,8 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
 
                 // updateCandleList.addAll(candleList);
                 from = updateCandleList.get(0).getStartAt();
-                System.out.println(from);
+
                 if (from.equals(prevFrom)) {
-                    System.out.println("파일의 끝");
                     break;
 
                 }
@@ -113,16 +128,23 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
                 tempCandleList = finalCandleList;
                 updateCandleList.addAll(tempCandleList);
                 finalCandleList = updateCandleList;
-                // System.out.println(finalCandleList.get(0).getStartAt());
+
             }
             finalCandleList.addAll(candleList);
             candleListWholeCachedMap.get(coinType).put(interval, finalCandleList);
             candleListCachedMap.get(coinType).get(interval)
                     .add(candleListWholeCachedMap.get(coinType).get(interval).get(0));
-            // candleListCachedMap.get(coinType).get(interval)
+
+            if(!candleListCachedMap.get(coinType).containsKey(interval)||!candleListWholeCachedMap.get(coinType).containsKey(interval)){
+                logger.fatal(String.format("getCandleList(%s,%s) : ERROR load CandleList from restAPI", coinType, interval));
+
+            }
+            logger.debug(String.format("getCandleList(%s,%s) : load CandleList from restAPI", coinType,
+                    interval));
             return candleListCachedMap.get(coinType).get(interval);
         } else {
-
+            logger.debug(String.format("getCandleList(%s,%s) : load CandleList from restAPI", coinType,
+                    interval));
             return candleListCachedMap.get(coinType).get(interval);
         }
     }
@@ -139,7 +161,7 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
             //positionList에 여러코인에 대한 정보를 저장해야하나????
             myPosition.add(pos);
             wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance()-(order.getQty()*getCurrentPrice(order.getCoinType())));
-
+            logger.debug(String.format("orderCoin : Open Position(coin: %s, entryPrice: %lf, side: %s, qty: %lf)", pos.getCoinType().getKorean(), pos.getEntryPrice(), pos.getSide().getKorean(), pos.getQty()));
         } else {
             // 포지션 청산 -> close 값 업데이트
 
@@ -149,12 +171,12 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
                 wholeProfit = wholeProfit + (((getCurrentPrice(order.getCoinType())/action.getEntryPrice())-1)* 100);
                 wallet.setWalletBalance(wallet.getWalletBalance() + ((getCurrentPrice(order.getCoinType())*order.getQty())-(action.getEntryPrice()*action.getQty())));
                 wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance()+((getCurrentPrice(order.getCoinType())*order.getQty())-(action.getEntryPrice()*action.getQty())));
+                wholeThreadProfit = wholeThreadProfit + (((getCurrentPrice(order.getCoinType())/action.getEntryPrice())-1)* 100);
+                logger.debug(String.format("orderCoin : Close Position(coin: %s, entryPrice: %lf closePrice: %lf, side: %s, qty: %lf, profit : %lf)", action.getCoinType().getKorean(), action.getEntryPrice(), getCurrentPrice(order.getCoinType()), order.getSide().getKorean(), order.getQty(), getRealtimeProfit(action.getCoinType(), order)));
             });
-
         }
     }
 
-    
     /**
      * 
      * @return 현재 오픈중인 코인의 실시간 수익률
@@ -162,12 +184,12 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
     @Override
     public double getRealtimeProfit(CoinEnum coinType, Orderable order) {
         realTimeProfit = 0;
-        //myPosition 에서 현재 close가 0인 coinType을 가진 position 
+        // myPosition 에서 현재 close가 0인 coinType을 가진 position
         myPosition.parallelStream().filter(pred -> {
             return pred.getCoinType().equals(order.getCoinType()) && pred.getSide().equals(order.getSide());
         }).peek(action -> {
-            realTimeProfit = realTimeProfit + ((getCurrentPrice(coinType)/action.getEntryPrice())-1) * 100; 
-            
+            realTimeProfit = realTimeProfit + ((getCurrentPrice(coinType) / action.getEntryPrice()) - 1) * 100;
+
         });
         return realTimeProfit;
     }
@@ -188,11 +210,14 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
         Candle currentCandle = this.getCandleList(coinType, IntervalEnum.ONE).get(0);
         return currentCandle.getClose();
     }
-    
+
     @Override
     public double getWholeProfit() {
-            
         return wholeProfit;
+    }
+
+    public double getWholeThreadProfit() {
+        return wholeThreadProfit;
     }
 
     /**
@@ -217,6 +242,18 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
         currentIndex++;
     }
 
+    /**
+     * 초기환경으로 돌아간 것 처럼 행동.
+     */
+    public void resetAll() {
+        currentIndex = 0;
+        candleListCachedMap.entrySet().parallelStream().forEach(action -> {
+            action.getValue().entrySet().stream().forEach(aaa -> {
+                aaa.getValue().clear();
+            });
+        });
+    }
+
     @Override
     @Deprecated
     public OrderedList getOrderList() {
@@ -236,5 +273,4 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
 
     }
 
-   
 }
