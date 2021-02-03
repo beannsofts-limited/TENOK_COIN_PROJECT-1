@@ -161,7 +161,7 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
     @Override
     public void orderCoin(Orderable order) {
 
-        if (order.getSide().getKorean().equals("매수/오픈") || order.getSide().getKorean().equals("매도/오픈")) {
+        if (order.getSide() == SideEnum.OPEN_BUY || order.getSide() == SideEnum.OPEN_SELL) {
             // 포지션 오픈 arrayList에 등록
 
             Position pos = Position.builder().coinType(order.getCoinType())
