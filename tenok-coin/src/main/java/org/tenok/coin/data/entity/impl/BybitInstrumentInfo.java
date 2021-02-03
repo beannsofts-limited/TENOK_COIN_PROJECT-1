@@ -69,5 +69,5 @@ public class BybitInstrumentInfo implements InstrumentInfo {
     @Override
     public long getLowPrice1hE4() {
         return lowPrice1hE4;
-    }   
+    }
 }

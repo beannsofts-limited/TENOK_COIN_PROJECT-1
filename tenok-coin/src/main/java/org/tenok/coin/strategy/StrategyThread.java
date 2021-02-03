@@ -96,8 +96,9 @@ class StrategyThread implements Runnable {
                         side = SideEnum.CLOSE_BUY;
                     }
 
-                    Orderable order = ActiveOrder.builder().coinType(config.getCoinType()).orderType(OrderTypeEnum.MARKET)
-                        .qty(myPosition.getQty()).side(side).tif(TIFEnum.GTC).build();
+                    Orderable order = ActiveOrder.builder().coinType(config.getCoinType())
+                            .orderType(OrderTypeEnum.MARKET).qty(myPosition.getQty()).side(side).tif(TIFEnum.GTC)
+                            .build();
                     coinDAOInstance.orderCoin(order);
                     strategyInstance.setIsopened(false);
                 }

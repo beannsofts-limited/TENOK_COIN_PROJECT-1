@@ -12,10 +12,12 @@ import org.tenok.coin.data.websocket.WebsocketResponseEnum;
 public class BybitDecoder implements Decoder.Text<JSONObject> {
 
     @Override
-    public void init(EndpointConfig config) { }
+    public void init(EndpointConfig config) {
+    }
 
     @Override
-    public void destroy() { }
+    public void destroy() {
+    }
 
     @Override
     @SuppressWarnings("unchecked")
@@ -42,5 +44,5 @@ public class BybitDecoder implements Decoder.Text<JSONObject> {
     public boolean willDecode(String s) {
         return true;
     }
-    
+
 }

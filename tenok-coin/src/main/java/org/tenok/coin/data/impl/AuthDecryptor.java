@@ -62,7 +62,8 @@ public class AuthDecryptor {
     }
 
     private static class AuthHolder {
-        public static final AuthDecryptor INSTANCE = new AuthDecryptor(new File("./../secret.auth"), new File("./secret.auth"));  // 상대주소 입력
+        public static final AuthDecryptor INSTANCE = new AuthDecryptor(new File("./../secret.auth"),
+                new File("./secret.auth")); // 상대주소 입력
     }
 
     public static AuthDecryptor getInstance() {
@@ -119,6 +120,7 @@ public class AuthDecryptor {
 
     /**
      * API Key 리턴
+     * 
      * @return API Key in String
      */
     public String getApiKey() {
@@ -127,6 +129,7 @@ public class AuthDecryptor {
 
     /**
      * Bybit Signature
+     * 
      * @return Bybit Signature
      */
     public String generate_signature(long expires) {
@@ -135,6 +138,7 @@ public class AuthDecryptor {
 
     /**
      * rest에서 query parameter를 토대로 암호키 생성
+     * 
      * @param param query parameter
      * @return signature
      */
@@ -149,11 +153,12 @@ public class AuthDecryptor {
                 return String.format("%s=%s&", ent.getKey(), ent.getValue());
             }
         }).forEachOrdered(sb::append);
-        return sha256_HMAC(sb.deleteCharAt(sb.length()-1).toString(), getApiSecretKey(pw));
+        return sha256_HMAC(sb.deleteCharAt(sb.length() - 1).toString(), getApiSecretKey(pw));
     }
 
     /**
      * auth 만기일
+     * 
      * @return 현재시간 + 1000 [ms]
      */
     public long generate_expire() {
@@ -162,6 +167,7 @@ public class AuthDecryptor {
 
     /**
      * 비밀번호 로그인 성공 여부 리턴
+     * 
      * @return 로그인 성공여부
      */
     public boolean validate() {
@@ -179,6 +185,7 @@ public class AuthDecryptor {
 
     /**
      * slack webhook 전용 url
+     * 
      * @return slack webhook url in String
      */
     public String getSlackWebhookURL() {

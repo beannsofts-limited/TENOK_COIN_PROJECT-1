@@ -38,7 +38,6 @@ public class BybitRestDAO {
         StringBuilder loadData = getRestApi(request, url);
         JSONObject jsonResponse = stringToJSON((loadData.toString()));
 
-
         return jsonResponse;
 
     }
@@ -83,12 +82,13 @@ public class BybitRestDAO {
         StringBuilder loadData = getRestApi(request, url);
         JSONObject jsonResponse = stringToJSON((loadData.toString()));
         logger.debug("getMyPositionList: My Position 불러오기");
-        
+
         return jsonResponse;
     }
 
     /**
      * Query Symbol
+     * 
      * @param coinType coin Enum
      * @return response json object
      */
@@ -98,19 +98,20 @@ public class BybitRestDAO {
         return stringToJSON(response);
     }
 
-    public JSONObject placeActiveOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum oderType,  double qty, TIFEnum tif) {
+    public JSONObject placeActiveOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum oderType, double qty,
+            TIFEnum tif) {
         Boolean reduceOnly = null;
         switch (side) {
             case OPEN_BUY:
             case OPEN_SELL:
                 reduceOnly = false;
                 break;
-			case CLOSE_BUY:
+            case CLOSE_BUY:
             case CLOSE_SELL:
                 reduceOnly = true;
-				break;
-			default:
-				break;
+                break;
+            default:
+                break;
         }
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
@@ -128,7 +129,7 @@ public class BybitRestDAO {
             url = new URL("https://api.bybit.com/private/linear/order/create");
             StringBuilder loadData = postRestApi(request, url);
             JSONObject jsonResponse = stringToJSON((loadData.toString()));
-       
+
             logger.debug("placeActiveOrder: active order 주문");
             return jsonResponse;
         } catch (MalformedURLException e) {
@@ -136,8 +137,9 @@ public class BybitRestDAO {
         }
         throw new RuntimeException("place active order 실패");
     }
-    
-    public JSONObject placeActiveOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum oderType,  double qty, TIFEnum tif, int leverage) {
+
+    public JSONObject placeActiveOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum oderType, double qty,
+            TIFEnum tif, int leverage) {
         setLeverage(coinType, leverage, leverage);
         return placeActiveOrder(side, coinType, oderType, qty, tif);
     }
@@ -178,7 +180,7 @@ public class BybitRestDAO {
             url = new URL("https://api.bybit.com/private/linear/order/cancel");
             StringBuilder loadData = postRestApi(request, url);
             JSONObject jsonResponse = stringToJSON((loadData.toString()));
-            
+
             logger.debug("cancelActiveOrder: active order 주문 취소");
             return jsonResponse;
         } catch (MalformedURLException e) {
@@ -219,7 +221,7 @@ public class BybitRestDAO {
             url = new URL("https://api.bybit.com/private/linear/order/cancel-all");
             StringBuilder loadData = postRestApi(request, url);
             JSONObject jsonResponse = stringToJSON((loadData.toString()));
-            
+
             logger.debug("cancelAllActiveOrder: 모든 active order 취소");
             return jsonResponse;
         } catch (MalformedURLException e) {
@@ -241,7 +243,7 @@ public class BybitRestDAO {
             url = new URL("https://api.bybit.com/private/linear/stop-order/cancel-all");
             StringBuilder loadData = postRestApi(request, url);
             JSONObject jsonResponse = stringToJSON((loadData.toString()));
-       
+
             logger.debug("cancelAllConditionalOrder: 모든 conditional order 취소");
             return jsonResponse;
         } catch (MalformedURLException e) {
@@ -304,7 +306,7 @@ public class BybitRestDAO {
         // StringBuilder jsonInputString = new StringBuilder("{");
         JSONObject jsonInputObject = new JSONObject(request);
         // request.forEach((k, v) -> {
-        //     jsonInputString.append(String.format("\"%s\":\"%s\",", k, v));
+        // jsonInputString.append(String.format("\"%s\":\"%s\",", k, v));
         // });
         // jsonInputString.deleteCharAt(jsonInputString.length() - 1);
         // jsonInputString.append("}");

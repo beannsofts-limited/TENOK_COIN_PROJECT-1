@@ -7,7 +7,8 @@ import lombok.Getter;
 
 @AllArgsConstructor
 public class StrategyHandler {
-    @Getter private CoinEnum coinType;
+    @Getter
+    private CoinEnum coinType;
     private StrategyThread strategyInstance;
     private Thread strategyThread;
 
@@ -38,20 +39,19 @@ public class StrategyHandler {
     /**
      * 레버리지를 업데이트한다.
      * <ul>
-     *   <li>
-     *   <strong><code>leverage > 0</code></strong>
-     *   <ul>
-     *     <li><em>롱 포지션</em> 전용 strategy</li>
-     *   </ul>
-     *   </li>
-     *   <li>
-     *   <strong><code>leverage < 0</code></strong>
-     *   <ul>
-     *     <li><em>숏 포지션</em> 전용 strategy</li>
-     *   </ul>
-     *   </li>
+     * <li><strong><code>leverage > 0</code></strong>
+     * <ul>
+     * <li><em>롱 포지션</em> 전용 strategy</li>
+     * </ul>
+     * </li>
+     * <li><strong><code>leverage < 0</code></strong>
+     * <ul>
+     * <li><em>숏 포지션</em> 전용 strategy</li>
+     * </ul>
+     * </li>
      * </ul>
      * </br>
+     * 
      * @param leverage 거래 레버리지
      */
     public void updateLeverage(int leverage) {
@@ -64,9 +64,9 @@ public class StrategyHandler {
     /**
      * 해당 strategy가 사용할 수 있는 예수금의 비율을 업데이트한다.
      * <p>
-     *   ex)
-     *   <code>availableRate = 0.5</code> is equal to <code>50%</code>
+     * ex) <code>availableRate = 0.5</code> is equal to <code>50%</code>
      * </p>
+     * 
      * @param availableRate 사용가능한 예수금 비율
      */
     public void updateAvailableRate(double availableRate) {

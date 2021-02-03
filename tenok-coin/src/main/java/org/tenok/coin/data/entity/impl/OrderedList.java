@@ -6,5 +6,5 @@ import org.tenok.coin.data.entity.OrderDataAccessable;
 
 @SuppressWarnings("serial")
 public class OrderedList extends ArrayList<OrderDataAccessable> {
-    
+
 }

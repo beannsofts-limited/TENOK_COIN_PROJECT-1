@@ -4,6 +4,8 @@ import org.tenok.coin.type.CoinEnum;
 
 public interface BacktestOrderable {
     public double getRealtimeProfit(CoinEnum coinType, Orderable order);
+
     public double getWholeProfit();
+
     public void nextSeq();
 }

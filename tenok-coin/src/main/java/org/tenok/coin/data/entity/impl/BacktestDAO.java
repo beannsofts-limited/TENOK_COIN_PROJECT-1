@@ -135,16 +135,16 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
             candleListCachedMap.get(coinType).get(interval)
                     .add(candleListWholeCachedMap.get(coinType).get(interval).get(0));
 
-            if(!candleListCachedMap.get(coinType).containsKey(interval)||!candleListWholeCachedMap.get(coinType).containsKey(interval)){
-                logger.fatal(String.format("getCandleList(%s,%s) : ERROR load CandleList from restAPI", coinType, interval));
+            if (!candleListCachedMap.get(coinType).containsKey(interval)
+                    || !candleListWholeCachedMap.get(coinType).containsKey(interval)) {
+                logger.fatal(
+                        String.format("getCandleList(%s,%s) : ERROR load CandleList from restAPI", coinType, interval));
 
             }
-            logger.debug(String.format("getCandleList(%s,%s) : load CandleList from restAPI", coinType,
-                    interval));
+            logger.debug(String.format("getCandleList(%s,%s) : load CandleList from restAPI", coinType, interval));
             return candleListCachedMap.get(coinType).get(interval);
         } else {
-            logger.debug(String.format("getCandleList(%s,%s) : load CandleList from restAPI", coinType,
-                    interval));
+            logger.debug(String.format("getCandleList(%s,%s) : load CandleList from restAPI", coinType, interval));
             return candleListCachedMap.get(coinType).get(interval);
         }
     }
@@ -154,36 +154,48 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
 
         if (order.getSide().getKorean().equals("매수/오픈") || order.getSide().getKorean().equals("매도/오픈")) {
             // 포지션 오픈 arrayList에 등록
-           
-            Position pos = Position.builder().coinType(order.getCoinType()).
-                                        entryPrice(getCurrentPrice(order.getCoinType())).side(order.getSide()).liqPrice(0)
-                                        .qty(order.getQty()).leverage(1).build();
-            //positionList에 여러코인에 대한 정보를 저장해야하나????
+
+            Position pos = Position.builder().coinType(order.getCoinType())
+                    .entryPrice(getCurrentPrice(order.getCoinType())).side(order.getSide()).liqPrice(0)
+                    .qty(order.getQty()).leverage(1).build();
+            // positionList에 여러코인에 대한 정보를 저장해야하나????
             myPosition.add(pos);
-            wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance()-(order.getQty()*getCurrentPrice(order.getCoinType())));
-            logger.debug(String.format("orderCoin : Open Position(coin: %s, entryPrice: %lf, side: %s, qty: %lf)", pos.getCoinType().getKorean(), pos.getEntryPrice(), pos.getSide().getKorean(), pos.getQty()));
+            wallet.setWalletAvailableBalance(
+                    wallet.getWalletAvailableBalance() - (order.getQty() * getCurrentPrice(order.getCoinType())));
+            logger.debug(String.format("orderCoin : Open Position(coin: %s, entryPrice: %lf, side: %s, qty: %lf)",
+                    pos.getCoinType().getKorean(), pos.getEntryPrice(), pos.getSide().getKorean(), pos.getQty()));
         } else {
             // 포지션 청산 -> close 값 업데이트
 
             myPosition.parallelStream().filter(pred -> {
                 return pred.getCoinType().equals(order.getCoinType()) && pred.getSide().equals(order.getSide());
             }).peek(action -> {
-                double profit = (((getCurrentPrice(order.getCoinType())/action.getEntryPrice())-1)* 100);
-                if(action.getSide() == SideEnum.OPEN_SELL){
+                double profit = (((getCurrentPrice(order.getCoinType()) / action.getEntryPrice()) - 1) * 100);
+                if (action.getSide() == SideEnum.OPEN_SELL) {
                     wholeProfit = wholeProfit - profit;
                     wholeThreadProfit = wholeThreadProfit - profit;
-                    wallet.setWalletBalance(wallet.getWalletBalance() - ((getCurrentPrice(order.getCoinType())*order.getQty())-(action.getEntryPrice()*action.getQty())));
-                    wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance()-((getCurrentPrice(order.getCoinType())*order.getQty())-(action.getEntryPrice()*action.getQty())));
+                    wallet.setWalletBalance(
+                            wallet.getWalletBalance() - ((getCurrentPrice(order.getCoinType()) * order.getQty())
+                                    - (action.getEntryPrice() * action.getQty())));
+                    wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance()
+                            - ((getCurrentPrice(order.getCoinType()) * order.getQty())
+                                    - (action.getEntryPrice() * action.getQty())));
 
-                }else{
+                } else {
                     wholeProfit = wholeProfit + profit;
                     wholeThreadProfit = wholeThreadProfit + profit;
-                    wallet.setWalletBalance(wallet.getWalletBalance() + ((getCurrentPrice(order.getCoinType())*order.getQty())-(action.getEntryPrice()*action.getQty())));
-                    wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance() + ((getCurrentPrice(order.getCoinType())*order.getQty())-(action.getEntryPrice()*action.getQty())));
+                    wallet.setWalletBalance(
+                            wallet.getWalletBalance() + ((getCurrentPrice(order.getCoinType()) * order.getQty())
+                                    - (action.getEntryPrice() * action.getQty())));
+                    wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance()
+                            + ((getCurrentPrice(order.getCoinType()) * order.getQty())
+                                    - (action.getEntryPrice() * action.getQty())));
                 }
-                
-               
-                logger.debug(String.format("orderCoin : Close Position(coin: %s, entryPrice: %lf closePrice: %lf, side: %s, qty: %lf, profit : %lf)", action.getCoinType().getKorean(), action.getEntryPrice(), getCurrentPrice(order.getCoinType()), order.getSide().getKorean(), order.getQty(), getRealtimeProfit(action.getCoinType(), order)));
+
+                logger.debug(String.format(
+                        "orderCoin : Close Position(coin: %s, entryPrice: %lf closePrice: %lf, side: %s, qty: %lf, profit : %lf)",
+                        action.getCoinType().getKorean(), action.getEntryPrice(), getCurrentPrice(order.getCoinType()),
+                        order.getSide().getKorean(), order.getQty(), getRealtimeProfit(action.getCoinType(), order)));
             });
         }
     }

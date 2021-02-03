@@ -31,6 +31,8 @@ public class ActiveOrder implements Orderable {
 
     private Date timeStamp;
 
+    private int leverage;
+
     @Override
     public SideEnum getSide() {
         return side;
@@ -68,8 +70,7 @@ public class ActiveOrder implements Orderable {
 
     @Override
     public int getLeverage() {
-        // TODO Auto-generated method stub
-        return 0;
+        return leverage;
     }
-    
+
 }

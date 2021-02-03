@@ -2,7 +2,6 @@ package org.tenok.coin.data.entity.impl;
 
 import java.util.Date;
 
-
 public class Candle {
     private Date startAt;
     private double volume;
@@ -52,7 +51,7 @@ public class Candle {
     public double getClose() {
         return this.close;
     }
-  
+
     public double getMa5() {
         return this.ma5;
     }

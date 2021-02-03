@@ -14,11 +14,18 @@ import org.tenok.coin.type.IntervalEnum;
  */
 public interface CoinDataAccessable {
     public CandleList getCandleList(CoinEnum coinType, IntervalEnum interval);
+
     public OrderedList getOrderList();
+
     public PositionList getPositionList();
+
     public InstrumentInfo getInstrumentInfo(CoinEnum coinType);
+
     public WalletAccessable getWalletInfo();
+
     public void orderCoin(Orderable order);
+
     public void getPaidLimit(CoinEnum coinType);
+
     public double getCurrentPrice(CoinEnum coinType);
 }

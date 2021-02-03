@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import javax.security.auth.login.LoginException;
 
 import org.tenok.coin.data.impl.BybitDAO;
+
 public class Index {
     public static void main(String[] args) {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -23,11 +24,10 @@ public class Index {
                 System.out.println("retry");
             }
         }
-        
+
         // StrategyRunner strategyRunner = new StrategyRunner(BybitDAO.class);
         // strategyRunner.runStrategy(LongStrategy.class, CoinEnum.BTCUSDT);
         // strategyRunner.runStrategy(ShortStrategy.class, CoinEnum.BTCUSDT);
-
 
         try {
             BybitDAO.getInstance().close();

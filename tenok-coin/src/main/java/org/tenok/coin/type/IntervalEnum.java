@@ -14,7 +14,7 @@ public enum IntervalEnum {
     /**
      * 5
      */
-    FIVE("5", 300 ,5),
+    FIVE("5", 300, 5),
 
     /**
      * 15
@@ -44,12 +44,12 @@ public enum IntervalEnum {
     /**
      * 360
      */
-    THREEHOUNDREDSIXTY("360", 21600 , 360),
+    THREEHOUNDREDSIXTY("360", 21600, 360),
 
     /**
      * D
      */
-    DAY("D", 86400 , 1440),
+    DAY("D", 86400, 1440),
 
     /**
      * W
@@ -86,7 +86,7 @@ public enum IntervalEnum {
     }
 
     public static IntervalEnum valueOfApiString(String literal) {
-        for (var interval: IntervalEnum.values()) {
+        for (var interval : IntervalEnum.values()) {
             if (interval.getApiString().equalsIgnoreCase(literal)) {
                 return interval;
             }

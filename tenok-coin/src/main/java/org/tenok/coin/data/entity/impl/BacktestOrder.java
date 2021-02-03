@@ -10,7 +10,6 @@ import org.tenok.coin.type.TIFEnum;
 
 import lombok.Builder;
 
-
 /**
  * Backtest 할 때. 진입가격, 수익률 등을 기록하기 위한 클래스
  */
@@ -83,5 +82,5 @@ public class BacktestOrder implements OrderDataAccessable {
         // TODO Auto-generated method stub
         return 0;
     }
-    
+
 }
