@@ -1,7 +1,6 @@
 package org.tenok.coin.data.entity.impl;
 
 import java.util.LinkedList;
-import java.util.List;
 
 
 import lombok.Getter;

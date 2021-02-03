@@ -6,13 +6,7 @@ import java.io.InputStreamReader;
 
 import javax.security.auth.login.LoginException;
 
-import org.apache.log4j.Logger;
 import org.tenok.coin.data.impl.BybitDAO;
-import org.tenok.coin.strategy.StrategyRunner;
-import org.tenok.coin.strategy.impl.LongStrategy;
-import org.tenok.coin.strategy.impl.ShortStrategy;
-import org.tenok.coin.type.CoinEnum;
-
 public class Index {
     public static void main(String[] args) {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));

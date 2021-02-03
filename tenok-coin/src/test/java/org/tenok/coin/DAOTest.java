@@ -2,7 +2,6 @@ package org.tenok.coin;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -12,14 +11,12 @@ import javax.swing.plaf.ColorUIResource;
 
 import com.slack.api.webhook.WebhookResponse;
 
-import org.json.simple.JSONObject;
 import org.junit.Test;
 import org.knowm.xchart.OHLCChart;
 import org.knowm.xchart.OHLCChartBuilder;
 import org.knowm.xchart.SwingWrapper;
 import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.impl.ActiveOrder;
-import org.tenok.coin.data.entity.impl.BacktestDAO;
 import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
 import org.tenok.coin.data.impl.BybitDAO;
@@ -46,7 +43,6 @@ public class DAOTest {
     public void candleListTest() throws InterruptedException, LoginException {
         BybitDAO.getInstance().login("tenok2019");
         CandleList candleList = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
-        CandleList candleLidst = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.TWOHUNDREDFORTY);
         assertEquals(candleList.size(), 200);
         
         candleList.stream().forEachOrdered(cl -> {

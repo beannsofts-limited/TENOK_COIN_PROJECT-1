@@ -2,7 +2,6 @@ package org.tenok.coin.data.entity.impl;
 
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -29,7 +28,7 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
     private Map<CoinEnum, Map<IntervalEnum, CandleList>> candleListWholeCachedMap; // 전체 캔들 데이터
     private WalletAccessable wallet = new BybitWalletInfo(1000000, 1000000);
     private long currentIndex = 0;
-    private List<BacktestOrder> orderedList;
+    // private List<BacktestOrder> orderedList;
     private double wholeProfit = 0;
     private double realTimeProfit = 0;
     private BybitRestDAO restDAO = new BybitRestDAO();
