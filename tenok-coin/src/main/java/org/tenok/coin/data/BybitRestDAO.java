@@ -33,8 +33,7 @@ public class BybitRestDAO {
         request.put("interval", interval.getApiString());
         request.put("limit", Integer.toString(limit));
         request.put("from", Long.toString(from.getTime() / 1000L));
-        StringBuilder url = new StringBuilder("https://api.bybit.com/public/linear/kline?");
-        return requestByGet(request, url);
+        return requestByGet(request, "https://api.bybit.com/public/linear/kline?");
 
     }
 
@@ -45,8 +44,7 @@ public class BybitRestDAO {
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
         request.put("symbol", coinType.name());
         request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
-        StringBuilder url = new StringBuilder("https://api.bybit.com/private/linear/order/list?");
-        return requestByGet(request, url);
+        return requestByGet(request, "https://api.bybit.com/private/linear/order/list?");
 
     }
 
@@ -56,8 +54,7 @@ public class BybitRestDAO {
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
         request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
-        StringBuilder url = new StringBuilder("https://api.bybit.com/private/linear/stop-order/list?");
-        return requestByGet(request, url);
+        return requestByGet(request, "https://api.bybit.com/private/linear/stop-order/list?");
 
     }
 
@@ -68,8 +65,7 @@ public class BybitRestDAO {
         request.put("symbol", coinType.name());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
         request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
-        StringBuilder url = new StringBuilder("https://api.bybit.com/private/linear/position/list?");
-        return requestByGet(request, url);
+        return requestByGet(request, "https://api.bybit.com/private/linear/position/list?");
     }
 
     /**
@@ -80,7 +76,7 @@ public class BybitRestDAO {
      */
     public JSONObject getInstrumentInfo(CoinEnum coinType) {
         Map<String, Object> request = new TreeMap<>();
-        return requestByGet(request, new StringBuilder("https://api.bybit.com/v2/public/symbols"));
+        return requestByGet(request, "https://api.bybit.com/v2/public/symbols");
     }
 
     public JSONObject placeActiveOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum oderType, double qty,
@@ -241,15 +237,16 @@ public class BybitRestDAO {
         throw new RuntimeException("leverage setting 실패");
     }
 
-    private JSONObject requestByGet(Map<String, Object> request, StringBuilder url) {
+    private JSONObject requestByGet(Map<String, Object> request, String uri) {
+        StringBuilder urlBuilder = new StringBuilder(uri);
         request.forEach((k, v) -> {
-            url.append(String.format("%s=%s&", k, v));
+            urlBuilder.append(String.format("%s=%s&", k, v));
         });
-        url.deleteCharAt(url.length() - 1);
+        urlBuilder.deleteCharAt(urlBuilder.length() - 1);
 
         HttpsURLConnection conn;
         try {
-            conn = (HttpsURLConnection) new URL(url.toString()).openConnection();
+            conn = (HttpsURLConnection) new URL(urlBuilder.toString()).openConnection();
             conn.setRequestMethod("GET");
             conn.setDoInput(true);
 
