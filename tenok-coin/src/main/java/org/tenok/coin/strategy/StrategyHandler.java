@@ -8,11 +8,31 @@ import lombok.Getter;
 @AllArgsConstructor
 public class StrategyHandler {
     @Getter private CoinEnum coinType;
-    private StrategyThread strategyThread;
+    private StrategyThread strategyInstance;
+    private Thread strategyThread;
 
-    public StrategyHandler(StrategyConfig config, StrategyThread strategyThread) {
+    public StrategyHandler(StrategyConfig config, StrategyThread strategyInstance, Thread strategyThread) {
         this.coinType = config.getCoinType();
+        this.strategyInstance = strategyInstance;
         this.strategyThread = strategyThread;
+    }
+
+    /**
+     * Strarts the Strategy Thread
+     */
+    public void start() {
+        strategyThread.start();
+    }
+
+    /**
+     * Stop the Strategy Thread
+     */
+    public void stop() {
+        strategyThread.interrupt();
+    }
+
+    public boolean isOpened() {
+        return strategyInstance.isOpened();
     }
 
     /**
@@ -38,7 +58,7 @@ public class StrategyHandler {
         if (leverage == 0) {
             throw new IllegalArgumentException("Leverage cannot be 0.");
         }
-        strategyThread.updateLeverage(leverage);
+        strategyInstance.updateLeverage(leverage);
     }
 
     /**
@@ -53,6 +73,6 @@ public class StrategyHandler {
         if (availableRate <= 0.0 || availableRate > 1.0) {
             throw new IllegalArgumentException("available rate must be in range of (0, 1]");
         }
-        strategyThread.updateAvailableRate(availableRate);
+        strategyInstance.updateAvailableRate(availableRate);
     }
 }

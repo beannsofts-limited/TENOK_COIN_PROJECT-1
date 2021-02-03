@@ -30,9 +30,9 @@ public class Index {
             }
         }
         
-        StrategyRunner strategyRunner = new StrategyRunner(BybitDAO.class);
-        strategyRunner.runStrategy(LongStrategy.class, CoinEnum.BTCUSDT);
-        strategyRunner.runStrategy(ShortStrategy.class, CoinEnum.BTCUSDT);
+        // StrategyRunner strategyRunner = new StrategyRunner(BybitDAO.class);
+        // strategyRunner.runStrategy(LongStrategy.class, CoinEnum.BTCUSDT);
+        // strategyRunner.runStrategy(ShortStrategy.class, CoinEnum.BTCUSDT);
 
 
         try {

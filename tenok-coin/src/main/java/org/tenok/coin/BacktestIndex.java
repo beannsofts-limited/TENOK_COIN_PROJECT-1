@@ -24,6 +24,5 @@ public class BacktestIndex {
         Thread.sleep(500000000000L);
         handler.updateLeverage(5);
 
-        runner.stopStrategy(handler);
     }
 }
