@@ -16,6 +16,7 @@ import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
+import org.tenok.coin.type.SideEnum;
 import org.tenok.coin.data.BybitRestDAO;
 
 /**
@@ -167,10 +168,21 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
             myPosition.parallelStream().filter(pred -> {
                 return pred.getCoinType().equals(order.getCoinType()) && pred.getSide().equals(order.getSide());
             }).peek(action -> {
-                wholeProfit = wholeProfit + (((getCurrentPrice(order.getCoinType())/action.getEntryPrice())-1)* 100);
-                wallet.setWalletBalance(wallet.getWalletBalance() + ((getCurrentPrice(order.getCoinType())*order.getQty())-(action.getEntryPrice()*action.getQty())));
-                wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance()+((getCurrentPrice(order.getCoinType())*order.getQty())-(action.getEntryPrice()*action.getQty())));
-                wholeThreadProfit = wholeThreadProfit + (((getCurrentPrice(order.getCoinType())/action.getEntryPrice())-1)* 100);
+                double profit = (((getCurrentPrice(order.getCoinType())/action.getEntryPrice())-1)* 100);
+                if(action.getSide() == SideEnum.OPEN_SELL){
+                    wholeProfit = wholeProfit - profit;
+                    wholeThreadProfit = wholeThreadProfit - profit;
+                    wallet.setWalletBalance(wallet.getWalletBalance() - ((getCurrentPrice(order.getCoinType())*order.getQty())-(action.getEntryPrice()*action.getQty())));
+                    wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance()-((getCurrentPrice(order.getCoinType())*order.getQty())-(action.getEntryPrice()*action.getQty())));
+
+                }else{
+                    wholeProfit = wholeProfit + profit;
+                    wholeThreadProfit = wholeThreadProfit + profit;
+                    wallet.setWalletBalance(wallet.getWalletBalance() + ((getCurrentPrice(order.getCoinType())*order.getQty())-(action.getEntryPrice()*action.getQty())));
+                    wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance() + ((getCurrentPrice(order.getCoinType())*order.getQty())-(action.getEntryPrice()*action.getQty())));
+                }
+                
+               
                 logger.debug(String.format("orderCoin : Close Position(coin: %s, entryPrice: %lf closePrice: %lf, side: %s, qty: %lf, profit : %lf)", action.getCoinType().getKorean(), action.getEntryPrice(), getCurrentPrice(order.getCoinType()), order.getSide().getKorean(), order.getQty(), getRealtimeProfit(action.getCoinType(), order)));
             });
         }
