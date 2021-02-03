@@ -14,6 +14,7 @@ import java.util.TreeMap;
 
 import javax.net.ssl.HttpsURLConnection;
 
+import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -26,6 +27,8 @@ import org.tenok.coin.type.SideEnum;
 import org.tenok.coin.type.TIFEnum;
 
 public class BybitRestDAO {
+    private static Logger logger = Logger.getLogger(BybitRestDAO.class);
+
     public JSONObject requestKline(CoinEnum coinType, IntervalEnum interval, int limit, Date from) {
         Map<String, Object> request = new TreeMap<>();
         request.put("symbol", coinType.name());
@@ -35,7 +38,7 @@ public class BybitRestDAO {
         StringBuilder url = new StringBuilder("https://api.bybit.com/public/linear/kline?");
         StringBuilder loadData = getRestApi(request, url);
         JSONObject jsonResponse = stringToJSON((loadData.toString()));
-        System.out.println("restAPI: 캔들차트 불러오기\n");
+
 
         return jsonResponse;
 
@@ -50,7 +53,8 @@ public class BybitRestDAO {
         StringBuilder url = new StringBuilder("https://api.bybit.com/private/linear/order/list?");
         StringBuilder loadData = getRestApi(request, url);
         JSONObject jsonResponse = stringToJSON((loadData.toString()));
-        System.out.println("restAPI: active Order List 불러오기\n");
+
+        logger.debug("getActiveOrder: active Order List 불러오기");
 
         return jsonResponse;
 
@@ -64,7 +68,7 @@ public class BybitRestDAO {
         StringBuilder url = new StringBuilder("https://api.bybit.com/private/linear/stop-order/list?");
         StringBuilder loadData = getRestApi(request, url);
         JSONObject jsonResponse = stringToJSON((loadData.toString()));
-        System.out.println("restAPI: Conditional Order List 불러오기\n");
+        logger.debug("getConditionalOrder: Conditional Order List 불러오기");
 
         return jsonResponse;
 
@@ -79,8 +83,8 @@ public class BybitRestDAO {
         StringBuilder url = new StringBuilder("https://api.bybit.com/private/linear/position/list?");
         StringBuilder loadData = getRestApi(request, url);
         JSONObject jsonResponse = stringToJSON((loadData.toString()));
-        System.out.println("restAPI: My Position 불러오기\n");
-
+        logger.debug("getMyPositionList: My Position 불러오기");
+        
         return jsonResponse;
     }
 
@@ -125,13 +129,15 @@ public class BybitRestDAO {
             url = new URL("https://api.bybit.com/private/linear/order/create");
             StringBuilder loadData = postRestApi(request, url);
             JSONObject jsonResponse = stringToJSON((loadData.toString()));
-            System.out.println("restAPI: active order 주문\n");
+       
+            logger.debug("placeActiveOrder: active order 주문");
             return jsonResponse;
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
         throw new RuntimeException("place active order 실패");
     }
+    
     public JSONObject placeActiveOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum oderType,  double qty, TIFEnum tif, int leverage) {
         setLeverage(coinType, leverage, leverage);
         return placeActiveOrder(side, coinType, oderType, qty, tif);
@@ -153,7 +159,7 @@ public class BybitRestDAO {
             url = new URL("https://api.bybit.com/private/linear/stop-order/create");
             StringBuilder loadData = postRestApi(request, url);
             JSONObject jsonResponse = stringToJSON((loadData.toString()));
-            System.out.println("restAPI: conditional order 주문\n");
+            logger.debug("placeConditionalOrder: condition order 주문");
             return jsonResponse;
         } catch (MalformedURLException e) {
             e.printStackTrace();
@@ -173,7 +179,8 @@ public class BybitRestDAO {
             url = new URL("https://api.bybit.com/private/linear/order/cancel");
             StringBuilder loadData = postRestApi(request, url);
             JSONObject jsonResponse = stringToJSON((loadData.toString()));
-            System.out.println("restAPI: active order 취소\n");
+            
+            logger.debug("cancelActiveOrder: active order 주문 취소");
             return jsonResponse;
         } catch (MalformedURLException e) {
             e.printStackTrace();
@@ -193,7 +200,7 @@ public class BybitRestDAO {
             url = new URL("https://api.bybit.com/private/linear/stop-order/cancel");
             StringBuilder loadData = postRestApi(request, url);
             JSONObject jsonResponse = stringToJSON((loadData.toString()));
-            System.out.println("restAPI: conditional order 취소\n");
+            logger.debug("cancelConditionalOrder: conditional order 주문 취소");
             return jsonResponse;
         } catch (MalformedURLException e) {
             e.printStackTrace();
@@ -213,7 +220,8 @@ public class BybitRestDAO {
             url = new URL("https://api.bybit.com/private/linear/order/cancel-all");
             StringBuilder loadData = postRestApi(request, url);
             JSONObject jsonResponse = stringToJSON((loadData.toString()));
-            System.out.println("restAPI: 모든 active order 취소\n");
+            
+            logger.debug("cancelAllActiveOrder: 모든 active order 취소");
             return jsonResponse;
         } catch (MalformedURLException e) {
 
@@ -234,7 +242,8 @@ public class BybitRestDAO {
             url = new URL("https://api.bybit.com/private/linear/stop-order/cancel-all");
             StringBuilder loadData = postRestApi(request, url);
             JSONObject jsonResponse = stringToJSON((loadData.toString()));
-            System.out.println("restAPI: 모든 conditional order 취소\n");
+       
+            logger.debug("cancelAllConditionalOrder: 모든 conditional order 취소");
             return jsonResponse;
         } catch (MalformedURLException e) {
             e.printStackTrace();
@@ -254,7 +263,8 @@ public class BybitRestDAO {
             url = new URL("https://api.bybit.com/private/linear/position/set-leverage");
             StringBuilder loadData = postRestApi(request, url);
             JSONObject jsonResponse = stringToJSON((loadData.toString()));
-            System.out.println("restAPI: 레버리지 설정\n");
+
+            logger.debug("setLeverage: 레버리지 설정");
             return jsonResponse;
         } catch (MalformedURLException e) {
 

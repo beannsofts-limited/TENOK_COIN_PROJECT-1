@@ -1,23 +1,31 @@
 package org.tenok.coin.strategy;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
+import org.apache.log4j.Logger;
+
+/**
+ * Strategy Factory
+ */
 public class StrategyRunner {
-    ExecutorService threadPool = Executors.newFixedThreadPool(10);
+    private static Logger logger = Logger.getLogger(StrategyRunner.class);
+
     public StrategyRunner() {
-
     }
 
-    public void init() {
-
-    }
-
-    public void runStrategy(Strategy strategy) {
-
-    }
-
-    public void stopStrategy() {
-
+    /**
+     * Create Strategy Handler
+     * @param config Strategy config
+     * @return Strategy Handler
+     */
+    public StrategyHandler runStrategy(StrategyConfig config) {
+        StrategyThread strategy = new StrategyThread(config.clone());
+        
+        logger.info(
+            String.format("Run Strategy Thread [%s, %s, %s]", config.getCoinDataAccessableClass().getSimpleName(),
+            config.getStrategyClass().getSimpleName(), config.getCoinType().getKorean()));
+            
+            StrategyHandler handler = new StrategyHandler(config, strategy, new Thread(strategy));
+            
+        return handler;
     }
 }
