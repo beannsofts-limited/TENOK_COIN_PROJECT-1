@@ -2,6 +2,10 @@ package org.tenok.coin.data.entity.impl;
 
 import java.util.Date;
 
+import lombok.Setter;
+
+
+@Setter
 public class Candle {
     private Date startAt;
     private double volume;
@@ -26,6 +30,10 @@ public class Candle {
         this.high = high;
         this.low = low;
         this.close = close;
+    }
+
+    public Candle() {
+        
     }
 
     public Date getStartAt() {
@@ -86,42 +94,6 @@ public class Candle {
 
     public boolean isConfirmed() {
         return this.isConfirmed;
-    }
-
-    void setMa5(double ma5) {
-        this.ma5 = ma5;
-    }
-
-    void setMa10(double ma10) {
-        this.ma10 = ma10;
-    }
-
-    void setMa20(double ma20) {
-        this.ma20 = ma20;
-    }
-
-    void setMa60(double ma60) {
-        this.ma60 = ma60;
-    }
-
-    void setMa120(double ma120) {
-        this.ma120 = ma120;
-    }
-
-    void setUpperBB(double upperBB) {
-        this.upperBB = upperBB;
-    }
-
-    void setMiddleBB(double middleBB) {
-        this.middleBB = middleBB;
-    }
-
-    void setLowerBB(double lowerBB) {
-        this.lowerBB = lowerBB;
-    }
-
-    void setConfirmed(boolean isConfirmed) {
-        this.isConfirmed = isConfirmed;
     }
 
     @Override

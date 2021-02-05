@@ -2,7 +2,7 @@ package org.tenok.coin;
 
 import java.io.IOException;
 
-import org.tenok.coin.data.entity.impl.BacktestDAO;
+import org.tenok.coin.data.impl.BacktestDAO;
 import org.tenok.coin.strategy.StrategyConfig;
 import org.tenok.coin.strategy.StrategyHandler;
 import org.tenok.coin.strategy.StrategyRunner;

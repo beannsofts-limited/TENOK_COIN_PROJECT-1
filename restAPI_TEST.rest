@@ -1,4 +1,4 @@
-GET https://api.bybit.com/public/linear/kline
+GET http://api.bybit.com/public/linear/kline
         ?symbol=LINKUSDT
         &interval=15
         &limit=20

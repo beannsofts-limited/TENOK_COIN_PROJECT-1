@@ -1,8 +1,10 @@
 package org.tenok.coin.data;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 
 import java.net.URL;
@@ -244,12 +246,11 @@ public class BybitRestDAO {
         });
         urlBuilder.deleteCharAt(urlBuilder.length() - 1);
 
-        HttpsURLConnection conn;
+        HttpURLConnection conn = null;
         try {
-            conn = (HttpsURLConnection) new URL(urlBuilder.toString()).openConnection();
+            conn = (HttpURLConnection) new URL(urlBuilder.toString()).openConnection();
             conn.setRequestMethod("GET");
             conn.setDoInput(true);
-
             return (JSONObject) new JSONParser().parse(new InputStreamReader(conn.getInputStream()));
         } catch (IOException e1) {
             e1.printStackTrace();

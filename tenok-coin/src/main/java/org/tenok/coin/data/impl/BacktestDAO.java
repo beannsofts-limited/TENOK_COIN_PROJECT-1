@@ -1,8 +1,9 @@
-package org.tenok.coin.data.entity.impl;
+package org.tenok.coin.data.impl;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Stack;
 import java.util.stream.Stream;
 
 import org.apache.log4j.Logger;
@@ -14,6 +15,12 @@ import org.tenok.coin.data.entity.Backtestable;
 import org.tenok.coin.data.entity.InstrumentInfo;
 import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.WalletAccessable;
+import org.tenok.coin.data.entity.impl.BybitWalletInfo;
+import org.tenok.coin.data.entity.impl.Candle;
+import org.tenok.coin.data.entity.impl.CandleList;
+import org.tenok.coin.data.entity.impl.OrderedList;
+import org.tenok.coin.data.entity.impl.Position;
+import org.tenok.coin.data.entity.impl.PositionList;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 import org.tenok.coin.type.SideEnum;
@@ -48,7 +55,6 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
                 candleListWholeCachedMap.get(coinType).put(interval, new CandleList(coinType, interval));
             }
         }
-        
 
     }
 
@@ -72,6 +78,38 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
     @Override
     @SuppressWarnings("unchecked")
     public CandleList getCandleList(CoinEnum coinType, IntervalEnum interval) {
+        if (candleListCachedMap.get(coinType).get(interval).size() == 0) {
+            Date currentDate = new Date();
+
+            int i = 0;
+            Stack<JSONArray> responseStack = new Stack<>();
+            long previousId = 0, currentId = 0;
+            while (true) {
+                JSONObject responseJson = restDAO.requestKline(coinType, interval, 200,
+                        new Date(currentDate.getTime() - (200000L * ((long) i) * interval.getSec() + interval.getSec() * 1000L)));
+                // System.out.println(responseJson);
+
+                JSONObject currentResponse = (JSONObject) responseStack.push((JSONArray) responseJson.get("result")).get(0);
+                currentId = ((long) currentResponse.get("id"));
+                if (previousId == currentId) {
+                    break;
+                } else if (i % 10 == 0) {
+                    logger.debug(String.format("candle list loading epoch %d", i));
+                }
+                previousId = currentId;
+                i++;
+            }
+
+            CandleList wholeCachedList = candleListWholeCachedMap.get(coinType).get(interval);
+
+            responseStack.parallelStream().flatMap(inner -> (Stream<JSONObject>) inner.stream());
+        }
+
+
+
+
+
+
         // loadCandleList(coinType, interval)
         if (!candleListCachedMap.get(coinType).containsKey(interval)
                 || (candleListCachedMap.get(coinType).get(interval).size() == 0)) {
@@ -139,8 +177,7 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
             // assert candleListWholeCachedMap != null;
             finalCandleList.addAll(candleList);
             candleListWholeCachedMap.get(coinType).get(interval).addAll(finalCandleList);
-            
-            
+
             candleListCachedMap.get(coinType).get(interval)
                     .add(candleListWholeCachedMap.get(coinType).get(interval).get(0));
 
@@ -268,7 +305,7 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
                         continue;
                     }
                     candleListCachedMap.get(coinType).get(interval)
-                            .add(candleListWholeCachedMap.get(coinType).get(interval).get((int) currentIndex-1));
+                            .add(candleListWholeCachedMap.get(coinType).get(interval).get((int) currentIndex - 1));
                 }
             }
 

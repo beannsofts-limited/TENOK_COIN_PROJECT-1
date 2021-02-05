@@ -8,19 +8,23 @@ import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @SuppressWarnings("serial")
 public class CandleList extends Stack<Candle> implements RealtimeAccessable {
-    private CoinEnum coinType = null;
-    private IntervalEnum interval = null;
+    private CoinEnum coinType;
+    private IntervalEnum interval;
 
-    private Candle currentCandle = null;
+    private Candle currentCandle;
 
     public CandleList(CoinEnum coinType, IntervalEnum interval) {
         super();
         this.coinType = coinType;
         this.interval = interval;
+    }
+    public CandleList() {
+
     }
 
     /**
