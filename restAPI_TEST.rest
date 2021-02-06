@@ -2,4 +2,4 @@ GET http://api.bybit.com/public/linear/kline
         ?symbol=LINKUSDT
         &interval=15
         &limit=20
-        &from=1611187200
+        &from=1611186300

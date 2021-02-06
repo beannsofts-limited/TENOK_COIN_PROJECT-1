@@ -6,11 +6,17 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpClient.Redirect;
 import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -37,6 +43,31 @@ public class BybitRestDAO {
         request.put("from", Long.toString(from.getTime() / 1000L));
         return requestByGet(request, "https://api.bybit.com/public/linear/kline?");
 
+    }
+
+    public CompletableFuture<HttpResponse<String>> requestKlineHttp2(CoinEnum coinType, IntervalEnum interval, int limit, Date from) {
+        Map<String, Object> request = new TreeMap<>();
+        request.put("symbol", coinType.name());
+        request.put("interval", interval.getApiString());
+        request.put("limit", Integer.toString(limit));
+        request.put("from", Long.toString(from.getTime() / 1000L));
+        StringBuilder requestParam = new StringBuilder();
+        request.entrySet().stream().forEachOrdered(requestSet -> {
+            requestParam.append(String.format("%s=%s&", requestSet.getKey(), (String) requestSet.getValue()));
+        });
+        requestParam.deleteCharAt(requestParam.length()-1);
+        try {
+            HttpClient client = HttpClient.newBuilder().followRedirects(Redirect.ALWAYS).build();
+            HttpRequest httpRequest = HttpRequest
+                    .newBuilder(new URI(
+                            String.format("http://api.bybit.com/public/linear/kline?%s", requestParam.toString())))
+                    .GET().build();
+
+            return client.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString());
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        throw new RuntimeException();
     }
 
     public JSONObject getActiveOrder(CoinEnum coinType) {
