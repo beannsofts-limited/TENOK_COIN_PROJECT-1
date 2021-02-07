@@ -1,14 +1,10 @@
 package org.tenok.coin.data.impl;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Stack;
-import java.util.stream.Stream;
+
 
 import org.apache.log4j.Logger;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.tenok.coin.data.CoinDataAccessable;
 import org.tenok.coin.data.entity.BacktestOrderable;
 import org.tenok.coin.data.entity.Backtestable;
@@ -24,7 +20,7 @@ import org.tenok.coin.data.entity.impl.PositionList;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 import org.tenok.coin.type.SideEnum;
-import org.tenok.coin.data.BybitRestDAO;
+import org.tenok.coin.util.CoinMapper;
 
 /**
  * this class aint thread safe
@@ -39,7 +35,6 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
     // private List<BacktestOrder> orderedList;
     private double wholeProfit = 0;
     private double realTimeProfit = 0;
-    private BybitRestDAO restDAO = new BybitRestDAO();
 
     private static double wholeThreadProfit = 0.0;
 
@@ -69,130 +64,12 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
         return BacktestLazyLoader.INSTANCE.get(thread);
     }
 
-    /**
-     * 
-     * 
-     * @return candleList
-     * 
-     */
     @Override
-    @SuppressWarnings("unchecked")
     public CandleList getCandleList(CoinEnum coinType, IntervalEnum interval) {
         if (candleListCachedMap.get(coinType).get(interval).size() == 0) {
-            Date currentDate = new Date();
-
-            int i = 0;
-            Stack<JSONArray> responseStack = new Stack<>();
-            long previousId = 0, currentId = 0;
-            while (true) {
-                JSONObject responseJson = restDAO.requestKline(coinType, interval, 200,
-                        new Date(currentDate.getTime() - (200000L * ((long) i) * interval.getSec() + interval.getSec() * 1000L)));
-                // System.out.println(responseJson);
-
-                JSONObject currentResponse = (JSONObject) responseStack.push((JSONArray) responseJson.get("result")).get(0);
-                currentId = ((long) currentResponse.get("id"));
-                if (previousId == currentId) {
-                    break;
-                } else if (i % 10 == 0) {
-                    logger.debug(String.format("candle list loading epoch %d", i));
-                }
-                previousId = currentId;
-                i++;
-            }
-
-            CandleList wholeCachedList = candleListWholeCachedMap.get(coinType).get(interval);
-
-            responseStack.parallelStream().flatMap(inner -> (Stream<JSONObject>) inner.stream());
+            candleListCachedMap.get(coinType).put(interval, CoinMapper.getInstance().getWholeCandleList(coinType, interval));
         }
-
-
-
-
-
-
-        // loadCandleList(coinType, interval)
-        if (!candleListCachedMap.get(coinType).containsKey(interval)
-                || (candleListCachedMap.get(coinType).get(interval).size() == 0)) {
-            // 캐시 되어 있지 않은 경우.
-            // json 파일에 불러오기\
-            long intervalSec = interval.getSec();
-            CandleList finalCandleList = new CandleList(coinType, interval);
-            CandleList tempCandleList;
-            Date prevFrom = null;
-            JSONObject firstCandleObject = restDAO.requestKline(coinType, interval, 200,
-                    new Date(System.currentTimeMillis() - intervalSec * 200000L));
-            JSONArray kLineArray = (JSONArray) firstCandleObject.get("result");
-            CandleList candleList = new CandleList(coinType, interval);
-            Stream<JSONObject> map = kLineArray.stream().map((kLineObject) -> {
-                return (JSONObject) kLineObject;
-            });
-            map.forEachOrdered((JSONObject kLineObject) -> {
-                double open = ((Number) kLineObject.get("open")).doubleValue();
-                double high = ((Number) kLineObject.get("high")).doubleValue();
-                double low = ((Number) kLineObject.get("low")).doubleValue();
-                double close = ((Number) kLineObject.get("close")).doubleValue();
-                double volume = ((Number) kLineObject.get("volume")).doubleValue();
-                Date startAt = new Date(((long) kLineObject.get("start_at")) * 1000L);
-                Candle candle = (new Candle(startAt, volume, open, high, low, close));
-                candleList.registerNewCandle(candle);
-            });
-            Date from = candleList.get(0).getStartAt();
-
-            while (true) {
-
-                JSONObject updateCandleObject = restDAO.requestKline(coinType, interval, 200,
-                        new Date(from.getTime() - intervalSec * 200000L));
-                kLineArray = (JSONArray) updateCandleObject.get("result");
-                CandleList updateCandleList = new CandleList(coinType, interval);
-
-                map = kLineArray.stream().map((kLineObject) -> {
-                    return (JSONObject) kLineObject;
-                });
-                map.forEachOrdered((JSONObject kLineObject) -> {
-                    double open = ((Number) kLineObject.get("open")).doubleValue();
-                    double high = ((Number) kLineObject.get("high")).doubleValue();
-                    double low = ((Number) kLineObject.get("low")).doubleValue();
-                    double close = ((Number) kLineObject.get("close")).doubleValue();
-                    double volume = ((Number) kLineObject.get("volume")).doubleValue();
-                    Date startAt = new Date(((long) kLineObject.get("start_at")) * 1000L);
-                    Candle candle = (new Candle(startAt, volume, open, high, low, close));
-                    updateCandleList.registerNewCandle(candle);
-                });
-
-                // updateCandleList.addAll(candleList);
-                from = updateCandleList.get(0).getStartAt();
-
-                if (from.equals(prevFrom)) {
-                    break;
-
-                }
-                prevFrom = from;
-                tempCandleList = finalCandleList;
-                updateCandleList.addAll(tempCandleList);
-                finalCandleList = updateCandleList;
-                System.out.println("loading");
-            }
-
-            // assert candleListCachedMap != null;
-            // assert candleListWholeCachedMap != null;
-            finalCandleList.addAll(candleList);
-            candleListWholeCachedMap.get(coinType).get(interval).addAll(finalCandleList);
-
-            candleListCachedMap.get(coinType).get(interval)
-                    .add(candleListWholeCachedMap.get(coinType).get(interval).get(0));
-
-            if (!candleListCachedMap.get(coinType).containsKey(interval)
-                    || !candleListWholeCachedMap.get(coinType).containsKey(interval)) {
-                logger.fatal(
-                        String.format("getCandleList(%s,%s) : ERROR load CandleList from restAPI", coinType, interval));
-
-            }
-            logger.debug(String.format("getCandleList(%s,%s) : load CandleList from restAPI", coinType, interval));
-            return candleListCachedMap.get(coinType).get(interval);
-        } else {
-            logger.debug(String.format("getCandleList(%s,%s) : load CandleList from restAPI", coinType, interval));
-            return candleListCachedMap.get(coinType).get(interval);
-        }
+        return candleListCachedMap.get(coinType).get(interval);
     }
 
     @Override
