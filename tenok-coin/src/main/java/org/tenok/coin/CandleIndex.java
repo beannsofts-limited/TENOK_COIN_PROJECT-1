@@ -25,8 +25,13 @@ import org.tenok.coin.type.IntervalEnum;
 
 import lombok.extern.log4j.Log4j;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.net.http.HttpResponse;
 
 @Log4j
@@ -41,7 +46,6 @@ public class CandleIndex {
                 cacheKLine(coinType, interval);
             }
         }
-        // cacheKLine(CoinEnum.BTCUSDT, IntervalEnum.THREE);
     }
 
     public static void cacheKLine(CoinEnum coinType, IntervalEnum interval)
@@ -55,13 +59,8 @@ public class CandleIndex {
         log.info(String.format("size of Loaded list: %d", tempCandleList.size()));
 
         // 중복된 캔들 리스트 삭제
-        removeDuplicatCandle(tempCandleList);
+        removeDuplicateCandle(tempCandleList);
         log.info(String.format("removed duplicate candles. size is %d", tempCandleList.size()));
-
-        // data loss 검증 및 data loss 메꿔질 때 까지 반복
-        while (checkDataLossParallel(tempCandleList, coinType, interval) != 0) {
-        }
-        log.info(String.format("data loss check complete. size is %d", tempCandleList.size()));
 
         // CandleList 객체 생성하여, register한다.
         CandleList candleList = new CandleList(coinType, interval);
@@ -141,128 +140,11 @@ public class CandleIndex {
     }
 
     /**
-     * Candle List 중에서 loss 된 데이터가 있는지 확인. 만약 loss 된 데이터가 있다면 메꿈.
-     * 
-     * @param candleList 데이터 loss 검증 대상
-     * @param coinType   코인 종류
-     * @param interval   봉 간격
-     * @return 데이터 loss 개수
-     */
-    public static int checkDataLoss(List<Candle> candleList, CoinEnum coinType, IntervalEnum interval) {
-        List<Long> dataLossList = new ArrayList<>();
-        candleList.sort((candle1, candle2) -> {
-            return candle1.getStartAt().compareTo(candle2.getStartAt());
-        });
-        long listSize = (candleList.get(candleList.size() - 1).getStartAt().getTime()
-                - candleList.get(0).getStartAt().getTime()) / ((long) interval.getSec() * 1000);
-        long baseTime = candleList.get(0).getStartAt().getTime();
-        int index = -1;
-        List<Candle> temp = new ArrayList<>();
-        for (Candle candleTemp : candleList) {
-            index++;
-            while (candleTemp.getStartAt().getTime() != baseTime + interval.getSec() * ((long) index) * 1000L) {
-                dataLossList.add(baseTime + interval.getSec() * ((long) index) * 1000L);
-                temp.add(requestCandle(coinType, interval,
-                        new Date(baseTime + interval.getSec() * ((long) index) * 1000L)));
-
-                if (index % 10 == 0) {
-                    log.info(String.format("loss list loading %.2f%%", (index / (double) listSize * 100)));
-                }
-                if (baseTime + interval.getSec() * ((long) index) * 1000L > System.currentTimeMillis()) {
-                    throw new RuntimeException("se");
-                }
-                index++;
-            }
-        }
-        candleList.addAll(temp);
-        candleList.sort((candle1, candle2) -> {
-            return candle1.getStartAt().compareTo(candle2.getStartAt());
-        });
-        log.info(String.format("loss data: %d", dataLossList.size()));
-        return dataLossList.size();
-    }
-
-    /**
-     * Candle List 중에서 loss 된 데이터가 있는지 확인. 만약 loss 된 데이터가 있다면 메꿈.
-     * 
-     * @param candleList 데이터 loss 검증 대상
-     * @param coinType   코인 종류
-     * @param interval   봉 간격
-     * @return 데이터 loss 개수
-     * @throws ParseException
-     */
-    public static int checkDataLossParallel(List<Candle> candleList, CoinEnum coinType, IntervalEnum interval)
-            throws ParseException {
-        int dataLossCount = 0;
-        candleList.sort((candle1, candle2) -> {
-            return candle1.getStartAt().compareTo(candle2.getStartAt());
-        });
-        // 총 candleList의 사이즈
-        long listSize = (candleList.get(candleList.size() - 1).getStartAt().getTime()
-                - candleList.get(0).getStartAt().getTime()) / ((long) interval.getSec() * 1000);
-        // 0번째 캔들의 start at
-        long baseTime = candleList.get(0).getStartAt().getTime();
-        int index = -1;
-        List<CompletableFuture<HttpResponse<String>>> temp = new LinkedList<>();
-        List<Candle> candleTempList = new ArrayList<>();
-        for (Candle candleTemp : candleList) {
-            index++;
-            while (candleTemp.getStartAt().getTime() != baseTime + interval.getSec() * ((long) index) * 1000L) {
-                dataLossCount++;
-                temp.add(requestCandleParallel(coinType, interval,
-                        new Date(baseTime + interval.getSec() * ((long) index) * 1000L)));
-
-                if (index % 100 == 0) {
-                    log.info(String.format("loss list loading %.2f%%", (index / (double) listSize * 100)));
-                }
-                if (index % 1000 == 0) {
-                    for(var future : temp) {
-                        JSONObject jsonObj = (JSONObject) new JSONParser().parse(future.join().body());
-                        JSONArray resArr = (JSONArray) jsonObj.get("result");
-                        JSONObject kLineObject = (JSONObject) resArr.get(0);
-                        double open = ((Number) kLineObject.get("open")).doubleValue();
-                        double high = ((Number) kLineObject.get("high")).doubleValue();
-                        double low = ((Number) kLineObject.get("low")).doubleValue();
-                        double close = ((Number) kLineObject.get("close")).doubleValue();
-                        double volume = ((Number) kLineObject.get("volume")).doubleValue();
-                        Date startAt = new Date(((long) kLineObject.get("start_at")) * 1000L);
-                        candleTempList.add(new Candle(startAt, volume, open, high, low, close));
-                    }
-                    temp.clear();
-                }
-                if (baseTime + interval.getSec() * ((long) index) * 1000L > System.currentTimeMillis()) {
-                    throw new RuntimeException("se");
-                }
-                index++;
-            }
-        }
-        for(var future : temp) {
-            JSONObject jsonObj = (JSONObject) new JSONParser().parse(future.join().body());
-            JSONArray resArr = (JSONArray) jsonObj.get("result");
-            JSONObject kLineObject = (JSONObject) resArr.get(0);
-            double open = ((Number) kLineObject.get("open")).doubleValue();
-            double high = ((Number) kLineObject.get("high")).doubleValue();
-            double low = ((Number) kLineObject.get("low")).doubleValue();
-            double close = ((Number) kLineObject.get("close")).doubleValue();
-            double volume = ((Number) kLineObject.get("volume")).doubleValue();
-            Date startAt = new Date(((long) kLineObject.get("start_at")) * 1000L);
-            candleTempList.add(new Candle(startAt, volume, open, high, low, close));
-        }
-
-        candleList.addAll(candleTempList);
-        candleList.sort((candle1, candle2) -> {
-            return candle1.getStartAt().compareTo(candle2.getStartAt());
-        });
-        log.info(String.format("loss data: %d", dataLossCount));
-        return dataLossCount;
-    }
-
-    /**
      * cache 과정에서 중복된 캔들 리스트를 삭제.
      * 
      * @param candleList 캔들 리스트
      */
-    public static void removeDuplicatCandle(List<Candle> candleList) {
+    public static void removeDuplicateCandle(List<Candle> candleList) {
         candleList.sort((candle1, candle2) -> {
             return (-1) * candle1.getStartAt().compareTo(candle2.getStartAt());
         });
@@ -287,30 +169,29 @@ public class CandleIndex {
         });
     }
 
-    @SuppressWarnings("unchecked")
     public static void updateCandle(CoinEnum coinType, IntervalEnum interval)
             throws JsonParseException, JsonMappingException, IOException {
 
-        CandleList list = new ObjectMapper().readValue(new File("./candle_cached_final/bitcoin/15.json"),
+        CandleList list = new ObjectMapper().readValue(new File("./candle_cached/bitcoin/1.json"),
                 CandleList.class);
         Candle latestCandle = list.get(list.size() - 1);
 
         Date latestDate = latestCandle.getStartAt();
-        Date currentDate = new Date();
+        
+        Candle pivotCandle = findPivotCandle(coinType, interval);
         int i = 0;
         boolean outFlag = true;
 
-        Stack<JSONObject> responseStack = new Stack<>();
+        List<JSONObject> responseList = new ArrayList<>();
 
         while (outFlag) {
             JSONObject response = restDAO.requestKline(coinType, interval, 200, new Date(
-                    currentDate.getTime() - (200000L * ((long) i) * interval.getSec() + interval.getSec() * 1000L)));
+                pivotCandle.getStartAt().getTime() - (200000L * ((long) i) * interval.getSec() + interval.getSec() * 1000L)));
             JSONArray responseArray = (JSONArray) response.get("result");
-            responseStack.push(response);
+            responseList.add(response);
 
             for (Object object : responseArray) {
                 JSONObject kLine = (JSONObject) object;
-                System.out.printf("%d %d\n", (long) kLine.get("start_at"), latestDate.getTime() / 1000L);
                 if (((long) kLine.get("start_at")) == latestDate.getTime() / 1000L) {
                     System.out.println("hi");
                     outFlag = false;

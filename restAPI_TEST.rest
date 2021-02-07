@@ -1,5 +1,5 @@
 GET http://api.bybit.com/public/linear/kline
-        ?symbol=LINKUSDT
-        &interval=15
-        &limit=20
-        &from=1611186300
+        ?symbol=ETHUSDT
+        &interval=1
+        &limit=3
+        &from=1585118245

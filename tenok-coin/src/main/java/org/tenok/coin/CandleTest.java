@@ -20,7 +20,7 @@ public class CandleTest {
 
     @SuppressWarnings("unchecked")
     public static void main(String[] args) {
-        System.out.println(findPivotCandle(CoinEnum.BTCUSDT, IntervalEnum.ONE));
+        System.out.println(findPivotCandle(CoinEnum.BTCUSDT, IntervalEnum.ONE).getStartAt().getTime());
     }
 
     public static long findPivotTime(JSONObject response) {
