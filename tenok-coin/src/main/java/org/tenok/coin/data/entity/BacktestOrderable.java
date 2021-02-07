@@ -7,5 +7,5 @@ public interface BacktestOrderable {
 
     public double getWholeProfit();
 
-    public boolean nextSeq();
+    public boolean nextSeq(CoinEnum coinType);
 }

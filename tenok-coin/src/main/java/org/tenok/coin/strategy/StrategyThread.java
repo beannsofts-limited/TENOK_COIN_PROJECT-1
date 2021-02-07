@@ -1,7 +1,5 @@
 package org.tenok.coin.strategy;
 
-import java.lang.reflect.InvocationTargetException;
-
 import org.tenok.coin.data.CoinDataAccessable;
 import org.tenok.coin.data.entity.BacktestOrderable;
 import org.tenok.coin.data.entity.Backtestable;
@@ -30,7 +28,7 @@ class StrategyThread implements Runnable {
             if (Backtestable.class.isAssignableFrom(config.getCoinDataAccessableClass())) {
                 // backtestable 클래스 일 경우 Runnable 객체 집어넣고 getInstance 호출
                 coinDAOInstance = (CoinDataAccessable) config.getCoinDataAccessableClass()
-                        .getDeclaredMethod("getInstance", new Class<?>[] { Runnable.class })
+                        .getDeclaredMethod("getInstance", Runnable.class)
                         .invoke((Object) null, this);
                 log.info("get instance from Backtestable DAO Object");
             } else {
@@ -41,18 +39,9 @@ class StrategyThread implements Runnable {
             strategyInstance = config.getStrategyClass().getDeclaredConstructor(CoinDataAccessable.class, CoinEnum.class)
                     .newInstance(coinDAOInstance, config.getCoinType());
             this.config = config;
-        } catch (IllegalAccessException e) {
+        } catch(Exception e) {
             e.printStackTrace();
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (SecurityException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
 
         wallet = coinDAOInstance.getWalletInfo();
@@ -107,7 +96,7 @@ class StrategyThread implements Runnable {
 
             if (coinDAOInstance instanceof BacktestOrderable) {
                 // Next seq 호출하여 다음 시간으로 이동
-                boolean isEnd = ((BacktestOrderable) coinDAOInstance).nextSeq();
+                boolean isEnd = ((BacktestOrderable) coinDAOInstance).nextSeq(config.getCoinType());
                 if (isEnd) {
                     log.info("Backtest exceed");
                     break;

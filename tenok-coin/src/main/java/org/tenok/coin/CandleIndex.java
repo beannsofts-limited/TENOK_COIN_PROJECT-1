@@ -2,85 +2,88 @@ package org.tenok.coin;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Stack;
+import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.tenok.coin.data.BybitRestDAO;
 import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 
-import lombok.extern.log4j.Log4j;
-
-import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.net.http.HttpResponse;
 
-@Log4j
 public class CandleIndex {
     static BybitRestDAO restDAO = new BybitRestDAO();
-    static final String rootPath = "./candle_cached";
+    static final String ROOT_PATH = "./candle_cached";
 
-    public static void main(String[] args)
-            throws JsonGenerationException, JsonMappingException, InterruptedException, IOException, ParseException {
+    public static void main(String[] args) throws IOException {
+
+        System.out.println("candleCache!\n1. cache All");
+        int i = 2;
         for (var coinType : CoinEnum.values()) {
+            System.out.printf("%d. cache %s", i++, coinType.name());
+        }
+
+        Scanner scan = new Scanner(System.in);
+        CoinEnum selectedCoin = null;
+        int selected = scan.nextInt();
+        if (selected == 1) {
+            for (var coinType : CoinEnum.values()) {
+                for (var interval : IntervalEnum.values()) {
+                    cacheKLine(coinType, interval);
+                }
+            }
+        } else {
+            selectedCoin = CoinEnum.values()[2 + selected];
             for (var interval : IntervalEnum.values()) {
-                cacheKLine(coinType, interval);
+                cacheKLine(selectedCoin, interval);
             }
         }
+        scan.close();
+
     }
 
-    public static void cacheKLine(CoinEnum coinType, IntervalEnum interval)
-            throws InterruptedException, JsonGenerationException, JsonMappingException, IOException, ParseException {
-        log.info(String.format("start cache %s %s", coinType.getLiteral(), interval.getApiString()));
-        new File(rootPath + "/" + coinType.getLiteral() + "/").mkdirs();
-        new File(rootPath + "/" + coinType.getLiteral() + "/" + interval.getApiString() + ".json").createNewFile();
+    public static void cacheKLine(CoinEnum coinType, IntervalEnum interval) throws IOException {
+        System.out.printf("start cache %s %s%n", coinType.getLiteral(), interval.getApiString());
+        new File(ROOT_PATH + "/" + coinType.getLiteral() + "/").mkdirs();
+        new File(ROOT_PATH + "/" + coinType.getLiteral() + "/" + interval.getApiString() + ".json").createNewFile();
 
         // Bybit 서버로 부터 전체 캔들 받아옴.
         List<Candle> tempCandleList = requestAllCandleList(coinType, interval);
-        log.info(String.format("size of Loaded list: %d", tempCandleList.size()));
+        System.out.printf("size of Loaded list: %d%n", tempCandleList.size());
 
         // 중복된 캔들 리스트 삭제
         removeDuplicateCandle(tempCandleList);
-        log.info(String.format("removed duplicate candles. size is %d", tempCandleList.size()));
+        System.out.printf("removed duplicate candles. size is %d%n", tempCandleList.size());
 
         // CandleList 객체 생성하여, register한다.
         CandleList candleList = new CandleList(coinType, interval);
-        tempCandleList.stream().forEachOrdered(candle -> {
-            candleList.registerNewCandle(candle);
-        });
+        tempCandleList.stream().forEachOrdered(candle -> candleList.registerNewCandle(candle));
 
         candleList.sort((candle1, candle2) -> {
             return candle1.getStartAt().compareTo(candle2.getStartAt());
         });
-        log.info(String.format("Final size of candle list: %d", candleList.size()));
+        System.out.printf("Final size of candle list: %d%n", candleList.size());
 
         ObjectMapper mapper = new ObjectMapper();
 
-        mapper.writeValue(new File(rootPath + "/" + coinType.getLiteral() + "/" + interval.getApiString() + ".json"),
+        mapper.writeValue(new File(ROOT_PATH + "/" + coinType.getLiteral() + "/" + interval.getApiString() + ".json"),
                 candleList);
 
-        log.info(String.format("Successfully cached candle List. size is %dkb",
-                new File(rootPath + "/" + coinType.getLiteral() + "/" + interval.getApiString() + ".json").length()
-                        / 1024L));
+        System.out.printf("Successfully cached candle List. size is %dMB%n",
+                new File(ROOT_PATH + "/" + coinType.getLiteral() + "/" + interval.getApiString() + ".json").length()
+                        / 1024L / 1024L);
     }
 
     /**
@@ -97,7 +100,8 @@ public class CandleIndex {
         List<JSONArray> responseList = new ArrayList<>();
 
         int requestIter = 1;
-        long previousId = 0, currentId = 0;
+        long previousId = 0;
+        long currentId = 0;
         while (true) {
             JSONObject responseJson = null;
             responseJson = restDAO.requestKline(coinType, interval, 200,
@@ -110,12 +114,12 @@ public class CandleIndex {
             if (previousId == currentId) {
                 break;
             } else if (requestIter % 10 == 0) {
-                log.info(String.format("candle list loading epoch %d", requestIter));
+                System.out.printf(String.format("\rcandle list loading epoch %d", requestIter));
             }
             previousId = currentId;
             requestIter++;
         }
-        log.info("loading complete");
+        System.out.println("loading complete");
         List<Candle> tempCandleList = new ArrayList<>();
 
         responseList.stream().flatMap(inner -> {
@@ -131,7 +135,7 @@ public class CandleIndex {
         });
         tempCandleList.add(pivotCandle);
 
-        log.info("parse success");
+        System.out.println("parse success");
         tempCandleList.sort((candle1, candle2) -> {
             return candle1.getStartAt().compareTo(candle2.getStartAt());
         });
@@ -172,12 +176,11 @@ public class CandleIndex {
     public static void updateCandle(CoinEnum coinType, IntervalEnum interval)
             throws JsonParseException, JsonMappingException, IOException {
 
-        CandleList list = new ObjectMapper().readValue(new File("./candle_cached/bitcoin/1.json"),
-                CandleList.class);
+        CandleList list = new ObjectMapper().readValue(new File("./candle_cached/bitcoin/1.json"), CandleList.class);
         Candle latestCandle = list.get(list.size() - 1);
 
         Date latestDate = latestCandle.getStartAt();
-        
+
         Candle pivotCandle = findPivotCandle(coinType, interval);
         int i = 0;
         boolean outFlag = true;
@@ -185,8 +188,9 @@ public class CandleIndex {
         List<JSONObject> responseList = new ArrayList<>();
 
         while (outFlag) {
-            JSONObject response = restDAO.requestKline(coinType, interval, 200, new Date(
-                pivotCandle.getStartAt().getTime() - (200000L * ((long) i) * interval.getSec() + interval.getSec() * 1000L)));
+            JSONObject response = restDAO.requestKline(coinType, interval, 200,
+                    new Date(pivotCandle.getStartAt().getTime()
+                            - (200000L * ((long) i) * interval.getSec() + interval.getSec() * 1000L)));
             JSONArray responseArray = (JSONArray) response.get("result");
             responseList.add(response);
 

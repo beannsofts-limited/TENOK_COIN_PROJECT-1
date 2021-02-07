@@ -1,8 +1,8 @@
 package org.tenok.coin.data.impl;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
-
 
 import org.apache.log4j.Logger;
 import org.tenok.coin.data.CoinDataAccessable;
@@ -31,20 +31,23 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
     private Map<CoinEnum, Map<IntervalEnum, CandleList>> candleListCachedMap; // 실시간 처럼 보이는 기만용 캔들
     private Map<CoinEnum, Map<IntervalEnum, CandleList>> candleListWholeCachedMap; // 전체 캔들 데이터
     private WalletAccessable wallet = new BybitWalletInfo(1000000, 1000000);
-    private long currentIndex = 0;
-    // private List<BacktestOrder> orderedList;
+
+    /**
+     * 현재 시간을 표현한다. 정수 1 하나가 1분을 의미.
+     */
+    private int currentIndex = 0;
     private double wholeProfit = 0;
     private double realTimeProfit = 0;
 
     private static double wholeThreadProfit = 0.0;
 
     private BacktestDAO() {
-        candleListCachedMap = new HashMap<>();
-        candleListWholeCachedMap = new HashMap<>();
+        candleListCachedMap = new EnumMap<>(CoinEnum.class);
+        candleListWholeCachedMap = new EnumMap<>(CoinEnum.class);
 
         for (var coinType : CoinEnum.values()) {
-            candleListCachedMap.put(coinType, new HashMap<>());
-            candleListWholeCachedMap.put(coinType, new HashMap<>());
+            candleListCachedMap.put(coinType, new EnumMap<>(IntervalEnum.class));
+            candleListWholeCachedMap.put(coinType, new EnumMap<>(IntervalEnum.class));
             for (var interval : IntervalEnum.values()) {
                 candleListCachedMap.get(coinType).put(interval, new CandleList(coinType, interval));
                 candleListWholeCachedMap.get(coinType).put(interval, new CandleList(coinType, interval));
@@ -54,26 +57,37 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
     }
 
     private static class BacktestLazyLoader {
-        public static final Map<Runnable, BacktestDAO> INSTANCE = new HashMap<>();
+        protected static final Map<Runnable, BacktestDAO> INSTANCE = new HashMap<>();
     }
 
     public static BacktestDAO getInstance(Runnable thread) {
-        if (!BacktestLazyLoader.INSTANCE.containsKey(thread)) {
-            BacktestLazyLoader.INSTANCE.put(thread, new BacktestDAO());
-        }
-        return BacktestLazyLoader.INSTANCE.get(thread);
+        return BacktestLazyLoader.INSTANCE.computeIfAbsent(thread, k -> new BacktestDAO());
     }
 
     @Override
     public CandleList getCandleList(CoinEnum coinType, IntervalEnum interval) {
-        if (candleListCachedMap.get(coinType).get(interval).size() == 0) {
-            candleListCachedMap.get(coinType).put(interval, CoinMapper.getInstance().getWholeCandleList(coinType, interval));
+        if (candleListCachedMap.get(coinType).get(interval).isEmpty()) {
+            // 전체 캔들리스트를 먼저 불러온다.
+            candleListWholeCachedMap.get(coinType).get(interval)
+                    .addAll(CoinMapper.getInstance().getWholeCandleList(coinType, interval));
+
+            if (currentIndex == 0L) {
+                // 5개 캔들을 집어넣고 리턴
+                candleListCachedMap.get(coinType).get(interval)
+                        .addAll(candleListWholeCachedMap.get(coinType).get(interval).subList(0, 5));
+            } else {
+                // current index가 0이 아닌 상황 = 이미 Backtest 상에서 시간이 흐른 상황에서 새로운 캔들을 불러올 경우,
+                // nextSeq에서 문제가 생길 수 있으므로 이와 같이 currentIndex를 포함하는 서브리스트를 리턴
+                candleListCachedMap.get(coinType).get(interval)
+                        .addAll(candleListWholeCachedMap.get(coinType).get(interval).subList(0, 5 + currentIndex));
+            }
+
         }
         return candleListCachedMap.get(coinType).get(interval);
     }
 
     @Override
-    public void orderCoin(Orderable order) {
+    public synchronized void orderCoin(Orderable order) {
 
         if (order.getSide() == SideEnum.OPEN_BUY || order.getSide() == SideEnum.OPEN_SELL) {
             // 포지션 오픈 arrayList에 등록
@@ -92,11 +106,11 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
 
             myPosition.parallelStream().filter(pred -> {
                 return pred.getCoinType().equals(order.getCoinType()) && pred.getSide().equals(order.getSide());
-            }).peek(action -> {
+            }).forEach(action -> {
                 double profit = (((getCurrentPrice(order.getCoinType()) / action.getEntryPrice()) - 1) * 100);
                 if (action.getSide() == SideEnum.OPEN_SELL) {
                     wholeProfit = wholeProfit - profit;
-                    wholeThreadProfit = wholeThreadProfit - profit;
+                    BacktestDAO.wholeThreadProfit -= profit;
                     wallet.setWalletBalance(
                             wallet.getWalletBalance() - ((getCurrentPrice(order.getCoinType()) * order.getQty())
                                     - (action.getEntryPrice() * action.getQty())));
@@ -106,7 +120,7 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
 
                 } else {
                     wholeProfit = wholeProfit + profit;
-                    wholeThreadProfit = wholeThreadProfit + profit;
+                    BacktestDAO.wholeThreadProfit += profit;
                     wallet.setWalletBalance(
                             wallet.getWalletBalance() + ((getCurrentPrice(order.getCoinType()) * order.getQty())
                                     - (action.getEntryPrice() * action.getQty())));
@@ -133,7 +147,7 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
         // myPosition 에서 현재 close가 0인 coinType을 가진 position
         myPosition.parallelStream().filter(pred -> {
             return pred.getCoinType().equals(order.getCoinType()) && pred.getSide().equals(order.getSide());
-        }).peek(action -> {
+        }).forEach(action -> {
             realTimeProfit = realTimeProfit + ((getCurrentPrice(coinType) / action.getEntryPrice()) - 1) * 100;
 
         });
@@ -168,28 +182,26 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
 
     /**
      * 시간 축이 1칸 우측으로.
+     * 
+     * @return 더이상 nextSeq할 수 없으면 <code>true</code>리턴
      */
     @Override
-    public boolean nextSeq() {
+    public boolean nextSeq(CoinEnum coinType) {
         if (currentIndex++ == 0L) {
             return false;
         }
-        for (var coinType : CoinEnum.values()) {
-
-            for (var interval : IntervalEnum.values()) {
-                if (currentIndex % interval.getBacktestNumber() == 0) {
-                    if (candleListWholeCachedMap.get(coinType).get(interval).size() == 0) {
-                        continue;
-                    }
-                    candleListCachedMap.get(coinType).get(interval)
-                            .add(candleListWholeCachedMap.get(coinType).get(interval).get((int) currentIndex - 1));
+        for (var interval : IntervalEnum.values()) {
+            if (currentIndex % interval.getBacktestNumber() == 0) {
+                if (candleListWholeCachedMap.get(coinType).get(interval).isEmpty()) {
+                    // 아직 캐싱되지 않은 캔들일 경우, 패싱
+                    continue;
                 }
+                candleListCachedMap.get(coinType).get(interval)
+                        .add(candleListWholeCachedMap.get(coinType).get(interval).get(currentIndex - 1));
             }
-
         }
 
-        // TODO MAXIMUM of Current Index
-        if (currentIndex > 1000) {
+        if (currentIndex >= getCandleList(coinType, IntervalEnum.ONE).size() - 5) {
             return true;
         } else {
             return false;
@@ -208,23 +220,32 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
         });
     }
 
+    /**
+     * @deprecated
+     */
     @Override
-    @Deprecated
+    @Deprecated(forRemoval = false)
     public OrderedList getOrderList() {
 
         return null;
     }
 
+    /**
+     * @deprecated
+     */
     @Override
-    @Deprecated
+    @Deprecated(forRemoval = false)
     public InstrumentInfo getInstrumentInfo(CoinEnum coinType) {
         return null;
     }
 
+    /**
+     * @deprecated
+     */
     @Override
-    @Deprecated
+    @Deprecated(forRemoval = false)
     public void getPaidLimit(CoinEnum coinType) {
-
+        throw new UnsupportedOperationException();
     }
 
 }
