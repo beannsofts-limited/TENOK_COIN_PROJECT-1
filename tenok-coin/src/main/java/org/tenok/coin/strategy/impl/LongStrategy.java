@@ -19,19 +19,10 @@ public class LongStrategy implements Strategy {
     @Override
     public double testOpenRBI() {
         CandleList candleList = coinDAO.getCandleList(coinType, IntervalEnum.HUNDREDTWENTY);
-        if (candleList.getReversed(1).getMa5() != 0 && candleList.getReversed(1).getMa10() != 0) {
-
-            if (candleList.getReversed(1).getMa5() == candleList.getReversed(1).getMa10()) {
-
-                if (candleList.getReversed(0).getMa5() > candleList.getReversed(0).getMa10()) {
-                    System.out.println("MA5: " + candleList.getReversed(0).getMa5());
-                    System.out.println("MA10: " + candleList.getReversed(0).getMa10());
-                    return 1;
-                }
-
-            }
+        if (candleList.getReversed(1).getMa5() != 0 && candleList.getReversed(1).getMa10() != 0
+                && candleList.getReversed(0).getMa5() > candleList.getReversed(0).getMa10()) {
+            return 1;
         }
-
         return 0;
     }
 

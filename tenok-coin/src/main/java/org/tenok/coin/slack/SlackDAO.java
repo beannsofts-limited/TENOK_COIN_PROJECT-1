@@ -24,7 +24,6 @@ public class SlackDAO {
 
     public WebhookResponse sendTradingMessage(CoinEnum coinType, SideEnum side, double qty) {
         // send(String.format("%s을 %s개 %s하였습니다.", coinType.getLiteral(),
-        // orderType.name(), side.getKorean());
         try {
 
             String payload = String.format("{\"text\":\"%s %f개 %s\"}", coinType.getKorean(), qty, side.getKorean());
@@ -42,7 +41,7 @@ public class SlackDAO {
     public WebhookResponse sendException(Throwable t) {
 
         try {
-            String payload = String.format("{\"text\":\"Exception 발생\n%s\"}", t.getMessage());
+            String payload = String.format("{\"text\":\"Exception 발생%n%n%s\"}", t.getMessage());
             response = slackInstance.send(webhookUrl, payload);
             logger.debug(response);
             return response;
@@ -51,7 +50,6 @@ public class SlackDAO {
             e.printStackTrace();
         }
         throw new RuntimeException("Exception Message sending 실패");
-        // send(String.format("Exception 발생 %s", t.getMessage());
     }
 
     public WebhookResponse sendText(String text) {

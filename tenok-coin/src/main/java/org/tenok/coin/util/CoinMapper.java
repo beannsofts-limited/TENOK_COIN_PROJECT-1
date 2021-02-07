@@ -7,6 +7,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.json.simple.JSONArray;
@@ -70,8 +72,6 @@ public class CoinMapper {
             }
         }
 
-
-
         CandleList candleList = new CandleList(coinType, interval);
         candleList.addAll(wholeCandleList.subList(startIndex, endIndex));
         return candleList;
@@ -112,7 +112,40 @@ public class CoinMapper {
      * @param interval 업데이트 시킬 캔들의 봉 간격
      */
     public void updateCachedCandle(CoinEnum coinType, IntervalEnum interval) {
+        CandleList list = null;
+        try {
+            list = new ObjectMapper().readValue(getFile(coinType, interval), CandleList.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
+        Candle latestCandle = list.get(list.size() - 1);
 
+        Date latestDate = latestCandle.getStartAt();
+
+        Candle pivotCandle = findPivotCandle(coinType, interval);
+        int i = 0;
+        boolean outFlag = true;
+
+        List<JSONObject> responseList = new ArrayList<>();
+
+        while (outFlag) {
+            JSONObject response = restDAO.requestKline(coinType, interval, 200,
+                    new Date(pivotCandle.getStartAt().getTime()
+                            - (200000L * ((long) i) * interval.getSec() + interval.getSec() * 1000L)));
+            JSONArray responseArray = (JSONArray) response.get("result");
+            responseList.add(response);
+
+            for (Object object : responseArray) {
+                JSONObject kLine = (JSONObject) object;
+                if (((long) kLine.get("start_at")) == latestDate.getTime() / 1000L) {
+                    outFlag = false;
+                    break;
+                }
+            }
+            System.out.println();
+            i++;
+        }
     }
 
     /**

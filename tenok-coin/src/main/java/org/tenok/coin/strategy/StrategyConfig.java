@@ -10,7 +10,7 @@ import lombok.NonNull;
 
 @AllArgsConstructor(access = AccessLevel.PUBLIC)
 @Getter
-public class StrategyConfig implements Cloneable {
+public class StrategyConfig {
     @NonNull
     private CoinEnum coinType;
     @NonNull
@@ -21,8 +21,7 @@ public class StrategyConfig implements Cloneable {
     private int leverage;
     private double availableRate;
 
-    @Override
-    public StrategyConfig clone() {
+    public StrategyConfig copy() {
         return new StrategyConfig(coinType, coinDataAccessableClass, strategyClass, leverage, availableRate);
     }
 
