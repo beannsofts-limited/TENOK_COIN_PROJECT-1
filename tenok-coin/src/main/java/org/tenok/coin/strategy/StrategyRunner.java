@@ -8,9 +8,6 @@ import org.apache.log4j.Logger;
 public class StrategyRunner {
     private static Logger logger = Logger.getLogger(StrategyRunner.class);
 
-    public StrategyRunner() {
-    }
-
     /**
      * Create Strategy Handler
      * 
@@ -18,14 +15,12 @@ public class StrategyRunner {
      * @return Strategy Handler
      */
     public StrategyHandler runStrategy(StrategyConfig config) {
-        StrategyThread strategy = new StrategyThread(config.clone());
+        StrategyThread strategy = new StrategyThread(config.copy());
 
         logger.info(
                 String.format("Run Strategy Thread [%s, %s, %s]", config.getCoinDataAccessableClass().getSimpleName(),
                         config.getStrategyClass().getSimpleName(), config.getCoinType().getKorean()));
 
-        StrategyHandler handler = new StrategyHandler(config, strategy, new Thread(strategy));
-
-        return handler;
+        return new StrategyHandler(config, strategy, new Thread(strategy));
     }
 }

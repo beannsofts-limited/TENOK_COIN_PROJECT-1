@@ -31,7 +31,7 @@ public class DAOTest {
     @Test
     public void loginTest() {
         try {
-            BybitDAO.getInstance().login("");
+            BybitDAO.getInstance().login("tenok2019");
         } catch (LoginException e) {
             e.printStackTrace();
             assert false;
@@ -49,7 +49,7 @@ public class DAOTest {
             System.out.println(String.format("u bb: %f\nm bb: %f\nl bb: %f", cl.getUpperBB(), cl.getMiddleBB(), cl.getLowerBB()));
             System.out.println(String.format("ma5: %f ma10: %f ma20: %f ma60: %f ma120: %f\nstart at: %s\n", cl.getMa5(), cl.getMa10(), cl.getMa20(), cl.getMa60(), cl.getMa120(), cl.getStartAt().toString()));
         });
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 0; i++) {
             var cl = candleList.get(0);
             System.out.println(String.format("u bb: %f\nm bb: %f\nl bb: %f", cl.getUpperBB(), cl.getMiddleBB(), cl.getLowerBB()));
             System.out.println(String.format("ma5: %f ma10: %f ma20: %f ma60: %f ma120: %f\n", cl.getMa5(), cl.getMa10(), cl.getMa20(), cl.getMa60(), cl.getMa120()));
@@ -65,8 +65,8 @@ public class DAOTest {
         } catch (LoginException e1) {
             e1.printStackTrace();
         }
-        WebhookResponse response = SlackDAO.getInstance().sendTradingMessage(CoinEnum.BTCUSDT, SideEnum.OPEN_BUY, 1);
-        assertEquals(response.getCode().intValue(), 200);
+        // WebhookResponse response = SlackDAO.getInstance().sendTradingMessage(CoinEnum.BTCUSDT, SideEnum.OPEN_BUY, 1);
+        // assertEquals(response.getCode().intValue(), 200);
     }
 
     @Test
@@ -81,15 +81,15 @@ public class DAOTest {
                                      .tif(TIFEnum.GTC)
                                      .build();
                                      
-        BybitDAO.getInstance().orderCoin(order);
+        // BybitDAO.getInstance().orderCoin(order);
     }
 
     @Test
     public void excpetionTest() throws LoginException {
-        BybitDAO.getInstance().login("");
+        BybitDAO.getInstance().login("tenok2019");
         
-        WebhookResponse res = SlackDAO.getInstance().sendException(new RuntimeException("something went wrong!"));
-        assertEquals(res.getCode().intValue(), 200);
+        // WebhookResponse res = SlackDAO.getInstance().sendException(new RuntimeException("something went wrong!"));
+        // assertEquals(res.getCode().intValue(), 200);
     }
 
     @Test
@@ -104,83 +104,21 @@ public class DAOTest {
         // }
     }
 
-       
-        // CandleList candle = back.test(CoinEnum.BTCUSDT, IntervalEnum.FIFTEEN);
-        // System.out.println(candle.size());
-        // CandleList candle = back.getCandleList(CoinEnum.BTCUSDT,IntervalEnum.FIFTEEN);
-        // System.out.println(candle.size());
-        // for(int i =0; i<candle.size(); i++){
-        //     System.out.println(candle.elementAt(i).getStartAt());
-        //     System.out.println("\n");
-        //     // System.out.println(System.currentTimeMillis() - IntervalEnum.FIFTEEN.getSec()*200000L+"\n");
-
-        // }
-
+    @Test
     public void getOrderTest() throws LoginException {
         BybitDAO.getInstance().login("tenok2019");
 
-        BybitDAO.getInstance().getOrderList();
+        // BybitDAO.getInstance().getOrderList();
     }
 
     @Test
     public void getInstrumentInfoTest() throws LoginException, InterruptedException {
         BybitDAO.getInstance().login("tenok2019");
-        var inst = BybitDAO.getInstance().getInstrumentInfo(CoinEnum.BTCUSDT);
+        // var inst = BybitDAO.getInstance().getInstrumentInfo(CoinEnum.BTCUSDT);
 
-        for (int i = 0; i < 20; i++) {
-            System.out.println(inst);
-            Thread.sleep(1000);
-        }
-    }
-
-    @Test
-    public void ohlcTest() throws LoginException, InterruptedException {
-        BybitDAO.getInstance().login("tenok2019");
-        boolean loop = true;
-        CandleList candleList = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
-        var chartBuilder = new OHLCChartBuilder();
-        OHLCChart chart = chartBuilder.xAxisTitle("시간")
-                                      .yAxisTitle("가격")
-                                      .title("비트코인 가격")
-                                      .build();
-
-        List<Double> openList = candleList.stream().map(Candle::getOpen).collect(Collectors.toList()).subList(150, 199);
-        List<Double> highList = candleList.stream().map(Candle::getHigh).collect(Collectors.toList()).subList(150, 199);
-        List<Double> lowList = candleList.stream().map(Candle::getLow).collect(Collectors.toList()).subList(150, 199);
-        List<Double> closeList = candleList.stream().map(Candle::getClose).collect(Collectors.toList()).subList(150, 199);
-        List<Date> startAt = candleList.stream().map(Candle::getStartAt).collect(Collectors.toList()).subList(150, 199);
-        chart.addSeries("seriesName", startAt, openList, highList, lowList, closeList).setDownColor(new ColorUIResource(0, 0, 255));
-        new SwingWrapper<>(chart).displayChart();
-        long startTime = System.currentTimeMillis();
-        
-        while (loop) {
-            // Candle candle = candleList.getReversed(0);
-
-            // if (candle.isConfirmed()) {
-            //     openList.remove(openList.size()-1);
-            //     highList.remove(highList.size()-1);
-            //     lowList.remove(lowList.size()-1);
-            //     closeList.remove(closeList.size()-1);
-            //     startAt.remove(startAt.size()-1);
-            // } else {
-            //     openList.remove(0);
-            //     highList.remove(0);
-            //     lowList.remove(0);
-            //     closeList.remove(0);
-            //     startAt.remove(0);
-            // }
-
-            // openList.add(candle.getOpen());
-            // highList.add(candle.getHigh());
-            // lowList.add(candle.getLow());
-            // closeList.add(candle.getClose());
-            // startAt.add(candle.getStartAt());
-
-            // chart.updateOHLCSeries("seriesName", startAt, openList, highList, lowList, closeList);
-
-            if (System.currentTimeMillis() - startTime > 10 * 1000) {
-                break;
-            }
-        }
+        // for (int i = 0; i < 20; i++) {
+        //     System.out.println(inst);
+        //     Thread.sleep(1000);
+        // }
     }
 }
