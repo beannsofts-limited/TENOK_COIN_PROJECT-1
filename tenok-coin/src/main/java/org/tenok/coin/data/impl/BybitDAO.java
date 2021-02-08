@@ -4,7 +4,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -53,12 +53,11 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
     private AuthDecryptor auth;
 
     private BybitDAO() {
-        candleListIsCachedMap = new HashMap<>();
-        instrumentInfo = new HashMap<>();
+        candleListIsCachedMap = new EnumMap<>(CoinEnum.class);
+        instrumentInfo = new EnumMap<>(CoinEnum.class);
 
-        Arrays.asList(CoinEnum.values()).parallelStream().forEach((coinType) -> {
-            candleListIsCachedMap.put(coinType, new HashMap<>());
-        });
+        Arrays.asList(CoinEnum.values()).parallelStream()
+                .forEach(coinType -> candleListIsCachedMap.put(coinType, new EnumMap<>(IntervalEnum.class)));
         restDAO = new BybitRestDAO();
     }
 
@@ -181,9 +180,10 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
 
     /**
      * position list 조회
+     * @deprecated
      */
     @Override
-    @Deprecated
+    @Deprecated(forRemoval = false)
     public PositionList getPositionList() {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");
@@ -202,8 +202,8 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");
         }
-        if (!instrumentInfo.containsKey(coinType)) {
-            JSONObject result = (JSONObject) restDAO.getInstrumentInfo(coinType).get("result");
+        instrumentInfo.computeIfAbsent(coinType, coin -> {
+            JSONObject result = (JSONObject) restDAO.getInstrumentInfo(coin).get("result");
             double lastPrice = ((Number) result.get("last_price")).doubleValue();
             TickDirectionEnum lastTickDirection = TickDirectionEnum
                     .valueOfApiString((String) result.get("last_tick_direction"));
@@ -213,14 +213,14 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
             double price1hPcnt = ((Number) result.get("price_1h_pcnt")).doubleValue();
             double highPrice1h = ((Number) result.get("high_price_1h")).doubleValue();
             double lowPrice1h = ((Number) result.get("low_price_1h")).doubleValue();
-            var insInfo = BybitInstrumentInfo.builder().coinType(coinType).lastPriceE4((long) lastPrice * 10000)
+            var insInfo = BybitInstrumentInfo.builder().coinType(coin).lastPriceE4((long) lastPrice * 10000)
                     .lastTickDirection(lastTickDirection).price24hPcntE6((long) price24hPcnt * 1000000)
                     .highPrice24hE4((long) highPrice24h * 10000).lowPrice24hE4((long) lowPrice24h * 10000)
                     .price1hPcntE6((long) price1hPcnt * 1000000).highPrice1hE4((long) highPrice1h * 10000)
                     .lowPrice1hE4((long) lowPrice1h * 10000).build();
-            instrumentInfo.put(coinType, insInfo);
-            websocketProcessor.subscribeInsturmentInfo(coinType, insInfo);
-        }
+            websocketProcessor.subscribeInsturmentInfo(coin, insInfo);
+            return insInfo;
+        });
         return instrumentInfo.get(coinType);
     }
 
@@ -270,8 +270,11 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
         System.out.println(res.toJSONString());
     }
 
+    /**
+     * @deprecated
+     */
     @Override
-    @Deprecated
+    @Deprecated(forRemoval = false)
     public void getPaidLimit(CoinEnum coinType) {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");

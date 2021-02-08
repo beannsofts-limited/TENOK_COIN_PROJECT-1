@@ -65,8 +65,8 @@ public class DAOTest {
         } catch (LoginException e1) {
             e1.printStackTrace();
         }
-        // WebhookResponse response = SlackDAO.getInstance().sendTradingMessage(CoinEnum.BTCUSDT, SideEnum.OPEN_BUY, 1);
-        // assertEquals(response.getCode().intValue(), 200);
+        WebhookResponse response = SlackDAO.getInstance().sendTradingMessage(CoinEnum.BTCUSDT, SideEnum.OPEN_BUY, 1);
+        assertEquals(response.getCode().intValue(), 200);
     }
 
     @Test

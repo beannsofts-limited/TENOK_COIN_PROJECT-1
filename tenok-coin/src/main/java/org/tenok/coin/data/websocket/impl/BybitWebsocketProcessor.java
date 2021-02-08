@@ -57,9 +57,9 @@ public class BybitWebsocketProcessor implements Closeable {
                     new URI("wss://stream.bybit.com/realtime_private"));
             JSONObject authObject = new JSONObject();
             authObject.put("op", "auth");
-            long expires = AuthDecryptor.getInstance().generate_expire();
+            long expires = AuthDecryptor.getInstance().generateExpire();
             authObject.put("args", Arrays.asList(new String[] { AuthDecryptor.getInstance().getApiKey(),
-                    Long.toString(expires), AuthDecryptor.getInstance().generate_signature(expires) }));
+                    Long.toString(expires), AuthDecryptor.getInstance().generateSignature(expires) }));
             websocketPrivateSession.getBasicRemote().sendObject(authObject);
         } catch (DeploymentException e) {
             logger.error(e);

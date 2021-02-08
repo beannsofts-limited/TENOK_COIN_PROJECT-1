@@ -20,7 +20,6 @@ class StrategyThread implements Runnable {
     private StrategyConfig config;
     private Strategy strategyInstance;
     private WalletAccessable wallet;
-    private Thread thisThread;
     private Position myPosition;
 
     public StrategyThread(StrategyConfig config) {
@@ -49,7 +48,6 @@ class StrategyThread implements Runnable {
 
     @Override
     public void run() {
-        thisThread = Thread.currentThread();
 
         while (true) {
             if (strategyInstance.isNotOpened()) {
@@ -103,14 +101,15 @@ class StrategyThread implements Runnable {
                 }
             }
 
-            if (thisThread.isInterrupted()) {
-                log.info(String.format("%s strategy thread interrupted", thisThread.getName()));
+            if (Thread.currentThread().isInterrupted()) {
+                log.info(String.format("%s strategy thread interrupted", Thread.currentThread().getName()));
                 return; // TODO instrrupted 되면 그대로 끝낼지. 아님 자동매도 할지.
             }
             try {
                 Thread.sleep(5);
             } catch (InterruptedException e) {
-                log.info(String.format("%s strategy thread interrupted", thisThread.getName()));
+                log.info(String.format("%s strategy thread interrupted", Thread.currentThread().getName()));
+                Thread.currentThread().interrupt();
                 return;
             }
         }
