@@ -3,3 +3,6 @@ GET http://api.bybit.com/public/linear/kline
         &interval=1
         &limit=3
         &from=1585118245
+
+###
+GET http://sugang.ajou.ac.kr/aply/index.action

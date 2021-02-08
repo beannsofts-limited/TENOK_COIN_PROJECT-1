@@ -35,7 +35,7 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
     /**
      * 현재 시간을 표현한다. 정수 1 하나가 1분을 의미.
      */
-    private int currentIndex = 0;
+    private int currentIndex = -1;
     private double wholeProfit = 0;
     private double realTimeProfit = 0;
 
@@ -99,41 +99,42 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
             myPosition.add(pos);
             wallet.setWalletAvailableBalance(
                     wallet.getWalletAvailableBalance() - (order.getQty() * getCurrentPrice(order.getCoinType())));
-            logger.info(String.format("orderCoin : Open Position(coin: %s, entryPrice: %lf, side: %s, qty: %lf)",
+            logger.debug(String.format("orderCoin : Open Position(coin: %s, entryPrice: %f, side: %s, qty: %f)",
                     pos.getCoinType().getKorean(), pos.getEntryPrice(), pos.getSide().getKorean(), pos.getQty()));
         } else {
             // 포지션 청산 -> close 값 업데이트
 
-            myPosition.parallelStream().filter(pred -> {
-                return pred.getCoinType().equals(order.getCoinType()) && pred.getSide().equals(order.getSide());
-            }).forEach(action -> {
-                double profit = (((getCurrentPrice(order.getCoinType()) / action.getEntryPrice()) - 1) * 100);
-                if (action.getSide() == SideEnum.OPEN_SELL) {
-                    wholeProfit = wholeProfit - profit;
-                    BacktestDAO.wholeThreadProfit -= profit;
-                    wallet.setWalletBalance(
-                            wallet.getWalletBalance() - ((getCurrentPrice(order.getCoinType()) * order.getQty())
-                                    - (action.getEntryPrice() * action.getQty())));
-                    wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance()
-                            - ((getCurrentPrice(order.getCoinType()) * order.getQty())
-                                    - (action.getEntryPrice() * action.getQty())));
+            myPosition.parallelStream().filter(
+                    pred -> pred.getCoinType().equals(order.getCoinType()) && pred.getSide().equals(order.getSide()))
+                    .forEach(action -> {
+                        double profit = (((getCurrentPrice(order.getCoinType()) / action.getEntryPrice()) - 1) * 100);
+                        if (action.getSide() == SideEnum.OPEN_SELL) {
+                            wholeProfit = wholeProfit - profit;
+                            BacktestDAO.wholeThreadProfit -= profit;
+                            wallet.setWalletBalance(
+                                    wallet.getWalletBalance() - ((getCurrentPrice(order.getCoinType()) * order.getQty())
+                                            - (action.getEntryPrice() * action.getQty())));
+                            wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance()
+                                    - ((getCurrentPrice(order.getCoinType()) * order.getQty())
+                                            - (action.getEntryPrice() * action.getQty())));
 
-                } else {
-                    wholeProfit = wholeProfit + profit;
-                    BacktestDAO.wholeThreadProfit += profit;
-                    wallet.setWalletBalance(
-                            wallet.getWalletBalance() + ((getCurrentPrice(order.getCoinType()) * order.getQty())
-                                    - (action.getEntryPrice() * action.getQty())));
-                    wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance()
-                            + ((getCurrentPrice(order.getCoinType()) * order.getQty())
-                                    - (action.getEntryPrice() * action.getQty())));
-                }
+                        } else {
+                            wholeProfit = wholeProfit + profit;
+                            BacktestDAO.wholeThreadProfit += profit;
+                            wallet.setWalletBalance(
+                                    wallet.getWalletBalance() + ((getCurrentPrice(order.getCoinType()) * order.getQty())
+                                            - (action.getEntryPrice() * action.getQty())));
+                            wallet.setWalletAvailableBalance(wallet.getWalletAvailableBalance()
+                                    + ((getCurrentPrice(order.getCoinType()) * order.getQty())
+                                            - (action.getEntryPrice() * action.getQty())));
+                        }
 
-                logger.info(String.format(
-                        "orderCoin : Close Position(coin: %s, entryPrice: %lf closePrice: %lf, side: %s, qty: %lf, profit : %lf)",
-                        action.getCoinType().getKorean(), action.getEntryPrice(), getCurrentPrice(order.getCoinType()),
-                        order.getSide().getKorean(), order.getQty(), getRealtimeProfit(action.getCoinType(), order)));
-            });
+                        logger.info(String.format(
+                                "orderCoin : Close Position(coin: %s, entryPrice: %lf closePrice: %lf, side: %s, qty: %lf, profit : %lf)",
+                                action.getCoinType().getKorean(), action.getEntryPrice(),
+                                getCurrentPrice(order.getCoinType()), order.getSide().getKorean(), order.getQty(),
+                                getRealtimeProfit(action.getCoinType(), order)));
+                    });
         }
     }
 
@@ -145,12 +146,10 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
     public double getRealtimeProfit(CoinEnum coinType, Orderable order) {
         realTimeProfit = 0;
         // myPosition 에서 현재 close가 0인 coinType을 가진 position
-        myPosition.parallelStream().filter(pred -> {
-            return pred.getCoinType().equals(order.getCoinType()) && pred.getSide().equals(order.getSide());
-        }).forEach(action -> {
-            realTimeProfit = realTimeProfit + ((getCurrentPrice(coinType) / action.getEntryPrice()) - 1) * 100;
-
-        });
+        myPosition.parallelStream().filter(
+                pred -> pred.getCoinType().equals(order.getCoinType()) && pred.getSide().equals(order.getSide()))
+                .forEach(action -> realTimeProfit = realTimeProfit
+                        + ((getCurrentPrice(coinType) / action.getEntryPrice()) - 1) * 100);
         return realTimeProfit;
     }
 
@@ -187,9 +186,9 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
      */
     @Override
     public boolean nextSeq(CoinEnum coinType) {
-        if (currentIndex++ == 0L) {
-            return false;
-        }
+        // 1분봉이 캐싱되어 있어야, 하단에서 isEnd를 계산할 수 있음.
+        getCandleList(coinType, IntervalEnum.ONE);
+
         for (var interval : IntervalEnum.values()) {
             if (currentIndex % interval.getBacktestNumber() == 0) {
                 if (candleListWholeCachedMap.get(coinType).get(interval).isEmpty()) {
@@ -197,15 +196,11 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
                     continue;
                 }
                 candleListCachedMap.get(coinType).get(interval)
-                        .add(candleListWholeCachedMap.get(coinType).get(interval).get(currentIndex - 1));
+                        .add(candleListWholeCachedMap.get(coinType).get(interval).get(currentIndex + 6));
             }
         }
 
-        if (currentIndex >= getCandleList(coinType, IntervalEnum.ONE).size() - 5) {
-            return true;
-        } else {
-            return false;
-        }
+        return currentIndex++ >= candleListWholeCachedMap.get(coinType).get(IntervalEnum.ONE).size() - 7;
     }
 
     /**
@@ -213,11 +208,8 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
      */
     public void resetAll() {
         currentIndex = 0;
-        candleListCachedMap.entrySet().parallelStream().forEach(action -> {
-            action.getValue().entrySet().stream().forEach(aaa -> {
-                aaa.getValue().clear();
-            });
-        });
+        candleListCachedMap.entrySet().parallelStream().forEach(
+                entSet -> entSet.getValue().entrySet().stream().forEach(allCandle -> allCandle.getValue().clear()));
     }
 
     /**
