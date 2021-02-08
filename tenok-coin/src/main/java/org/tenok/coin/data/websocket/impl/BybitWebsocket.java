@@ -3,7 +3,7 @@ package org.tenok.coin.data.websocket.impl;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -34,8 +34,8 @@ public class BybitWebsocket implements Closeable {
     private Session session;
 
     public BybitWebsocket() {
-        this.kLineConsumerMap = new HashMap<>();
-        this.instrumentInfoConsumerMap = new HashMap<>();
+        this.kLineConsumerMap = new EnumMap<>(CoinEnum.class);
+        this.instrumentInfoConsumerMap = new EnumMap<>(CoinEnum.class);
     }
 
     @OnOpen
@@ -95,7 +95,7 @@ public class BybitWebsocket implements Closeable {
                 break;
 
             default:
-                throw new RuntimeException("Websocket Topic Parse Failed" + topicParsed.toString());
+                throw new RuntimeException("Websocket Topic Parse Failed" + Arrays.toString(topicParsed));
         }
     }
 
@@ -118,14 +118,14 @@ public class BybitWebsocket implements Closeable {
      * @param consumer 콜백
      */
     public void registerKLineCallback(CoinEnum coinType, IntervalEnum interval, Consumer<JSONObject> consumer) {
-        kLineConsumerMap.putIfAbsent(coinType, new HashMap<>());
+        kLineConsumerMap.putIfAbsent(coinType, new EnumMap<>(IntervalEnum.class));
         var previousValue = kLineConsumerMap.get(coinType).get(interval);
         if (previousValue != null) {
             throw new RuntimeException("RegisterKLineCallback request called twice by the homogeneous parameter");
         }
         kLineConsumerMap.get(coinType).put(interval, consumer);
-        JSONObject requestJson = getSubscriptionJSONObject(Arrays.asList(
-                new String[] { String.format("%s.%s.%s", "candle", interval.getApiString(), coinType.name()) }));
+        JSONObject requestJson = getSubscriptionJSONObject(
+                Arrays.asList(String.format("%s.%s.%s", "candle", interval.getApiString(), coinType.name())));
         session.getAsyncRemote().sendObject(requestJson);
     }
 

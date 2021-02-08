@@ -75,7 +75,7 @@ public class BybitRestDAO {
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
         request.put("symbol", coinType.name());
-        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
+        request.put("sign", AuthDecryptor.getInstance().generateSignature(request));
         return requestByGet(request, "https://api.bybit.com/private/linear/order/list?");
 
     }
@@ -85,7 +85,7 @@ public class BybitRestDAO {
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
-        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
+        request.put("sign", AuthDecryptor.getInstance().generateSignature(request));
         return requestByGet(request, "https://api.bybit.com/private/linear/stop-order/list?");
 
     }
@@ -96,7 +96,7 @@ public class BybitRestDAO {
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
-        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
+        request.put("sign", AuthDecryptor.getInstance().generateSignature(request));
         return requestByGet(request, "https://api.bybit.com/private/linear/position/list?");
     }
 
@@ -137,7 +137,7 @@ public class BybitRestDAO {
         request.put("reduce_only", Boolean.valueOf(reduceOnly));
         request.put("close_on_trigger", Boolean.valueOf(false));
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
-        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
+        request.put("sign", AuthDecryptor.getInstance().generateSignature(request));
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/order/create");
@@ -165,7 +165,7 @@ public class BybitRestDAO {
         request.put("qty", Double.toString(qty));
         request.put("time_in_force", tif.getApiString());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
-        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
+        request.put("sign", AuthDecryptor.getInstance().generateSignature(request));
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/stop-order/create");
@@ -183,7 +183,7 @@ public class BybitRestDAO {
         request.put("symbol", coinType.name());
         request.put("order_id", orderID);
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
-        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
+        request.put("sign", AuthDecryptor.getInstance().generateSignature(request));
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/order/cancel");
@@ -201,7 +201,7 @@ public class BybitRestDAO {
         request.put("symbol", coinType.name());
         request.put("order_id", orderID);
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
-        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
+        request.put("sign", AuthDecryptor.getInstance().generateSignature(request));
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/stop-order/cancel");
@@ -219,7 +219,7 @@ public class BybitRestDAO {
         request.put("symbol", coinType.name());
         request.put("order_id", orderID);
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
-        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
+        request.put("sign", AuthDecryptor.getInstance().generateSignature(request));
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/order/cancel-all");
@@ -238,7 +238,7 @@ public class BybitRestDAO {
         request.put("symbol", coinType.name());
         request.put("order_id", orderID);
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
-        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
+        request.put("sign", AuthDecryptor.getInstance().generateSignature(request));
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/stop-order/cancel-all");
@@ -256,7 +256,7 @@ public class BybitRestDAO {
         request.put("symbol", coinType.name());
         request.put("buy_leverage", Integer.toString(buyLeverage));
         request.put("sell_leverage", Integer.toString(sellLeverage));
-        request.put("sign", AuthDecryptor.getInstance().generate_signature(request));
+        request.put("sign", AuthDecryptor.getInstance().generateSignature(request));
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/position/set-leverage");

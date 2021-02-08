@@ -54,19 +54,11 @@ public class OrderedData implements OrderDataAccessable {
     }
 
     @Override
-    @Deprecated
-    public boolean isOpen() {
-        return false;
-    }
-
-    @Override
-    @Deprecated
     public double getEntryPrice() {
         return 0;
     }
 
     @Override
-    @Deprecated
     public double getExitPrice() {
         return 0;
     }

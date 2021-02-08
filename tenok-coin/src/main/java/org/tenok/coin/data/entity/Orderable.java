@@ -1,7 +1,5 @@
 package org.tenok.coin.data.entity;
 
-import java.util.Date;
-
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.OrderTypeEnum;
 import org.tenok.coin.type.SideEnum;
@@ -38,14 +36,6 @@ public interface Orderable {
      * 
      */
     public double getQty();
-
-    /**
-     * 
-     * @return timestamp
-     */
-    public Date getTimeStamp();
-
-    public boolean isOpen();
 
     public int getLeverage();
 }

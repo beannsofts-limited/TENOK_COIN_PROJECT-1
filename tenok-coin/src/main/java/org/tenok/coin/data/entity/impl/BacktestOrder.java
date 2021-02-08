@@ -52,12 +52,6 @@ public class BacktestOrder implements OrderDataAccessable {
     }
 
     @Override
-    public boolean isOpen() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
     public double getEntryPrice() {
         // TODO Auto-generated method stub
         return 0;

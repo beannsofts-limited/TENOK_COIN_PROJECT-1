@@ -7,8 +7,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.json.simple.JSONArray;
@@ -27,7 +25,7 @@ import lombok.extern.log4j.Log4j;
 @Log4j
 public class CoinMapper {
     BybitRestDAO restDAO = new BybitRestDAO();
-    private static final String ROOT_PATH = "./candle_cache";
+    private static final String ROOT_PATH = "./candle_cached";
 
     private CoinMapper() {
     }
@@ -58,7 +56,8 @@ public class CoinMapper {
             throw new RuntimeException(e);
         }
 
-        int startIndex = -1, endIndex = -1;
+        int startIndex = -1;
+        int endIndex = -1;
 
         for (int i = 0; i < wholeCandleList.size() - 1; i++) {
             if ((wholeCandleList.get(i).getStartAt().equals(start) || wholeCandleList.get(i).getStartAt().before(start))
@@ -155,16 +154,32 @@ public class CoinMapper {
      * @param interval 봉 간격
      * @return 파일 객체
      */
-    private File getFile(CoinEnum coinType, IntervalEnum interval) {
-        return new File(ROOT_PATH + "/" + coinType.getLiteral() + "/" + interval.getApiString() + ".json");
+    public File getFile(CoinEnum coinType, IntervalEnum interval) {
+        return new File(String.format("%s%s%s%s%s.json", ROOT_PATH, File.separator, coinType.getLiteral(),
+                File.separator, interval.getApiString()));
+    }
+
+    /**
+     * 해당 코인, 봉 간격에 해당 하는 파일의 디렉터리 반환
+     * 
+     * @param coinType 코인
+     * @param interval 봉 간격
+     * @return 파일 객체
+     */
+    public File getDir(CoinEnum coinType, IntervalEnum interval) {
+        return new File(String.format("%s%s%s", ROOT_PATH, File.separator, coinType.getLiteral()));
     }
 
     private void cacheKLine(CoinEnum coinType, IntervalEnum interval) {
         log.info(String.format("start cache %s %s", coinType.getLiteral(), interval.getApiString()));
-        new File(ROOT_PATH + "/" + coinType.getLiteral() + "/").mkdirs();
+        getDir(coinType, interval).mkdirs();
         File outputFile = getFile(coinType, interval);
         try {
-            outputFile.createNewFile();
+            if (outputFile.createNewFile()) {
+                log.info("cacheFile in file.");
+            } else {
+                log.info("cacheFile in already exist file.");
+            }
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -180,13 +195,9 @@ public class CoinMapper {
 
         // CandleList 객체 생성하여, register한다.
         CandleList candleList = new CandleList(coinType, interval);
-        tempCandleList.stream().forEachOrdered(candle -> {
-            candleList.registerNewCandle(candle);
-        });
+        tempCandleList.stream().forEachOrdered(candleList::registerNewCandle);
 
-        candleList.sort((candle1, candle2) -> {
-            return candle1.getStartAt().compareTo(candle2.getStartAt());
-        });
+        candleList.sort((candle1, candle2) -> candle1.getStartAt().compareTo(candle2.getStartAt()));
         log.info(String.format("Final size of candle list: %d", candleList.size()));
 
         ObjectMapper mapper = new ObjectMapper();
@@ -214,11 +225,12 @@ public class CoinMapper {
         List<JSONArray> responseList = new ArrayList<>();
 
         int requestIter = 1;
-        long previousId = 0, currentId = 0;
+        long previousId = 0;
+        long currentId = 0;
         while (true) {
             JSONObject responseJson = null;
             responseJson = restDAO.requestKline(coinType, interval, 200,
-                    new Date(pivotTime * 1000L - 200L * ((long) interval.getSec()) * 1000L * ((long) requestIter)));
+                    new Date(pivotTime * 1000L - 200L * interval.getSec() * 1000L * ((long) requestIter)));
 
             JSONObject currentResponse = (JSONObject) ((JSONArray) responseJson.get("result")).get(0);
             responseList.add((JSONArray) responseJson.get("result"));
@@ -235,9 +247,7 @@ public class CoinMapper {
         log.info("loading complete");
         List<Candle> tempCandleList = new ArrayList<>();
 
-        responseList.stream().flatMap(inner -> {
-            return (Stream<JSONObject>) inner.stream();
-        }).forEach(kLineObject -> {
+        responseList.stream().flatMap(inner -> (Stream<JSONObject>) inner.stream()).forEach(kLineObject -> {
             double open = ((Number) kLineObject.get("open")).doubleValue();
             double high = ((Number) kLineObject.get("high")).doubleValue();
             double low = ((Number) kLineObject.get("low")).doubleValue();
@@ -249,9 +259,7 @@ public class CoinMapper {
         tempCandleList.add(pivotCandle);
 
         log.info("parse success");
-        tempCandleList.sort((candle1, candle2) -> {
-            return candle1.getStartAt().compareTo(candle2.getStartAt());
-        });
+        tempCandleList.sort((candle1, candle2) -> candle1.getStartAt().compareTo(candle2.getStartAt()));
 
         return tempCandleList;
     }
@@ -262,9 +270,7 @@ public class CoinMapper {
      * @param candleList 캔들 리스트
      */
     private void removeDuplicateCandle(List<Candle> candleList) {
-        candleList.sort((candle1, candle2) -> {
-            return (-1) * candle1.getStartAt().compareTo(candle2.getStartAt());
-        });
+        candleList.sort((candle1, candle2) -> (-1) * candle1.getStartAt().compareTo(candle2.getStartAt()));
 
         List<Integer> duplicateIndexList = new ArrayList<>();
 
@@ -281,9 +287,7 @@ public class CoinMapper {
             candleList.remove((int) duplicateIndexList.get(j));
         }
 
-        candleList.sort((candle1, candle2) -> {
-            return candle1.getStartAt().compareTo(candle2.getStartAt());
-        });
+        candleList.sort((candle1, candle2) -> candle1.getStartAt().compareTo(candle2.getStartAt()));
     }
 
     private Candle findPivotCandle(CoinEnum coinType, IntervalEnum interval) {

@@ -1,8 +1,7 @@
 package org.tenok.coin.strategy;
 
 import org.tenok.coin.data.CoinDataAccessable;
-import org.tenok.coin.data.entity.BacktestOrderable;
-import org.tenok.coin.data.entity.Backtestable;
+import org.tenok.coin.data.entity.BackTestable;
 import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.data.entity.impl.ActiveOrder;
@@ -20,12 +19,11 @@ class StrategyThread implements Runnable {
     private StrategyConfig config;
     private Strategy strategyInstance;
     private WalletAccessable wallet;
-    private Thread thisThread;
     private Position myPosition;
 
     public StrategyThread(StrategyConfig config) {
         try {
-            if (Backtestable.class.isAssignableFrom(config.getCoinDataAccessableClass())) {
+            if (BackTestable.class.isAssignableFrom(config.getCoinDataAccessableClass())) {
                 // backtestable 클래스 일 경우 Runnable 객체 집어넣고 getInstance 호출
                 coinDAOInstance = (CoinDataAccessable) config.getCoinDataAccessableClass()
                         .getDeclaredMethod("getInstance", Runnable.class)
@@ -49,7 +47,6 @@ class StrategyThread implements Runnable {
 
     @Override
     public void run() {
-        thisThread = Thread.currentThread();
 
         while (true) {
             if (strategyInstance.isNotOpened()) {
@@ -94,23 +91,24 @@ class StrategyThread implements Runnable {
                 }
             }
 
-            if (coinDAOInstance instanceof BacktestOrderable) {
+            if (coinDAOInstance instanceof BackTestable) {
                 // Next seq 호출하여 다음 시간으로 이동
-                boolean isEnd = ((BacktestOrderable) coinDAOInstance).nextSeq(config.getCoinType());
+                boolean isEnd = ((BackTestable) coinDAOInstance).nextSeq(config.getCoinType());
                 if (isEnd) {
                     log.info("Backtest exceed");
                     break;
                 }
             }
 
-            if (thisThread.isInterrupted()) {
-                log.info(String.format("%s strategy thread interrupted", thisThread.getName()));
+            if (Thread.currentThread().isInterrupted()) {
+                log.info(String.format("%s strategy thread interrupted", Thread.currentThread().getName()));
                 return; // TODO instrrupted 되면 그대로 끝낼지. 아님 자동매도 할지.
             }
             try {
                 Thread.sleep(5);
             } catch (InterruptedException e) {
-                log.info(String.format("%s strategy thread interrupted", thisThread.getName()));
+                log.info(String.format("%s strategy thread interrupted", Thread.currentThread().getName()));
+                Thread.currentThread().interrupt();
                 return;
             }
         }
