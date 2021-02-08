@@ -82,14 +82,20 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
 
     }
 
+    /**
+     * @deprecated
+     */
     @Override
-    @Deprecated
+    @Deprecated(forRemoval = false)
     public Candle push(Candle item) {
         return super.push(item);
     }
 
+    /**
+     * @deprecated
+     */
     @Override
-    @Deprecated
+    @Deprecated(forRemoval = false)
     public synchronized Candle pop() {
         throw new RuntimeException("호출하지 마세요.");
     }

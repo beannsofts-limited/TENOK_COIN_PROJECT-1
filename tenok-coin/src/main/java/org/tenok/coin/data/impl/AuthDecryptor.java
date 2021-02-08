@@ -4,22 +4,17 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Map;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.Mac;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.security.auth.login.FailedLoginException;
+import javax.security.auth.login.LoginException;
 
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
@@ -78,7 +73,7 @@ public class AuthDecryptor {
     private String getApiKey(String password) {
         try {
             return decrypt(this.apiKeyEncrypted, password);
-        } catch (BadPaddingException e) {
+        } catch (FailedLoginException e) {
             e.printStackTrace();
         }
         throw new RuntimeException();
@@ -87,13 +82,13 @@ public class AuthDecryptor {
     private String getApiSecretKey(String password) {
         try {
             return decrypt(this.secretKeyEncrypted, password);
-        } catch (BadPaddingException e) {
+        } catch (FailedLoginException e) {
             e.printStackTrace();
         }
         throw new RuntimeException();
     }
 
-    private String decrypt(String cipherText, String password) throws BadPaddingException {
+    public String decrypt(String cipherText, String password) throws FailedLoginException {
         Cipher cipher;
         try {
             cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
@@ -102,11 +97,27 @@ public class AuthDecryptor {
             SecretKeySpec keySpec = new SecretKeySpec(md5.digest(), "AES");
             IvParameterSpec ivParamSpec = new IvParameterSpec(md5.digest());
             cipher.init(Cipher.DECRYPT_MODE, keySpec, ivParamSpec);
-            return new String(cipher.doFinal(Base64.getDecoder().decode(cipherText)), "UTF-8");
+            return new String(cipher.doFinal(Base64.getDecoder().decode(cipherText)), StandardCharsets.UTF_8);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        throw new RuntimeException("복호화 실패");
+        throw new FailedLoginException("복호화 실패");
+    }
+
+    public String encrypt(String plainText, String password) {
+        Cipher cipher;
+        try {
+            cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            md5.update(password.getBytes(StandardCharsets.UTF_8));
+            SecretKeySpec keySpec = new SecretKeySpec(md5.digest(), "AES");
+            IvParameterSpec ivParamSpec = new IvParameterSpec(md5.digest());
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivParamSpec);
+            return Base64.getEncoder().encodeToString(cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        throw new RuntimeException("암호화 실패");
     }
 
     /**
@@ -124,7 +135,7 @@ public class AuthDecryptor {
      * @return Bybit Signature
      */
     public String generateSignature(long expires) {
-        return sha256HMAC("GET/realtime" + String.valueOf(expires), getApiSecretKey(pw));
+        return sha256HMAC("GET/realtime" + expires, getApiSecretKey(pw));
     }
 
     /**
@@ -135,9 +146,7 @@ public class AuthDecryptor {
      */
     public String generateSignature(Map<String, Object> param) {
         StringBuilder sb = new StringBuilder();
-        param.entrySet().stream().sorted((ent1, ent2) -> {
-            return ent1.getKey().compareTo(ent2.getKey());
-        }).map(ent -> {
+        param.entrySet().stream().sorted((ent1, ent2) -> ent1.getKey().compareTo(ent2.getKey())).map(ent -> {
             if (ent.getValue() instanceof Boolean) {
                 return String.format("%s=%b&", ent.getKey(), (boolean) ent.getValue());
             } else {
@@ -168,8 +177,8 @@ public class AuthDecryptor {
         boolean success = false;
         try {
             success = decrypt(validationEncrypted, this.pw).equals("success");
-        } catch (BadPaddingException e) {
-            success = false;
+        } catch(LoginException e) {
+            return false;
         }
         return success;
     }
@@ -182,7 +191,7 @@ public class AuthDecryptor {
     public String getSlackWebhookURL() {
         try {
             return decrypt(this.slackWebhookURLEncrypted, pw);
-        } catch (BadPaddingException e) {
+        } catch (FailedLoginException e) {
             e.printStackTrace();
         }
         throw new RuntimeException();

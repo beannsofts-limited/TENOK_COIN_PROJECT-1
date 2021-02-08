@@ -1,8 +1,7 @@
 package org.tenok.coin.strategy;
 
 import org.tenok.coin.data.CoinDataAccessable;
-import org.tenok.coin.data.entity.BacktestOrderable;
-import org.tenok.coin.data.entity.Backtestable;
+import org.tenok.coin.data.entity.BackTestable;
 import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.data.entity.impl.ActiveOrder;
@@ -24,7 +23,7 @@ class StrategyThread implements Runnable {
 
     public StrategyThread(StrategyConfig config) {
         try {
-            if (Backtestable.class.isAssignableFrom(config.getCoinDataAccessableClass())) {
+            if (BackTestable.class.isAssignableFrom(config.getCoinDataAccessableClass())) {
                 // backtestable 클래스 일 경우 Runnable 객체 집어넣고 getInstance 호출
                 coinDAOInstance = (CoinDataAccessable) config.getCoinDataAccessableClass()
                         .getDeclaredMethod("getInstance", Runnable.class)
@@ -92,9 +91,9 @@ class StrategyThread implements Runnable {
                 }
             }
 
-            if (coinDAOInstance instanceof BacktestOrderable) {
+            if (coinDAOInstance instanceof BackTestable) {
                 // Next seq 호출하여 다음 시간으로 이동
-                boolean isEnd = ((BacktestOrderable) coinDAOInstance).nextSeq(config.getCoinType());
+                boolean isEnd = ((BackTestable) coinDAOInstance).nextSeq(config.getCoinType());
                 if (isEnd) {
                     log.info("Backtest exceed");
                     break;

@@ -6,9 +6,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.tenok.coin.data.CoinDataAccessable;
-import org.tenok.coin.data.entity.BacktestOrderable;
-import org.tenok.coin.data.entity.Backtestable;
-import org.tenok.coin.data.entity.InstrumentInfo;
+import org.tenok.coin.data.entity.BackTestable;
 import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.data.entity.impl.BybitWalletInfo;
@@ -25,7 +23,7 @@ import org.tenok.coin.util.CoinMapper;
 /**
  * this class aint thread safe
  */
-public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOrderable {
+public class BacktestDAO implements CoinDataAccessable, BackTestable {
     private static Logger logger = Logger.getLogger(BacktestDAO.class);
     private PositionList myPosition = new PositionList();
     private Map<CoinEnum, Map<IntervalEnum, CandleList>> candleListCachedMap; // 실시간 처럼 보이는 기만용 캔들
@@ -218,26 +216,7 @@ public class BacktestDAO implements CoinDataAccessable, Backtestable, BacktestOr
     @Override
     @Deprecated(forRemoval = false)
     public OrderedList getOrderList() {
-
         return null;
-    }
-
-    /**
-     * @deprecated
-     */
-    @Override
-    @Deprecated(forRemoval = false)
-    public InstrumentInfo getInstrumentInfo(CoinEnum coinType) {
-        return null;
-    }
-
-    /**
-     * @deprecated
-     */
-    @Override
-    @Deprecated(forRemoval = false)
-    public void getPaidLimit(CoinEnum coinType) {
-        throw new UnsupportedOperationException();
     }
 
 }

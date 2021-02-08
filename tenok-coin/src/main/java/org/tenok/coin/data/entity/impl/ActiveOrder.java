@@ -1,7 +1,5 @@
 package org.tenok.coin.data.entity.impl;
 
-import java.util.Date;
-
 import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.OrderTypeEnum;
@@ -25,11 +23,7 @@ public class ActiveOrder implements Orderable {
     @NonNull
     private TIFEnum tif;
 
-    private boolean isOpen;
-
     private double qty;
-
-    private Date timeStamp;
 
     private int leverage;
 
@@ -56,16 +50,6 @@ public class ActiveOrder implements Orderable {
     @Override
     public double getQty() {
         return qty;
-    }
-
-    @Override
-    public Date getTimeStamp() {
-        return timeStamp;
-    }
-
-    @Override
-    public boolean isOpen() {
-        return isOpen;
     }
 
     @Override

@@ -197,7 +197,6 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
     /**
      * instrument info 조회
      */
-    @Override
     public InstrumentInfo getInstrumentInfo(CoinEnum coinType) {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");
@@ -268,18 +267,6 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
         JSONObject res = restDAO.placeActiveOrder(order.getSide(), order.getCoinType(), order.getOrderType(),
                 order.getQty(), order.getTIF(), Math.abs(order.getLeverage()));
         System.out.println(res.toJSONString());
-    }
-
-    /**
-     * @deprecated
-     */
-    @Override
-    @Deprecated(forRemoval = false)
-    public void getPaidLimit(CoinEnum coinType) {
-        if (!isLoggedIn) {
-            throw new RuntimeException("DAO instance is not logged in");
-        }
-
     }
 
     public boolean isLoggedIn() {
