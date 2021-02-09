@@ -20,7 +20,7 @@ import org.tenok.coin.data.entity.impl.ActiveOrder;
 import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
 import org.tenok.coin.data.impl.BybitDAO;
-import org.tenok.coin.slack.SlackDAO;
+import org.tenok.coin.slack.SlackSender;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 import org.tenok.coin.type.SideEnum;
@@ -65,7 +65,7 @@ public class DAOTest {
         } catch (LoginException e1) {
             e1.printStackTrace();
         }
-        WebhookResponse response = SlackDAO.getInstance().sendTradingMessage(CoinEnum.BTCUSDT, SideEnum.OPEN_BUY, 1);
+        WebhookResponse response = SlackSender.getInstance().sendTradingMessage(CoinEnum.BTCUSDT, SideEnum.OPEN_BUY, 1);
         assertEquals(response.getCode().intValue(), 200);
     }
 

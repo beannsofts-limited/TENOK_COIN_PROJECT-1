@@ -19,10 +19,13 @@ import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.tenok.coin.data.websocket.WebsocketResponseEnum;
-import org.tenok.coin.slack.SlackDAO;
+import org.tenok.coin.slack.SlackSender;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 
+/**
+ * Websocket Annotated Class
+ */
 @ClientEndpoint(encoders = { BybitEncoder.class }, decoders = { BybitDecoder.class })
 public class BybitWebsocket implements Closeable {
     private static Logger logger = Logger.getLogger(BybitWebsocket.class);
@@ -49,7 +52,7 @@ public class BybitWebsocket implements Closeable {
         logger.debug(response);
         WebsocketResponseEnum resType = (WebsocketResponseEnum) response.get("response_type");
         if (resType.equals(WebsocketResponseEnum.PING) || resType.equals(WebsocketResponseEnum.SUBSCRIPTION)) {
-            boolean success = (boolean) response.get("success"); // TODO ping??
+            boolean success = (boolean) response.get("success");
             if (!success) {
                 logger.fatal("Websocket Ping or Subscription failed");
                 logger.fatal(response.toJSONString());
@@ -107,7 +110,7 @@ public class BybitWebsocket implements Closeable {
     @OnError
     public void onError(Throwable t) {
         logger.error("Websocket Error", t);
-        SlackDAO.getInstance().sendException(t);
+        SlackSender.getInstance().sendException(t);
     }
 
     /**
@@ -167,6 +170,11 @@ public class BybitWebsocket implements Closeable {
         session.getAsyncRemote().sendObject(requestJson);
     }
 
+    /**
+     * return subscribe query json object
+     * @param args
+     * @return
+     */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private JSONObject getSubscriptionJSONObject(List args) {
         JSONObject requestJson = new JSONObject();

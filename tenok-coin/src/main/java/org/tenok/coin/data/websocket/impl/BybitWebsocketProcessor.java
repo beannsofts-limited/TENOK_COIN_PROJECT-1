@@ -27,6 +27,9 @@ import org.tenok.coin.type.SideEnum;
 import org.tenok.coin.type.TIFEnum;
 import org.tenok.coin.type.TickDirectionEnum;
 
+/**
+ * Websocket에서 할 수 있는 요청들(예: kline 실시간, wallet 실시간) 들을 처리 해줄 수 있는 클래스.
+ */
 public class BybitWebsocketProcessor implements Closeable {
     private static Logger logger = Logger.getLogger(BybitWebsocketProcessor.class);
     private static final String BYBIT_PUBLIC = "wss://stream.bybit.com/realtime_public";
