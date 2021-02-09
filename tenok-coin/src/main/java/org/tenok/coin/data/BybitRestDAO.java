@@ -132,7 +132,7 @@ public class BybitRestDAO {
         request.put("side", side.getApiString());
         request.put("symbol", coinType.name());
         request.put("order_type", oderType.getApiString());
-        request.put("qty", Double.toString(qty));
+        request.put("qty", qty);
         request.put("time_in_force", tif.getApiString());
         request.put("reduce_only", Boolean.valueOf(reduceOnly));
         request.put("close_on_trigger", Boolean.valueOf(false));

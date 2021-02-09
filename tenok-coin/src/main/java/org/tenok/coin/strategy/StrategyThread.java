@@ -31,7 +31,7 @@ class StrategyThread implements Runnable {
                 log.info("get instance from Backtestable DAO Object");
             } else {
                 coinDAOInstance = (CoinDataAccessable) config.getCoinDataAccessableClass()
-                        .getDeclaredMethod("getInstance", (Class<?>[]) null).invoke((Object) null, (Object) null);
+                        .getDeclaredMethod("getInstance", (Class<?>[]) null).invoke((Object) null);
                 log.info("get instance from Bybit DAO Object");
             }
             strategyInstance = config.getStrategyClass().getDeclaredConstructor(CoinDataAccessable.class, CoinEnum.class)
@@ -62,6 +62,8 @@ class StrategyThread implements Runnable {
     
                     double currentPrice = coinDAOInstance.getCurrentPrice(config.getCoinType());
                     double qty = currentAvailable / currentPrice;
+                    log.info(String.format("%f %f %f", currentAvailable, currentPrice, qty)+ String.format("%.1f", qty));
+                    qty = Double.parseDouble(String.format("%.1f", qty));
                     Orderable order = ActiveOrder.builder().coinType(config.getCoinType()).orderType(OrderTypeEnum.MARKET)
                             .qty(qty).side(side).tif(TIFEnum.IOC).build();
                     coinDAOInstance.orderCoin(order);
@@ -105,7 +107,7 @@ class StrategyThread implements Runnable {
                 return; // TODO instrrupted 되면 그대로 끝낼지. 아님 자동매도 할지.
             }
             try {
-                Thread.sleep(5);
+                Thread.sleep(1);
             } catch (InterruptedException e) {
                 log.info(String.format("%s strategy thread interrupted", Thread.currentThread().getName()));
                 Thread.currentThread().interrupt();
