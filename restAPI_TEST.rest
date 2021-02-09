@@ -9,4 +9,4 @@ GET http://sugang.ajou.ac.kr/aply/index.action
 
 
 ###
-GET https://api.bybit.com/v2/public/symbols
+GET https://api.bybit.com/v2/public/tickers?symbol=BTCUSDT

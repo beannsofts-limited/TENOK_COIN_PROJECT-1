@@ -3,7 +3,6 @@ package org.tenok.coin.data;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -108,7 +107,8 @@ public class BybitRestDAO {
      */
     public JSONObject getInstrumentInfo(CoinEnum coinType) {
         Map<String, Object> request = new TreeMap<>();
-        return requestByGet(request, "https://api.bybit.com/v2/public/symbols");
+        request.put("symbol", coinType.name());
+        return requestByGet(request, "https://api.bybit.com/v2/public/tickers?");
     }
 
     public JSONObject placeActiveOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum oderType, double qty,
@@ -276,9 +276,9 @@ public class BybitRestDAO {
         });
         urlBuilder.deleteCharAt(urlBuilder.length() - 1);
 
-        HttpURLConnection conn = null;
+        HttpsURLConnection conn = null;
         try {
-            conn = (HttpURLConnection) new URL(urlBuilder.toString()).openConnection();
+            conn = (HttpsURLConnection) new URL(urlBuilder.toString()).openConnection();
             conn.setRequestMethod("GET");
             conn.setDoInput(true);
             return (JSONObject) new JSONParser().parse(new InputStreamReader(conn.getInputStream()));

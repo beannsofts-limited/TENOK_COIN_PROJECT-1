@@ -39,7 +39,6 @@ public class SlackDAO {
     }
 
     public WebhookResponse sendException(Throwable t) {
-
         try {
             String payload = String.format("{\"text\":\"Exception 발생%n%n%s\"}", t.getMessage());
             response = slackInstance.send(webhookUrl, payload);

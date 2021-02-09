@@ -13,7 +13,7 @@ public class LongStrategy implements Strategy {
     private CoinDataAccessable coinDAO;
     private CoinEnum coinType;
     private boolean isOpened = false;
-    volatile CandleList candleList;
+    CandleList candleList;
 
     public LongStrategy(CoinDataAccessable coinDAO, CoinEnum coinType) {
         this.coinDAO = coinDAO;
@@ -36,7 +36,7 @@ public class LongStrategy implements Strategy {
 
     @Override
     public boolean testCloseRBI() {
-        CandleList candleList = coinDAO.getCandleList(coinType, IntervalEnum.HUNDREDTWENTY);
+        candleList = coinDAO.getCandleList(coinType, IntervalEnum.HUNDREDTWENTY);
         if (candleList.getReversed(0).getMa5() < candleList.getReversed(0).getMa10()) {
             return true;
         }

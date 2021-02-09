@@ -16,10 +16,9 @@ import org.json.simple.JSONObject;
 import org.tenok.coin.data.BybitRestDAO;
 import org.tenok.coin.data.CoinDataAccessable;
 import org.tenok.coin.data.entity.impl.PositionList;
-import org.tenok.coin.data.entity.InstrumentInfo;
 import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.WalletAccessable;
-import org.tenok.coin.data.entity.impl.BybitInstrumentInfo;
+import org.tenok.coin.data.entity.impl.InstrumentInfo;
 import org.tenok.coin.data.entity.impl.BybitWalletInfo;
 import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
@@ -50,7 +49,6 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
     // data accessable instance field
     private BybitWebsocketProcessor websocketProcessor = new BybitWebsocketProcessor();
     private BybitRestDAO restDAO;
-    private AuthDecryptor auth;
 
     private BybitDAO() {
         candleListIsCachedMap = new EnumMap<>(CoinEnum.class);
@@ -77,9 +75,8 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
      * @throws LoginException 로그인 실패 시 발생
      */
     public void login(String password) throws LoginException {
-        this.auth = AuthDecryptor.getInstance();
-        this.auth.setPassword(password);
-        if (!auth.validate()) {
+        AuthDecryptor.getInstance().setPassword(password);
+        if (!AuthDecryptor.getInstance().validate()) {
             throw new LoginException("로그인 실패");
         }
         logger.info(String.format("login success with pw: %s", password));
@@ -109,7 +106,7 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
             CandleList candleList = new CandleList(coinType, interval);
             candleListIsCachedMap.get(coinType).put(interval, candleList);
 
-            Stream<JSONObject> map = kLineArray.stream().map(kLineObject -> (JSONObject) kLineObject);
+            Stream<JSONObject> map = kLineArray.stream().map(JSONObject.class::cast);
             map.forEachOrdered((JSONObject kLineObject) -> {
                 double open = ((Number) kLineObject.get("open")).doubleValue();
                 double high = ((Number) kLineObject.get("high")).doubleValue();
@@ -196,27 +193,27 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
     /**
      * instrument info 조회
      */
+    @SuppressWarnings("unchecked")
     public InstrumentInfo getInstrumentInfo(CoinEnum coinType) {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");
         }
-        instrumentInfo.computeIfAbsent(coinType, coin -> {
-            JSONObject result = (JSONObject) restDAO.getInstrumentInfo(coin).get("result");
-            double lastPrice = ((Number) result.get("last_price")).doubleValue();
+        instrumentInfo.computeIfAbsent(coinType, key -> {
+            JSONArray resultArray = (JSONArray) restDAO.getInstrumentInfo(key).get("result");
+            JSONObject result = (JSONObject) resultArray.parallelStream()
+                    .filter(pred -> ((JSONObject) pred).get("symbol").equals(coinType.name())).findAny().get();
+            double lastPrice = Double.parseDouble((String) result.get("last_price"));
             TickDirectionEnum lastTickDirection = TickDirectionEnum
                     .valueOfApiString((String) result.get("last_tick_direction"));
-            double price24hPcnt = ((Number) result.get("price_24h_pcnt")).doubleValue();
-            double highPrice24h = ((Number) result.get("high_price_24h")).doubleValue();
-            double lowPrice24h = ((Number) result.get("low_price_24h")).doubleValue();
-            double price1hPcnt = ((Number) result.get("price_1h_pcnt")).doubleValue();
-            double highPrice1h = ((Number) result.get("high_price_1h")).doubleValue();
-            double lowPrice1h = ((Number) result.get("low_price_1h")).doubleValue();
-            var insInfo = BybitInstrumentInfo.builder().coinType(coin).lastPriceE4((long) lastPrice * 10000)
+            double price24hPcnt = Double.parseDouble((String) result.get("price_24h_pcnt"));
+            double highPrice24h = Double.parseDouble((String) result.get("high_price_24h"));
+            double lowPrice24h = Double.parseDouble((String) result.get("low_price_24h"));
+            double price1hPcnt = Double.parseDouble((String) result.get("price_1h_pcnt"));
+            var insInfo = InstrumentInfo.builder().coinType(key).lastPriceE4((long) lastPrice * 10000)
                     .lastTickDirection(lastTickDirection).price24hPcntE6((long) price24hPcnt * 1000000)
                     .highPrice24hE4((long) highPrice24h * 10000).lowPrice24hE4((long) lowPrice24h * 10000)
-                    .price1hPcntE6((long) price1hPcnt * 1000000).highPrice1hE4((long) highPrice1h * 10000)
-                    .lowPrice1hE4((long) lowPrice1h * 10000).build();
-            websocketProcessor.subscribeInsturmentInfo(coin, insInfo);
+                    .price1hPcntE6((long) price1hPcnt * 1000000).build();
+            websocketProcessor.subscribeInsturmentInfo(key, insInfo);
             return insInfo;
         });
         return instrumentInfo.get(coinType);
@@ -232,7 +229,7 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");
         }
-        return getInstrumentInfo(coinType).getLastPriceE4()/10000;
+        return getInstrumentInfo(coinType).getLastPriceE4() / 10000L;
     }
 
     /**
