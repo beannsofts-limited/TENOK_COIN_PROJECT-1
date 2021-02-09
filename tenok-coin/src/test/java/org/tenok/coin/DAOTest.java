@@ -76,12 +76,12 @@ public class DAOTest {
         Orderable order = ActiveOrder.builder()
                                      .coinType(CoinEnum.LTCUSDT)
                                      .orderType(OrderTypeEnum.MARKET)
-                                     .side(SideEnum.CLOSE_BUY)
+                                     .side(SideEnum.CLOSE_SELL)
                                      .qty(0.1)
                                      .tif(TIFEnum.GTC)
                                      .build();
                                      
-        // BybitDAO.getInstance().orderCoin(order);
+        BybitDAO.getInstance().orderCoin(order);
     }
 
     @Test

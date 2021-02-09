@@ -29,10 +29,10 @@ public class CandleIndex {
 
     public static void main(String[] args) throws IOException {
 
-        System.out.println("candleCache!\n1. cache All");
+        System.out.println("candleCache!\n1. cache All\n");
         int i = 2;
         for (var coinType : CoinEnum.values()) {
-            System.out.printf("%d. cache %s", i++, coinType.name());
+            System.out.printf("%d. cache %s%n", i++, coinType.name());
         }
 
         Scanner scan = new Scanner(System.in);
@@ -45,7 +45,7 @@ public class CandleIndex {
                 }
             }
         } else {
-            selectedCoin = CoinEnum.values()[2 + selected];
+            selectedCoin = CoinEnum.values()[1 + selected];
             for (var interval : IntervalEnum.values()) {
                 cacheKLine(selectedCoin, interval);
             }

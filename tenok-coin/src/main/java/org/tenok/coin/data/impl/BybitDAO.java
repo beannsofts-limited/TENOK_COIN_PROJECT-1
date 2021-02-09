@@ -109,9 +109,7 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
             CandleList candleList = new CandleList(coinType, interval);
             candleListIsCachedMap.get(coinType).put(interval, candleList);
 
-            Stream<JSONObject> map = kLineArray.stream().map((kLineObject) -> {
-                return (JSONObject) kLineObject;
-            });
+            Stream<JSONObject> map = kLineArray.stream().map(kLineObject -> (JSONObject) kLineObject);
             map.forEachOrdered((JSONObject kLineObject) -> {
                 double open = ((Number) kLineObject.get("open")).doubleValue();
                 double high = ((Number) kLineObject.get("high")).doubleValue();
@@ -180,6 +178,7 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
 
     /**
      * position list 조회
+     * 
      * @deprecated
      */
     @Override
@@ -233,7 +232,7 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");
         }
-        return 0;
+        return getInstrumentInfo(coinType).getLastPriceE4()/10000;
     }
 
     /**
@@ -247,7 +246,7 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
             throw new RuntimeException("DAO instance is not logged in");
         }
         if (walletInfo == null) {
-            walletInfo = new BybitWalletInfo(0, 0);
+            walletInfo = new BybitWalletInfo(24, 24);
             websocketProcessor.subscribeWalletInfo(walletInfo);
         }
         return walletInfo;
