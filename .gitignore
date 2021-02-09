@@ -34,5 +34,10 @@ target
 .classpath
 
 # bybit cached
-BTCUSDT*.json
-BTCUSDT*.txt
+/candle_cached/
+/candle_cached_final/
+
+# intelli j
+/.idea/
+/.metadata/
+*.iml

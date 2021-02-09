@@ -1,5 +1,8 @@
-GET https://api.bybit.com/public/linear/kline
-        ?symbol=LINKUSDT
-        &interval=15
-        &limit=20
-        &from=1611187200
+GET http://api.bybit.com/public/linear/kline
+        ?symbol=ETHUSDT
+        &interval=1
+        &limit=3
+        &from=1585118245
+
+###
+GET http://sugang.ajou.ac.kr/aply/index.action

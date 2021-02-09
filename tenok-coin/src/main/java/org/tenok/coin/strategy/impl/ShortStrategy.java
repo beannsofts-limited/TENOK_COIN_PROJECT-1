@@ -53,7 +53,7 @@ public class ShortStrategy implements Strategy {
 
     @Override
     public boolean isNotOpened() {
-        return isOpened;
+        return !isOpened;
     }
 
     @Override
