@@ -71,8 +71,8 @@ public class BacktestDAO implements CoinDataAccessable, BackTestable {
 
             if (currentIndex == 0L) {
                 // 5개 캔들을 집어넣고 리턴
-                candleListCachedMap.get(coinType).get(interval)
-                        .addAll(candleListWholeCachedMap.get(coinType).get(interval).subList(0, 5));
+                candleListCachedMap.get(coinType).get(interval).addAll(candleListWholeCachedMap.get(coinType)
+                        .get(interval).subList(0, Long.valueOf(5L / interval.getBacktestNumber()).intValue()));
             } else {
                 // current index가 0이 아닌 상황 = 이미 Backtest 상에서 시간이 흐른 상황에서 새로운 캔들을 불러올 경우,
                 // nextSeq에서 문제가 생길 수 있으므로 이와 같이 currentIndex를 포함하는 서브리스트를 리턴

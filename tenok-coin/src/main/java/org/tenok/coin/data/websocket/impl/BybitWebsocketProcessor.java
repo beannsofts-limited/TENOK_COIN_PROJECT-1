@@ -3,21 +3,18 @@ package org.tenok.coin.data.websocket.impl;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Date;
 
 import javax.websocket.ContainerProvider;
-import javax.websocket.DeploymentException;
 import javax.websocket.EncodeException;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 
 import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
-import org.tenok.coin.data.entity.InstrumentInfo;
 import org.tenok.coin.data.entity.WalletAccessable;
-import org.tenok.coin.data.entity.impl.BybitInstrumentInfo;
+import org.tenok.coin.data.entity.impl.InstrumentInfo;
 import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
 import org.tenok.coin.data.entity.impl.OrderedData;
@@ -30,8 +27,13 @@ import org.tenok.coin.type.SideEnum;
 import org.tenok.coin.type.TIFEnum;
 import org.tenok.coin.type.TickDirectionEnum;
 
+/**
+ * Websocket에서 할 수 있는 요청들(예: kline 실시간, wallet 실시간) 들을 처리 해줄 수 있는 클래스.
+ */
 public class BybitWebsocketProcessor implements Closeable {
     private static Logger logger = Logger.getLogger(BybitWebsocketProcessor.class);
+    private static final String BYBIT_PUBLIC = "wss://stream.bybit.com/realtime_public";
+    private static final String BYBIT_PRIVATE = "wss://stream.bybit.com/realtime_private";
     private Session websocketPublicSession;
     private Session websocketPrivateSession;
     private BybitWebsocket websocketPublicInstance;
@@ -44,50 +46,53 @@ public class BybitWebsocketProcessor implements Closeable {
     /**
      * 웹소켓 연결 및 heart deat 스레드 등록.
      */
-    @SuppressWarnings("unchecked")
     public void init() {
         WebSocketContainer container = ContainerProvider.getWebSocketContainer();
         this.websocketPublicInstance = new BybitWebsocket();
         this.websocketPrivateInstance = new BybitWebsocket();
 
         try {
-            this.websocketPublicSession = container.connectToServer(websocketPublicInstance,
-                    new URI("wss://stream.bybit.com/realtime_public"));
-            this.websocketPrivateSession = container.connectToServer(websocketPrivateInstance,
-                    new URI("wss://stream.bybit.com/realtime_private"));
-            JSONObject authObject = new JSONObject();
-            authObject.put("op", "auth");
-            long expires = AuthDecryptor.getInstance().generateExpire();
-            authObject.put("args", Arrays.asList(new String[] { AuthDecryptor.getInstance().getApiKey(),
-                    Long.toString(expires), AuthDecryptor.getInstance().generateSignature(expires) }));
-            websocketPrivateSession.getBasicRemote().sendObject(authObject);
-        } catch (DeploymentException e) {
+            // public, private websocket에 연결
+            this.websocketPublicSession = container.connectToServer(websocketPublicInstance, new URI(BYBIT_PUBLIC));
+            this.websocketPrivateSession = container.connectToServer(websocketPrivateInstance, new URI(BYBIT_PRIVATE));
+            // 웹소켓 서버에 로그인 시도
+            sendAuthQeury();
+        } catch (Exception e) {
             logger.error(e);
-        } catch (IOException e) {
-            logger.error(e);
-        } catch (URISyntaxException e) {
-            logger.error(e);
-        } catch (EncodeException e) {
-            logger.error(e);
+            throw new RuntimeException("websocket connect failed");
         }
-        heartBeatThread = new Thread() {
-            @Override
-            public void run() {
+
+        heartBeatThread = new Thread(() -> {
+            try {
                 while (true) {
                     websocketPublicSession.getAsyncRemote().sendText("{\"op\":\"ping\"}");
                     websocketPrivateSession.getAsyncRemote().sendText("{\"op\":\"ping\"}");
-                    if (interrupted()) {
-                        break;
-                    }
-                    try {
-                        Thread.sleep(30000);
-                    } catch (InterruptedException e) {
-                        break;
-                    }
+                    Thread.sleep(30000);
                 }
+            } catch (InterruptedException e) {
+                logger.info("heart beat thread interrupted!");
+                Thread.currentThread().interrupt();
             }
-        };
+        }, "HeartBeatThread");
+
         heartBeatThread.start();
+
+    }
+
+    /**
+     * Websocket 서버에 auth qeury를 전송한다.
+     * 
+     * @throws IOException     .
+     * @throws EncodeException .
+     */
+    @SuppressWarnings("unchecked")
+    private void sendAuthQeury() throws IOException, EncodeException {
+        JSONObject authObject = new JSONObject();
+        authObject.put("op", "auth");
+        long expires = AuthDecryptor.getInstance().generateExpire();
+        authObject.put("args", Arrays.asList(AuthDecryptor.getInstance().getApiKey(), Long.toString(expires),
+                AuthDecryptor.getInstance().generateSignature(expires)));
+        websocketPrivateSession.getBasicRemote().sendObject(authObject);
     }
 
     /**
@@ -98,12 +103,12 @@ public class BybitWebsocketProcessor implements Closeable {
      * @param candleList CandleList instance
      */
     public void subscribeCandle(CoinEnum coinType, IntervalEnum interval, CandleList candleList) {
-        this.websocketPublicInstance.registerKLineCallback(coinType, interval, (data) -> {
+        this.websocketPublicInstance.registerKLineCallback(coinType, interval, data -> {
             double open = ((Number) data.get("open")).doubleValue();
             double close = ((Number) data.get("close")).doubleValue();
             double high = ((Number) data.get("high")).doubleValue();
             double low = ((Number) data.get("low")).doubleValue();
-            double volume = Double.valueOf((String) data.get("volume"));
+            double volume = Double.parseDouble((String) data.get("volume"));
             Date startAt = new Date(((Number) data.get("start")).longValue() * 1000L);
             boolean confirm = (boolean) data.get("confirm");
 
@@ -119,30 +124,24 @@ public class BybitWebsocketProcessor implements Closeable {
 
     public void subscribeInsturmentInfo(CoinEnum coinType, InstrumentInfo instrumentInfo) {
         this.websocketPublicInstance.registerInsturmentInfo(coinType, data -> {
-            var insInfo = (BybitInstrumentInfo) instrumentInfo;
             if (data.containsKey("last_tick_direction")) {
-                insInfo.lastTickDirection(TickDirectionEnum.valueOfApiString((String) data.get("last_tick_direction")));
+                instrumentInfo.lastTickDirection(
+                        TickDirectionEnum.valueOfApiString((String) data.get("last_tick_direction")));
             }
             if (data.containsKey("last_price_e4")) {
-                insInfo.lastPriceE4((long) data.get("last_price_e4"));
+                instrumentInfo.lastPriceE4((long) data.get("last_price_e4"));
             }
             if (data.containsKey("price_24h_pcnt_e6")) {
-                insInfo.price24hPcntE6((long) data.get("price_24h_pcnt_e6"));
+                instrumentInfo.price24hPcntE6((long) data.get("price_24h_pcnt_e6"));
             }
             if (data.containsKey("high_price_24h_e4")) {
-                insInfo.price24hPcntE6((long) data.get("high_price_24h_e4"));
+                instrumentInfo.price24hPcntE6((long) data.get("high_price_24h_e4"));
             }
             if (data.containsKey("low_price_24h_e4")) {
-                insInfo.lowPrice24hE4((long) data.get("low_price_24h_e4"));
+                instrumentInfo.lowPrice24hE4((long) data.get("low_price_24h_e4"));
             }
             if (data.containsKey("price_1h_pcnt_e6")) {
-                insInfo.price1hPcntE6((long) data.get("price_1h_pcnt_e6"));
-            }
-            if (data.containsKey("high_price_1h_e4")) {
-                insInfo.highPrice1hE4((long) data.get("high_price_1h_e4"));
-            }
-            if (data.containsKey("low_price_1h_e4")) {
-                insInfo.lowPrice1hE4((long) data.get("low_price_1h_e4"));
+                instrumentInfo.price1hPcntE6((long) data.get("price_1h_pcnt_e6"));
             }
         });
     }

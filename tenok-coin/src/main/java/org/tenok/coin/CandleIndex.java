@@ -28,24 +28,28 @@ public class CandleIndex {
     static final String ROOT_PATH = "./candle_cached";
 
     public static void main(String[] args) throws IOException {
-
-        System.out.println("candleCache!\n1. cache All");
+        System.out.println(CoinEnum.values()[0]);
+        System.out.println(CoinEnum.values()[0]);
+        System.out.println(CoinEnum.values()[0]);
+        System.out.println(CoinEnum.values()[0]);
+        System.out.println("candleCache!\n1. cache All\n");
         int i = 2;
         for (var coinType : CoinEnum.values()) {
-            System.out.printf("%d. cache %s", i++, coinType.name());
+            System.out.printf("%d. cache %s%n", i++, coinType.name());
         }
 
         Scanner scan = new Scanner(System.in);
         CoinEnum selectedCoin = null;
         int selected = scan.nextInt();
         if (selected == 1) {
+            System.out.println("cache all");
             for (var coinType : CoinEnum.values()) {
                 for (var interval : IntervalEnum.values()) {
                     cacheKLine(coinType, interval);
                 }
             }
         } else {
-            selectedCoin = CoinEnum.values()[2 + selected];
+            selectedCoin = CoinEnum.values()[selected - 2];
             for (var interval : IntervalEnum.values()) {
                 cacheKLine(selectedCoin, interval);
             }
@@ -114,7 +118,7 @@ public class CandleIndex {
             if (previousId == currentId) {
                 break;
             } else if (requestIter % 10 == 0) {
-                System.out.printf(String.format("\rcandle list loading epoch %d", requestIter));
+                System.out.printf(String.format("\rcandle list loading epoch %5d", requestIter));
             }
             previousId = currentId;
             requestIter++;

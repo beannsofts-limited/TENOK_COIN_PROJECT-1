@@ -6,3 +6,7 @@ GET http://api.bybit.com/public/linear/kline
 
 ###
 GET http://sugang.ajou.ac.kr/aply/index.action
+
+
+###
+GET https://api.bybit.com/v2/public/tickers?symbol=BTCUSDT

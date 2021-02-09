@@ -21,6 +21,9 @@ public class StrategyRunner {
                 String.format("Run Strategy Thread [%s, %s, %s]", config.getCoinDataAccessableClass().getSimpleName(),
                         config.getStrategyClass().getSimpleName(), config.getCoinType().getKorean()));
 
-        return new StrategyHandler(config, strategy, new Thread(strategy));
+        return new StrategyHandler(config, strategy,
+                new Thread(strategy,
+                        String.format("Thread [%s, %s, %s]", config.getCoinDataAccessableClass().getSimpleName(),
+                                config.getStrategyClass().getSimpleName(), config.getCoinType().getLiteral())));
     }
 }

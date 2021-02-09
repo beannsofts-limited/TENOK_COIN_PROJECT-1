@@ -14,7 +14,7 @@ import org.tenok.coin.strategy.impl.LongStrategy;
 import org.tenok.coin.type.CoinEnum;
 
 public class Index {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
         System.out.printf("enter pw: ");
@@ -32,15 +32,14 @@ public class Index {
 
         StrategyRunner runner = new StrategyRunner();
 
-        StrategyConfig config = new StrategyConfig(CoinEnum.BTCUSDT, BybitDAO.class, LongStrategy.class, 1, 1.0);
+        StrategyConfig config = new StrategyConfig(CoinEnum.LINKUSDT, BybitDAO.class, LongStrategy.class, 1, 0.1);
         StrategyHandler handler = runner.runStrategy(config);
 
         handler.start();
 
-        try {
-            BybitDAO.getInstance().close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        while (!br.readLine().equals("quit")) { }
+
+        br.close();
+
     }
 }
