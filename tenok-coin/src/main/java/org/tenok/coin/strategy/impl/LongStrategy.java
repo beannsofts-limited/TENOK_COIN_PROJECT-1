@@ -37,9 +37,9 @@ public class LongStrategy implements Strategy {
     @Override
     public boolean testCloseRBI() {
         candleList = coinDAO.getCandleList(coinType, IntervalEnum.HUNDREDTWENTY);
-        if (candleList.getReversed(0).getMa5() < candleList.getReversed(0).getMa10()) {
-            return true;
-        }
+        // if (candleList.getReversed(0).getMa5() < candleList.getReversed(0).getMa10()) {
+        //     return true;
+        // }
         return false;
     }
 

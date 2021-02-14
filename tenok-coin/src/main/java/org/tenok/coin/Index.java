@@ -17,7 +17,7 @@ public class Index {
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-        System.out.printf("enter pw: ");
+        System.out.print("enter pw: ");
         while (true) {
             try {
                 BybitDAO.getInstance().login(br.readLine());
