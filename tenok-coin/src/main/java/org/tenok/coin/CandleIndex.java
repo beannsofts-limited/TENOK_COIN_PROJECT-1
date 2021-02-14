@@ -28,10 +28,6 @@ public class CandleIndex {
     static final String ROOT_PATH = "./candle_cached";
 
     public static void main(String[] args) throws IOException {
-        System.out.println(CoinEnum.values()[0]);
-        System.out.println(CoinEnum.values()[0]);
-        System.out.println(CoinEnum.values()[0]);
-        System.out.println(CoinEnum.values()[0]);
         System.out.println("candleCache!\n1. cache All\n");
         int i = 2;
         for (var coinType : CoinEnum.values()) {
@@ -59,7 +55,7 @@ public class CandleIndex {
     }
 
     public static void cacheKLine(CoinEnum coinType, IntervalEnum interval) throws IOException {
-        System.out.printf("start cache %s %s%n", coinType.getLiteral(), interval.getApiString());
+        System.out.printf("%n%nstart cache %s %s%n", coinType.getLiteral(), interval.getApiString());
         new File(ROOT_PATH + "/" + coinType.getLiteral() + "/").mkdirs();
         new File(ROOT_PATH + "/" + coinType.getLiteral() + "/" + interval.getApiString() + ".json").createNewFile();
 
@@ -85,9 +81,9 @@ public class CandleIndex {
         mapper.writeValue(new File(ROOT_PATH + "/" + coinType.getLiteral() + "/" + interval.getApiString() + ".json"),
                 candleList);
 
-        System.out.printf("Successfully cached candle List. size is %dMB%n",
+        System.out.printf("Successfully cached candle List. size is %.2fMB%n",
                 new File(ROOT_PATH + "/" + coinType.getLiteral() + "/" + interval.getApiString() + ".json").length()
-                        / 1024L / 1024L);
+                        / 1024 / 1024.0);
     }
 
     /**
@@ -117,13 +113,13 @@ public class CandleIndex {
             currentId = ((long) currentResponse.get("id"));
             if (previousId == currentId) {
                 break;
-            } else if (requestIter % 10 == 0) {
+            } else if (requestIter % 5 == 0) {
                 System.out.printf(String.format("\rcandle list loading epoch %5d", requestIter));
             }
             previousId = currentId;
             requestIter++;
         }
-        System.out.println("loading complete");
+        System.out.println("\nloading complete");
         List<Candle> tempCandleList = new ArrayList<>();
 
         responseList.stream().flatMap(inner -> {
