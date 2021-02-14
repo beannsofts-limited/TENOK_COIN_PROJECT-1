@@ -1,9 +1,11 @@
 package org.tenok.coin.data.entity.impl;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Stack;
 
 import org.tenok.coin.data.RealtimeAccessable;
+import org.tenok.coin.data.entity.impl.candle_index.Indexable;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 
@@ -14,12 +16,15 @@ import lombok.Getter;
 public class CandleList extends Stack<Candle> implements RealtimeAccessable {
     private CoinEnum coinType;
     private IntervalEnum interval;
+    private transient Map<Class<? extends Indexable<?>>, Indexable<?>> indexMap;
 
     public CandleList(CoinEnum coinType, IntervalEnum interval) {
         super();
         this.coinType = coinType;
         this.interval = interval;
+        this.indexMap = new HashMap<>();
     }
+
     public CandleList() {
         super();
     }
@@ -29,23 +34,7 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
      * confirm 이 true 일때 캔들을 확정지음 or kline으로 ??개 캔들 불러올때 계산해서 push 해줌
      */
     public void registerNewCandle(Candle item) {
-        double ma5 = calMA(item, 5);
-        double ma10 = calMA(item, 10);
-        double ma20 = calMA(item, 20);
-        double ma60 = calMA(item, 60);
-        double ma120 = calMA(item, 120);
-        double lowerBB = calLowerBB(item, 20);
-        double middleBB = calMiddleBB(item, 20);
-        double upperBB = calUpperBB(item, 20);
-
-        item.setMa5(ma5);
-        item.setMa10(ma10);
-        item.setMa20(ma20);
-        item.setMa60(ma60);
-        item.setMa120(ma120);
-        item.setLowerBB(lowerBB);
-        item.setMiddleBB(middleBB);
-        item.setUpperBB(upperBB);
+        indexMap.values().parallelStream().forEach(index -> index.calculateNewCandle(item));
         item.setConfirmed(true);
 
         super.push(item);
@@ -57,29 +46,26 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
     public void updateCurrentCandle(Candle item) {
 
         super.pop();
-        double ma5 = calMA(item, 5);
-        double ma10 = calMA(item, 10);
-        double ma20 = calMA(item, 20);
-        double ma60 = calMA(item, 60);
-        double ma120 = calMA(item, 120);
-        double lowerBB = calLowerBB(item, 20);
-        double middleBB = calMiddleBB(item, 20);
-        double upperBB = calUpperBB(item, 20);
-
-        item.setMa5(ma5);
-        item.setMa10(ma10);
-        item.setMa20(ma20);
-        item.setMa60(ma60);
-        item.setMa120(ma120);
-        item.setLowerBB(lowerBB);
-        item.setMiddleBB(middleBB);
-        item.setUpperBB(upperBB);
+        indexMap.values().parallelStream().forEach(index -> index.calculateCurrentCandle(item));
         item.setConfirmed(false);
 
         super.push(item);
 
         // 0봉전 pop -> 0봉전 실시간데이터 변경 볼린저 ,ma 계산 -> 다시 0봉전 push
 
+    }
+
+    public void addIndex(Class<? extends Indexable<?>> indexClass) {
+        try {
+            indexMap.put(indexClass, indexClass.getConstructor(CoinEnum.class, IntervalEnum.class, CandleList.class)
+                    .newInstance(coinType, interval, this));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void removeIndex(Class<? extends Indexable<?>> indexClass) {
+        indexMap.remove(indexClass);
     }
 
     /**
@@ -110,62 +96,7 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
         return super.get(this.size() - index - 1);
     }
 
-    private double calMA(Candle item, int period) {
-        double closeSum = 0;
-        double ma = 0;
-
-        if (period > super.size()) {
-            return 0;
-
-        } else {
-            for (int i = super.size() - 1; i >= super.size() - period + 1; i--) {
-                closeSum = closeSum + super.elementAt(i).getClose();
-            }
-            closeSum = item.getClose() + closeSum;
-            ma = closeSum / period;
-
-            return ma;
-        }
-
-    }
-
-    private double calUpperBB(Candle item, int period) {
-        return calMiddleBB(item, period) + calStandardDeviation(item, period) * 2;
-    }
-
-    private double calMiddleBB(Candle item, int period) {
-        return calMA(item, period);
-    }
-
-    private double calLowerBB(Candle item, int period) {
-        return calMiddleBB(item, period) - calStandardDeviation(item, period) * 2;
-    }
-
-    private double calStandardDeviation(Candle item, int period) {
-
-        if (period > super.size()) {
-            return 0;
-        } else {
-
-            double closeSum = 0;
-            double deviationSum = 0;
-            ArrayList<Candle> closeArray = new ArrayList<>();
-            ArrayList<Double> deviationArray = new ArrayList<>();
-            for (int i = super.size() - 1; i >= super.size() - period + 1; i--) {
-                closeArray.add(super.elementAt(i));
-                closeSum = closeSum + super.elementAt(i).getClose();
-            }
-            closeArray.add(item);
-            closeSum = item.getClose() + closeSum;
-            closeSum = closeSum / period;
-
-            for (int i = 0; i < closeArray.size(); i++) {
-                deviationArray.add(Math.pow(closeSum - closeArray.get(i).getClose(), 2));
-            }
-            for (int i = 0; i < deviationArray.size(); i++) {
-                deviationSum = deviationSum + deviationArray.get(i);
-            }
-            return Math.sqrt(deviationSum / period);
-        }
+    public Object getIndexReversed(Class<? extends Indexable<?>> indexClass, int index) {
+        return indexMap.get(indexClass).getReversed(index);
     }
 }
