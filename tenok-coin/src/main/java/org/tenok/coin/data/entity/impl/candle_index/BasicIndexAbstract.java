@@ -17,6 +17,10 @@ public abstract class BasicIndexAbstract<T> extends Stack<T> implements Indexabl
         this.coinType = coinType;
         this.interval = interval;
         this.reference = reference;
+
+        if (!reference.isEmpty()) {
+            reference.stream().forEachOrdered(this::calculateNewCandle);
+        }
     }
 
     public CoinEnum getCoinType() {

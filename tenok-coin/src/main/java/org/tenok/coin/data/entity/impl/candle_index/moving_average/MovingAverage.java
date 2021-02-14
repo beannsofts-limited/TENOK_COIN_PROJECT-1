@@ -9,7 +9,7 @@ import org.tenok.coin.type.IntervalEnum;
 @SuppressWarnings("serial")
 public class MovingAverage extends BasicIndexAbstract<MAObject> {
 
-    protected MovingAverage(CoinEnum coinType, IntervalEnum interval, CandleList reference) {
+    public MovingAverage(CoinEnum coinType, IntervalEnum interval, CandleList reference) {
         super(coinType, interval, reference);
     }
 

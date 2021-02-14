@@ -10,6 +10,10 @@ import org.junit.Test;
 import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.impl.ActiveOrder;
 import org.tenok.coin.data.entity.impl.CandleList;
+import org.tenok.coin.data.entity.impl.candle_index.bollinger_band.BBObject;
+import org.tenok.coin.data.entity.impl.candle_index.bollinger_band.BollingerBand;
+import org.tenok.coin.data.entity.impl.candle_index.moving_average.MAObject;
+import org.tenok.coin.data.entity.impl.candle_index.moving_average.MovingAverage;
 import org.tenok.coin.data.impl.BybitDAO;
 import org.tenok.coin.slack.SlackSender;
 import org.tenok.coin.type.CoinEnum;
@@ -31,21 +35,6 @@ public class DAOTest {
     }
 
     @Test
-    public void candleListTest() throws InterruptedException, LoginException {
-        BybitDAO.getInstance().login("tenok2019");
-        CandleList candleList = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
-        assertEquals(200, candleList.size());
-        
-        candleList.stream().forEachOrdered(cl -> {
-            System.out.println(String.format("u bb: %f\nm bb: %f\nl bb: %f", cl.getUpperBB(), cl.getMiddleBB(), cl.getLowerBB()));
-        });
-        for (int i = 0; i < 0; i++) {
-            var cl = candleList.get(0);
-            System.out.println(String.format("u bb: %f\nm bb: %f\nl bb: %f", cl.getUpperBB(), cl.getMiddleBB(), cl.getLowerBB()));
-        }
-    }
-
-    @Test
     public void sendMessage(){
         
         try {
@@ -54,7 +43,7 @@ public class DAOTest {
             e1.printStackTrace();
         }
         WebhookResponse response = SlackSender.getInstance().sendTradingMessage(CoinEnum.BTCUSDT, SideEnum.OPEN_BUY, 1);
-        assertEquals(response.getCode().intValue(), 200);
+        assertEquals(200, response.getCode().intValue());
     }
 
     @Test
@@ -78,7 +67,7 @@ public class DAOTest {
         BybitDAO.getInstance().login("tenok2019");
         
         WebhookResponse res = SlackSender.getInstance().sendException(new RuntimeException("something went wrong!"));
-        assertEquals(res.getCode().intValue(), 200);
+        assertEquals(200, res.getCode().intValue());
     }
 
     //  // @Test
@@ -99,5 +88,19 @@ public class DAOTest {
         var inst = BybitDAO.getInstance().getInstrumentInfo(CoinEnum.BTCUSDT);
 
         assertEquals(CoinEnum.BTCUSDT, inst.getCoinType());
+    }
+
+    @Test
+    public void indexingCandleTest() throws LoginException {
+        BybitDAO.getInstance().login("tenok2019");
+        CandleList candleList = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
+        candleList.addIndex(MovingAverage.class);
+        candleList.addIndex(BollingerBand.class);
+
+        MAObject maObject = (MAObject) candleList.getIndexReversed(MovingAverage.class, 0);
+        BBObject bbObject = (BBObject) candleList.getIndexReversed(BollingerBand.class, 0);
+        assertEquals(maObject.getMa20(), bbObject.getMiddleBB(), 1);
+
+        System.out.println(maObject.getMa20());
     }
 }

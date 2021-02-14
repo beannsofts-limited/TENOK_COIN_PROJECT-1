@@ -1,5 +1,6 @@
 package org.tenok.coin.data.entity.impl;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
@@ -21,6 +22,7 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
         super();
         this.coinType = coinType;
         this.interval = interval;
+        this.indexMap = new HashMap<>();
     }
 
     public CandleList() {
@@ -53,16 +55,17 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
 
     }
 
-    public void getIndexObject(Class<? extends Indexable<?>> indexClass) {
-
-    }
-
     public void addIndex(Class<? extends Indexable<?>> indexClass) {
-
+        try {
+            indexMap.put(indexClass, indexClass.getConstructor(CoinEnum.class, IntervalEnum.class, CandleList.class)
+                    .newInstance(coinType, interval, this));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void removeIndex(Class<? extends Indexable<?>> indexClass) {
-
+        indexMap.remove(indexClass);
     }
 
     /**
