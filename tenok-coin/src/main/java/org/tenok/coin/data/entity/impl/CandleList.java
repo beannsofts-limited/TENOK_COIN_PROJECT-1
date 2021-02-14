@@ -1,5 +1,6 @@
 package org.tenok.coin.data.entity.impl;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
@@ -30,12 +31,11 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
     }
 
     /**
-     * 
-     * confirm 이 true 일때 캔들을 확정지음 or kline으로 ??개 캔들 불러올때 계산해서 push 해줌
+     * 처음 open 된 캔들 등록
      */
     public void registerNewCandle(Candle item) {
         indexMap.values().parallelStream().forEach(index -> index.calculateNewCandle(item));
-        item.setConfirmed(true);
+        item.setConfirmed(false);
 
         super.push(item);
     }
@@ -44,26 +44,27 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
      * 현재 confirm 되지 않은 캔들 업데이트
      */
     public void updateCurrentCandle(Candle item) {
-
         super.pop();
         indexMap.values().parallelStream().forEach(index -> index.calculateCurrentCandle(item));
         item.setConfirmed(false);
 
         super.push(item);
-
-        // 0봉전 pop -> 0봉전 실시간데이터 변경 볼린저 ,ma 계산 -> 다시 0봉전 push
-
     }
 
+    /**
+     * 지표를 등록한다.
+     * 
+     * @param indexClass 지표 클래스
+     */
     public void addIndex(Class<? extends Indexable<?>> indexClass) {
-        try {
-            indexMap.put(indexClass, indexClass.getConstructor(CoinEnum.class, IntervalEnum.class, CandleList.class)
-                    .newInstance(coinType, interval, this));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        indexMap.put(indexClass, (Indexable<?>) instantiateIndexClass(indexClass));
     }
 
+    /**
+     * 지표를 삭제한다.
+     * 
+     * @param indexClass 지표 클래스
+     */
     public void removeIndex(Class<? extends Indexable<?>> indexClass) {
         indexMap.remove(indexClass);
     }
@@ -96,7 +97,38 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
         return super.get(this.size() - index - 1);
     }
 
+    /**
+     * 역배열 순서로 캔들의 지표를 가져온다. ex) HTS의 0봉전, 1봉전
+     * 
+     * 만약 해당 지표가 addIndex() 메소드로 add 되지 않았다면, 내부적으로 add 및 지표를 계산한다.
+     * 지표를 LazyLoad 할 수 있는 방법이나, 성능저하가 있을 수 있으니 주의
+     * <p>
+     * <strong>사용례)</strong>
+     * </p>
+     * <pre>
+     * {@code
+     * BBObject bbObject = (BBObject) candleList.getIndexReversed(BollingerBand.class, 0);
+     * boolean upperBB = bbObject.getUpperBB();
+     * boolean middleBB = bbObject.getMiddleBB();
+     * }
+     * </pre>
+     * 
+     * @param indexClass 불러올 지표
+     * @param index      index of the element to return in reversed order
+     * @return 지표 Object
+     */
     public Object getIndexReversed(Class<? extends Indexable<?>> indexClass, int index) {
+        indexMap.computeIfAbsent(indexClass, param -> (Indexable<?>) instantiateIndexClass(param));
         return indexMap.get(indexClass).getReversed(index);
+    }
+
+    private Object instantiateIndexClass(Class<? extends Indexable<?>> indexClass) {
+        try {
+            return indexClass.getConstructor(CoinEnum.class, IntervalEnum.class, CandleList.class).newInstance(coinType,
+                    interval, this);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Index class cannot be instantiated");
+        }
     }
 }

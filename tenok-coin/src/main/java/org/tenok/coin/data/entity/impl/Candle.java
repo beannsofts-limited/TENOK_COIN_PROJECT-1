@@ -28,26 +28,47 @@ public class Candle {
         
     }
 
+    /**
+     * @return open 시간
+     */
     public Date getStartAt() {
         return this.startAt;
     }
 
+    /**
+     * 
+     * @return 거래량
+     */
     public double getVolume() {
         return this.volume;
     }
 
+    /**
+     * 
+     * @return 시가
+     */
     public double getOpen() {
         return this.open;
     }
 
+    /**
+     * @return 고가
+     */
     public double getHigh() {
         return this.high;
     }
 
+    /**
+     * 
+     * @return 저가
+     */
     public double getLow() {
         return this.low;
     }
 
+    /**
+     * @return 종가
+     */
     public double getClose() {
         return this.close;
     }
