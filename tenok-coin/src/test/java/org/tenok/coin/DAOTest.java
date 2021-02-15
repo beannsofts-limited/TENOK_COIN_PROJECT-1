@@ -94,13 +94,14 @@ public class DAOTest {
     public void indexingCandleTest() throws LoginException {
         BybitDAO.getInstance().login("tenok2019");
         CandleList candleList = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
-        candleList.addIndex(MovingAverage.class);
-        candleList.addIndex(BollingerBand.class);
+        MovingAverage ma = (MovingAverage) candleList.createIndex(new MovingAverage());
+        BollingerBand bb = (BollingerBand) candleList.createIndex(new BollingerBand());
 
-        MAObject maObject = (MAObject) candleList.getIndexReversed(MovingAverage.class, 0);
-        BBObject bbObject = (BBObject) candleList.getIndexReversed(BollingerBand.class, 0);
+        MAObject maObject = ma.getReversed(0);
+        BBObject bbObject = bb.getReversed(0);
         assertEquals(maObject.getMa20(), bbObject.getMiddleBB(), 1);
 
         System.out.println(maObject.getMa20());
+
     }
 }

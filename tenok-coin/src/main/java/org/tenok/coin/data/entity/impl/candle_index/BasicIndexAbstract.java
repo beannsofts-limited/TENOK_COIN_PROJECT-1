@@ -4,31 +4,13 @@ import java.util.Stack;
 
 import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
-import org.tenok.coin.type.CoinEnum;
-import org.tenok.coin.type.IntervalEnum;
 
 @SuppressWarnings("serial")
 public abstract class BasicIndexAbstract<T> extends Stack<T> implements Indexable<T> {
-    private CoinEnum coinType;
-    private IntervalEnum interval;
     protected CandleList reference;
 
-    protected BasicIndexAbstract(CoinEnum coinType, IntervalEnum interval, CandleList reference) {
-        this.coinType = coinType;
-        this.interval = interval;
-        this.reference = reference;
+    protected BasicIndexAbstract() {
 
-        if (!reference.isEmpty()) {
-            reference.stream().forEachOrdered(this::calculateNewCandle);
-        }
-    }
-
-    public CoinEnum getCoinType() {
-        return coinType;
-    }
-
-    public IntervalEnum getInterval() {
-        return interval;
     }
 
     public CandleList getReference() {
@@ -36,6 +18,14 @@ public abstract class BasicIndexAbstract<T> extends Stack<T> implements Indexabl
     }
 
     protected abstract T calculate(Candle item);
+
+    @Override
+    public void injectReference(CandleList candleList) {
+        this.reference = candleList;
+        if (!reference.isEmpty()) {
+            reference.stream().forEachOrdered(this::calculateNewCandle);
+        }
+    }
 
     @Override
     public final void calculateNewCandle(Candle item) {
@@ -50,6 +40,9 @@ public abstract class BasicIndexAbstract<T> extends Stack<T> implements Indexabl
 
     @Override
     public final T getReversed(int index) {
+        if (reference == null) {
+            throw new IllegalStateException("CandleList::createIndex를 호출하여 사용해야 합니다.");
+        }
         return get(size() - index - 1);
     }
 }
