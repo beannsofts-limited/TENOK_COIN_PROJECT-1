@@ -3,16 +3,13 @@ package org.tenok.coin.data.entity.impl.candle_index.bollinger_band;
 import java.util.ArrayList;
 
 import org.tenok.coin.data.entity.impl.Candle;
-import org.tenok.coin.data.entity.impl.CandleList;
 import org.tenok.coin.data.entity.impl.candle_index.BasicIndexAbstract;
-import org.tenok.coin.type.CoinEnum;
-import org.tenok.coin.type.IntervalEnum;
 
 @SuppressWarnings("serial")
 public class BollingerBand extends BasicIndexAbstract<BBObject> {
 
-    public BollingerBand(CoinEnum coinType, IntervalEnum interval, CandleList reference) {
-        super(coinType, interval, reference);
+    public BollingerBand() {
+        super();
     }
 
     @Override

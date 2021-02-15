@@ -1,8 +1,7 @@
 package org.tenok.coin.data.entity.impl;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
 
 import org.tenok.coin.data.RealtimeAccessable;
@@ -17,13 +16,13 @@ import lombok.Getter;
 public class CandleList extends Stack<Candle> implements RealtimeAccessable {
     private CoinEnum coinType;
     private IntervalEnum interval;
-    private transient Map<Class<? extends Indexable<?>>, Indexable<?>> indexMap;
+    private transient List<Indexable<?>> indexList;
 
     public CandleList(CoinEnum coinType, IntervalEnum interval) {
         super();
         this.coinType = coinType;
         this.interval = interval;
-        this.indexMap = new HashMap<>();
+        this.indexList = new ArrayList<>();
     }
 
     public CandleList() {
@@ -34,7 +33,7 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
      * 처음 open 된 캔들 등록
      */
     public void registerNewCandle(Candle item) {
-        indexMap.values().parallelStream().forEach(index -> index.calculateNewCandle(item));
+        indexList.parallelStream().forEach(index -> index.calculateNewCandle(item));
         item.setConfirmed(false);
 
         super.push(item);
@@ -45,7 +44,7 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
      */
     public void updateCurrentCandle(Candle item) {
         super.pop();
-        indexMap.values().parallelStream().forEach(index -> index.calculateCurrentCandle(item));
+        indexList.parallelStream().forEach(index -> index.calculateCurrentCandle(item));
         item.setConfirmed(false);
 
         super.push(item);
@@ -56,8 +55,10 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
      * 
      * @param indexClass 지표 클래스
      */
-    public void addIndex(Class<? extends Indexable<?>> indexClass) {
-        indexMap.put(indexClass, (Indexable<?>) instantiateIndexClass(indexClass));
+    public Object createIndex(Indexable<?> indexObject) {
+        indexList.add(indexObject);
+        indexObject.injectReference(this);
+        return indexObject;
     }
 
     /**
@@ -65,8 +66,9 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
      * 
      * @param indexClass 지표 클래스
      */
-    public void removeIndex(Class<? extends Indexable<?>> indexClass) {
-        indexMap.remove(indexClass);
+    public void removeIndex(Indexable<?> indexClass) {
+        indexList.remove(indexClass);
+        indexClass.injectReference(null);
     }
 
     /**
@@ -95,40 +97,5 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
      */
     public Candle getReversed(int index) {
         return super.get(this.size() - index - 1);
-    }
-
-    /**
-     * 역배열 순서로 캔들의 지표를 가져온다. ex) HTS의 0봉전, 1봉전
-     * 
-     * 만약 해당 지표가 addIndex() 메소드로 add 되지 않았다면, 내부적으로 add 및 지표를 계산한다.
-     * 지표를 LazyLoad 할 수 있는 방법이나, 성능저하가 있을 수 있으니 주의
-     * <p>
-     * <strong>사용례)</strong>
-     * </p>
-     * <pre>
-     * {@code
-     * BBObject bbObject = (BBObject) candleList.getIndexReversed(BollingerBand.class, 0);
-     * boolean upperBB = bbObject.getUpperBB();
-     * boolean middleBB = bbObject.getMiddleBB();
-     * }
-     * </pre>
-     * 
-     * @param indexClass 불러올 지표
-     * @param index      index of the element to return in reversed order
-     * @return 지표 Object
-     */
-    public Object getIndexReversed(Class<? extends Indexable<?>> indexClass, int index) {
-        indexMap.computeIfAbsent(indexClass, param -> (Indexable<?>) instantiateIndexClass(param));
-        return indexMap.get(indexClass).getReversed(index);
-    }
-
-    private Object instantiateIndexClass(Class<? extends Indexable<?>> indexClass) {
-        try {
-            return indexClass.getConstructor(CoinEnum.class, IntervalEnum.class, CandleList.class).newInstance(coinType,
-                    interval, this);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Index class cannot be instantiated");
-        }
     }
 }
