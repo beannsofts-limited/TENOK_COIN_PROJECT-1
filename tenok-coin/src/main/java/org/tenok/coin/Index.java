@@ -11,6 +11,7 @@ import org.tenok.coin.strategy.StrategyConfig;
 import org.tenok.coin.strategy.StrategyHandler;
 import org.tenok.coin.strategy.StrategyRunner;
 import org.tenok.coin.strategy.impl.LongStrategy;
+import org.tenok.coin.strategy.impl.ShortStrategy;
 import org.tenok.coin.type.CoinEnum;
 
 public class Index {
@@ -32,14 +33,20 @@ public class Index {
 
         StrategyRunner runner = new StrategyRunner();
 
-        StrategyConfig config = new StrategyConfig(CoinEnum.LINKUSDT, BybitDAO.class, LongStrategy.class, 1, 0.1);
-        StrategyHandler handler = runner.runStrategy(config);
+        StrategyConfig longConfig = new StrategyConfig(CoinEnum.XTZUSDT, BybitDAO.class, LongStrategy.class, 1, 0.3);
+        StrategyConfig shortConfig = new StrategyConfig(CoinEnum.XTZUSDT, BybitDAO.class, ShortStrategy.class, 1, 0.3);
+        StrategyHandler longHandler = runner.runStrategy(longConfig);
+        StrategyHandler shortHandler = runner.runStrategy(shortConfig);
 
-        handler.start();
+        longHandler.start();
+        shortHandler.start();
 
         while (!br.readLine().equals("quit")) { }
 
         br.close();
+        longHandler.stop();
+        shortHandler.stop();
+        BybitDAO.getInstance().close();
 
     }
 }

@@ -10,9 +10,7 @@ import org.junit.Test;
 import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.impl.ActiveOrder;
 import org.tenok.coin.data.entity.impl.CandleList;
-import org.tenok.coin.data.entity.impl.candle_index.bollinger_band.BBObject;
 import org.tenok.coin.data.entity.impl.candle_index.bollinger_band.BollingerBand;
-import org.tenok.coin.data.entity.impl.candle_index.moving_average.MAObject;
 import org.tenok.coin.data.entity.impl.candle_index.moving_average.MovingAverage;
 import org.tenok.coin.data.impl.BybitDAO;
 import org.tenok.coin.slack.SlackSender;
@@ -93,15 +91,14 @@ public class DAOTest {
     @Test
     public void indexingCandleTest() throws LoginException {
         BybitDAO.getInstance().login("tenok2019");
+
         CandleList candleList = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
-        MovingAverage ma = (MovingAverage) candleList.createIndex(new MovingAverage());
-        BollingerBand bb = (BollingerBand) candleList.createIndex(new BollingerBand());
 
-        MAObject maObject = ma.getReversed(0);
-        BBObject bbObject = bb.getReversed(0);
-        assertEquals(maObject.getMa20(), bbObject.getMiddleBB(), 1);
+        MovingAverage ma = candleList.createIndex(new MovingAverage());
 
-        System.out.println(maObject.getMa20());
+        BollingerBand bb = candleList.createIndex(new BollingerBand());
 
+        assertEquals(ma.getReversed(0).getMa20(), bb.getReversed(0).getMiddleBB(), 0.1);
     }
+
 }
