@@ -55,7 +55,7 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
      * 
      * @param indexClass 지표 클래스
      */
-    public Object createIndex(Indexable<?> indexObject) {
+    public <E extends Indexable<?>> E createIndex(E indexObject) {
         indexList.add(indexObject);
         indexObject.injectReference(this);
         return indexObject;
