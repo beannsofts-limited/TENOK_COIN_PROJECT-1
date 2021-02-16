@@ -26,7 +26,6 @@ import org.tenok.coin.data.entity.impl.CandleList;
 import org.tenok.coin.data.entity.impl.OrderedData;
 import org.tenok.coin.data.entity.impl.OrderedList;
 import org.tenok.coin.data.websocket.impl.BybitWebsocketProcessor;
-import org.tenok.coin.slack.SlackSender;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 import org.tenok.coin.type.OrderTypeEnum;
@@ -262,14 +261,12 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");
         }
-        // active order 실패 시 exception 뜨게 바꿨으면 좋겠음.
         logger.info(String.format("coin: %s  leverage: %d qty: %f", order.getCoinType().getKorean(), order.getLeverage(), order.getQty()));
-        // SlackSender.getInstance().sendTradingMessage(order.getCoinType(), order.getSide(), order.getQty());
         JSONObject res = restDAO.placeActiveOrder(order.getSide(), order.getCoinType(), order.getOrderType(),
                 order.getQty(), order.getTIF(), Math.abs(order.getLeverage()));
 
         if (res.get("ret_msg").equals("Insufficient cost")) {
-            throw new InsufficientCostException("예수금이 부족하여 주문에 실패하였습니다..");
+            throw new InsufficientCostException("예수금이 부족하여 주문에 실패하였습니다.");
         }
         System.out.println(res.toJSONString());
     }

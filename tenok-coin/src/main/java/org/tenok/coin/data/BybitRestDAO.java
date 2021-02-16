@@ -23,7 +23,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.tenok.coin.data.impl.AuthDecryptor;
-
+import org.tenok.coin.slack.SlackSender;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 import org.tenok.coin.type.OrderTypeEnum;
@@ -134,7 +134,7 @@ public class BybitRestDAO {
         request.put("order_type", oderType.getApiString());
         request.put("qty", qty);
         request.put("time_in_force", tif.getApiString());
-        request.put("reduce_only", Boolean.valueOf(reduceOnly));
+        request.put("reduce_only", reduceOnly);
         request.put("close_on_trigger", Boolean.valueOf(false));
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
         request.put("sign", AuthDecryptor.getInstance().generateSignature(request));
@@ -150,6 +150,7 @@ public class BybitRestDAO {
 
     public JSONObject placeActiveOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum oderType, double qty,
             TIFEnum tif, int leverage) {
+        SlackSender.getInstance().sendTradingMessage(coinType, side, qty, leverage, tif);
         setLeverage(coinType, leverage, leverage);
         return placeActiveOrder(side, coinType, oderType, qty, tif);
     }
