@@ -20,7 +20,7 @@ public interface CoinDataAccessable {
 
     public WalletAccessable getWalletInfo();
 
-    public void orderCoin(Orderable order);
+    public void orderCoin(Orderable order) throws InsufficientCostException;
 
     public double getCurrentPrice(CoinEnum coinType);
 }
