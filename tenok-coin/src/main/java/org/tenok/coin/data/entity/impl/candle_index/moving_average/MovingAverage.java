@@ -22,12 +22,11 @@ public class MovingAverage extends BasicIndexAbstract<MAObject> {
 
         if (period > reference.size()) {
             return 0;
-
         } else {
-            for (int i = reference.size() - 1; i > reference.size() - period; i--) {
-                closeSum = closeSum + reference.elementAt(i).getClose();
+            for (int i = 0; i < period - 1; i++) {
+                closeSum = closeSum + reference.getReversed(i).getClose();
             }
-            closeSum = item.getClose() + closeSum;
+            closeSum = closeSum + item.getClose();
             ma = closeSum / period;
 
             return ma;

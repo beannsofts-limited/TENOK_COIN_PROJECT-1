@@ -43,8 +43,8 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
     /**
      * 처음 open 된 캔들 등록
      */
-    public void registerNewCandle(Candle item) {
-        indexList.parallelStream().forEach(index -> index.calculateNewCandle(item));
+    public synchronized void registerNewCandle(Candle item) {
+        indexList.stream().forEach(index -> index.calculateNewCandle(item));
         item.setConfirmed(false);
 
         super.push(item);
@@ -53,11 +53,10 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
     /**
      * 현재 confirm 되지 않은 캔들 업데이트
      */
-    public void updateCurrentCandle(Candle item) {
+    public synchronized void updateCurrentCandle(Candle item) {
         super.pop();
-        indexList.parallelStream().forEach(index -> index.calculateCurrentCandle(item));
+        indexList.stream().forEach(index -> index.calculateCurrentCandle(item));
         item.setConfirmed(false);
-
         super.push(item);
     }
 

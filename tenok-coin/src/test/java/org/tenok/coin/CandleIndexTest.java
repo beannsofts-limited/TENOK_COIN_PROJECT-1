@@ -1,5 +1,6 @@
 package org.tenok.coin;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import javax.security.auth.login.LoginException;
@@ -23,7 +24,7 @@ public class CandleIndexTest {
         long startTime = System.currentTimeMillis();
 
         while (true) {
-            if (System.currentTimeMillis() - startTime > (long) 1000*60*2) {
+            if (System.currentTimeMillis() - startTime > 1000L*60L) {
                 break;
             }
             MAObject maObj1 = ma.getReversed(0);
@@ -35,5 +36,19 @@ public class CandleIndexTest {
             System.out.printf("\r%f %f %f %f %f\n", maObj3.getMa5(), maObj3.getMa10(), maObj3.getMa20(), maObj3.getMa60(), maObj3.getMa120());
 
         }
+    }
+
+    @Test
+    public void maValueTest() throws LoginException {
+        BybitDAO.getInstance().login("");
+        CandleList cl = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
+
+        MovingAverage ma = cl.createIndex(new MovingAverage());
+        double sum = 0;
+        for (int i = 1; i < 6; i++) {
+            sum += cl.getReversed(i).getClose();
+        }
+
+        assertEquals(sum / 5.0, ma.getReversed(1).getMa5(), 0.01);
     }
 }

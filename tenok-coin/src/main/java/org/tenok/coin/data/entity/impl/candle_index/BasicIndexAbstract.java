@@ -23,7 +23,9 @@ public abstract class BasicIndexAbstract<T> extends Stack<T> implements Indexabl
     public void injectReference(CandleList candleList) {
         this.reference = candleList;
         if (!reference.isEmpty()) {
-            reference.stream().forEachOrdered(this::calculateNewCandle);
+            for (Candle candle : candleList) {
+                calculateNewCandle(candle);
+            }
         }
     }
 
@@ -33,7 +35,7 @@ public abstract class BasicIndexAbstract<T> extends Stack<T> implements Indexabl
     }
 
     @Override
-    public final void calculateCurrentCandle(Candle item) {
+    public final synchronized void calculateCurrentCandle(Candle item) {
         pop();
         push(calculate(item));
     }

@@ -43,5 +43,5 @@ target
 *.iml
 
 # log file
-/logs/
+logs/
 log4j.xml
