@@ -129,19 +129,19 @@ public class BybitWebsocketProcessor implements Closeable {
                         TickDirectionEnum.valueOfApiString((String) data.get("last_tick_direction")));
             }
             if (data.containsKey("last_price_e4")) {
-                instrumentInfo.lastPriceE4((long) data.get("last_price_e4"));
+                instrumentInfo.lastPriceE4(Long.valueOf((String) data.get("last_price_e4")));
             }
             if (data.containsKey("price_24h_pcnt_e6")) {
-                instrumentInfo.price24hPcntE6((long) data.get("price_24h_pcnt_e6"));
+                instrumentInfo.price24hPcntE6(Long.valueOf((String) data.get("price_24h_pcnt_e6")));
             }
             if (data.containsKey("high_price_24h_e4")) {
-                instrumentInfo.price24hPcntE6((long) data.get("high_price_24h_e4"));
+                instrumentInfo.price24hPcntE6(Long.valueOf((String) data.get("high_price_24h_e4")));
             }
             if (data.containsKey("low_price_24h_e4")) {
-                instrumentInfo.lowPrice24hE4((long) data.get("low_price_24h_e4"));
+                instrumentInfo.lowPrice24hE4(Long.valueOf((String) data.get("low_price_24h_e4")));
             }
             if (data.containsKey("price_1h_pcnt_e6")) {
-                instrumentInfo.price1hPcntE6((long) data.get("price_1h_pcnt_e6"));
+                instrumentInfo.price1hPcntE6(Long.valueOf((String) data.get("price_1h_pcnt_e6")));
             }
         });
     }

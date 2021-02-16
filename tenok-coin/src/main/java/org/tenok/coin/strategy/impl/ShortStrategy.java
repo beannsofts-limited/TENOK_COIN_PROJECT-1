@@ -11,13 +11,14 @@ public class ShortStrategy implements Strategy {
     private CoinDataAccessable coinDAO;
     private CoinEnum coinType;
     private boolean isOpened = false;
-    CandleList candleList;
-    MovingAverage ma;
+    private CandleList candleList;
+    private MovingAverage ma;
+    private double entryPrice;
 
     public ShortStrategy(CoinDataAccessable coinDAO, CoinEnum coinType) {
         this.coinDAO = coinDAO;
         this.coinType = coinType;
-        candleList = this.coinDAO.getCandleList(coinType, IntervalEnum.ONE);
+        candleList = this.coinDAO.getCandleList(coinType, IntervalEnum.FIVE);
         ma = candleList.createIndex(new MovingAverage());
     }
 
@@ -25,6 +26,7 @@ public class ShortStrategy implements Strategy {
     public double testOpenRBI() {
         if (ma.getReversed(2).getMa5() > ma.getReversed(2).getMa20()
                 && ma.getReversed(1).getMa5() < ma.getReversed(1).getMa20()) {
+            entryPrice = coinDAO.getCurrentPrice(coinType);
             return 1;
         }
         return 0;
@@ -32,6 +34,10 @@ public class ShortStrategy implements Strategy {
 
     @Override
     public boolean testCloseRBI() {
+        if (getProfitPercent() >= 2.0 || getProfitPercent() <= -2.0) {
+            return true;
+        }
+
         return !(ma.getReversed(2).getMa5() > ma.getReversed(2).getMa20()
                 && ma.getReversed(1).getMa5() < ma.getReversed(1).getMa20());
 
@@ -57,4 +63,7 @@ public class ShortStrategy implements Strategy {
         return coinType;
     }
 
+    private double getProfitPercent() {
+        return (1.0 - (coinDAO.getCurrentPrice(coinType) / entryPrice)) * 100;
+    }
 }

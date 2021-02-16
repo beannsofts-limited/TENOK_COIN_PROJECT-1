@@ -63,7 +63,9 @@ class StrategyThread implements Runnable {
                     double currentPrice = coinDAOInstance.getCurrentPrice(config.getCoinType());
                     double qty = currentAvailable / currentPrice;
                     log.info(String.format("%f %f %f", currentAvailable, currentPrice, qty)+ String.format("%.1f", qty));
-                    qty = Double.parseDouble(String.format("%.1f", qty));
+                    qty = Double.parseDouble(String.format("%.3f", qty));
+                    
+                    qty = 1.3; // TODO 예수금 하드코딩
                     Orderable order = ActiveOrder.builder().coinType(config.getCoinType()).orderType(OrderTypeEnum.MARKET)
                             .qty(qty).side(side).tif(TIFEnum.IOC).build();
                     coinDAOInstance.orderCoin(order);

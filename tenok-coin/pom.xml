@@ -146,7 +146,7 @@
               <archive>
                   <manifest>
                       <!-- FQCN으로 public static void main(String[] args)가 있는 메인 클래스를 넣자 -->
-                      <mainClass>org.tenok.coin.CandleIndex</mainClass>
+                      <mainClass>org.tenok.coin.Index</mainClass>
                   </manifest>
               </archive>
               <descriptorRefs>

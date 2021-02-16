@@ -44,21 +44,21 @@ public class DAOTest {
         assertEquals(200, response.getCode().intValue());
     }
 
-    @Test
-    public void orderTest() throws LoginException {
-        BybitDAO.getInstance().login("tenok2019");
+    // @Test
+    // public void orderTest() throws LoginException {
+    //     BybitDAO.getInstance().login("tenok2019");
 
-        Orderable order = ActiveOrder.builder()
-                                     .coinType(CoinEnum.LTCUSDT)
-                                     .orderType(OrderTypeEnum.MARKET)
-                                     .side(SideEnum.CLOSE_SELL)
-                                     .qty(0.1)
-                                     .tif(TIFEnum.GTC)
-                                     .build();
+    //     Orderable order = ActiveOrder.builder()
+    //                                  .coinType(CoinEnum.LTCUSDT)
+    //                                  .orderType(OrderTypeEnum.MARKET)
+    //                                  .side(SideEnum.CLOSE_SELL)
+    //                                  .qty(0.1)
+    //                                  .tif(TIFEnum.GTC)
+    //                                  .build();
                                      
-        BybitDAO.getInstance().orderCoin(order);
-        assertEquals(1, BybitDAO.getInstance().getOrderList().size());
-    }
+    //     BybitDAO.getInstance().orderCoin(order);
+    //     assertEquals(1, BybitDAO.getInstance().getOrderList().size());
+    // }
 
     @Test
     public void excpetionTest() throws LoginException {
@@ -84,7 +84,8 @@ public class DAOTest {
     public void getInstrumentInfoTest() throws LoginException, InterruptedException {
         BybitDAO.getInstance().login("tenok2019");
         var inst = BybitDAO.getInstance().getInstrumentInfo(CoinEnum.BTCUSDT);
-
+        Thread.sleep(10000);
+        System.out.println(inst.getPrice24hPcntE6());
         assertEquals(CoinEnum.BTCUSDT, inst.getCoinType());
     }
 
