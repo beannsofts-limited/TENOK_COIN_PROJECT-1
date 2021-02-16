@@ -118,6 +118,8 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
                 candleList.registerNewCandle(new Candle(startAt, volume, open, high, low, close));
             });
 
+            System.out.println(candleList.getReversed(0).getStartAt());
+
             // 실시간 kLine에 등록
             websocketProcessor.subscribeCandle(coinType, interval, candleList);
         }

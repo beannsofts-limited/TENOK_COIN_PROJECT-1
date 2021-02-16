@@ -95,6 +95,7 @@ public class BybitWebsocketProcessor implements Closeable {
         websocketPrivateSession.getBasicRemote().sendObject(authObject);
     }
 
+    Integer count = 0;
     /**
      * kLine 실시간 처리 등록
      * 
@@ -113,6 +114,7 @@ public class BybitWebsocketProcessor implements Closeable {
             boolean confirm = (boolean) data.get("confirm");
 
             if (confirm) {
+                System.out.println("confirm");
                 Candle candle = new Candle(startAt, volume, open, high, low, close);
                 candleList.registerNewCandle(candle);
             } else {
