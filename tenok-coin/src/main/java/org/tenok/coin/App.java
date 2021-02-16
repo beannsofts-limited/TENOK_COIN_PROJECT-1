@@ -22,7 +22,7 @@ public class App {
     }
 
     public static void maTest() throws LoginException, InterruptedException {
-        BybitDAO.getInstance().login("");
+        BybitDAO.getInstance().login("tenok2019");
         CandleList candleList = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
         MovingAverage ma = candleList.createIndex(new MovingAverage());
 
@@ -68,7 +68,7 @@ public class App {
 
         CandleList cl = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
 
-        Thread.sleep(1000L*60L*2L);
+        Thread.sleep(1000L*30L);
 
         for (Candle candle : cl) {
             System.out.println(candle.getStartAt());
