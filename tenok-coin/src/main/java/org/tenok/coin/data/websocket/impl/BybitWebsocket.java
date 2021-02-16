@@ -29,10 +29,11 @@ import org.tenok.coin.type.IntervalEnum;
 @ClientEndpoint(encoders = { BybitEncoder.class }, decoders = { BybitDecoder.class })
 public class BybitWebsocket implements Closeable {
     private static Logger logger = Logger.getLogger(BybitWebsocket.class);
-    Map<CoinEnum, Map<IntervalEnum, Consumer<JSONObject>>> kLineConsumerMap;
-    Consumer<JSONObject> walletInfoConsumer;
-    Consumer<JSONObject> orderConsumer;
-    Map<CoinEnum, Consumer<JSONObject>> instrumentInfoConsumerMap;
+    private boolean isConfirmDataHasNext = false;
+    private Map<CoinEnum, Map<IntervalEnum, Consumer<JSONObject>>> kLineConsumerMap;
+    private Consumer<JSONObject> walletInfoConsumer;
+    private Consumer<JSONObject> orderConsumer;
+    private Map<CoinEnum, Consumer<JSONObject>> instrumentInfoConsumerMap;
 
     private Session session;
 
@@ -85,8 +86,27 @@ public class BybitWebsocket implements Closeable {
                 IntervalEnum interval = IntervalEnum.valueOfApiString(topicParsed[1]);
                 coinType = CoinEnum.valueOf(topicParsed[2]);
 
-                kLineConsumerMap.get(coinType).get(interval)
-                        .accept((JSONObject) ((JSONArray) response.get("data")).get(0));
+                JSONObject data = (JSONObject) ((JSONArray) response.get("data")).get(0);
+                if (((JSONArray) response.get("data")).size() == 2) {
+                    if (isConfirmDataHasNext) {
+                        kLineConsumerMap.get(coinType).get(interval)
+                                .accept((JSONObject) ((JSONArray) response.get("data")).get(1));
+                        isConfirmDataHasNext = false;
+                        break;
+                    }
+                    System.out.println(((JSONObject) ((JSONArray) response.get("data")).get(1)).get("volume"));
+                    if (((JSONObject) ((JSONArray) response.get("data")).get(1)).get("volume").equals("0")) {
+                        isConfirmDataHasNext = true;
+                        kLineConsumerMap.get(coinType).get(interval).accept(data);
+                    } else {
+                        kLineConsumerMap.get(coinType).get(interval).accept(data);
+                        kLineConsumerMap.get(coinType).get(interval)
+                                .accept((JSONObject) ((JSONArray) response.get("data")).get(1));
+                    }
+                } else {
+                    kLineConsumerMap.get(coinType).get(interval).accept(data);
+                }
+
                 break;
 
             case "wallet":
@@ -172,6 +192,7 @@ public class BybitWebsocket implements Closeable {
 
     /**
      * return subscribe query json object
+     * 
      * @param args
      * @return
      */

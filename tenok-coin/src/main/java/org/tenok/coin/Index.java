@@ -34,14 +34,14 @@ public class Index {
         StrategyRunner runner = new StrategyRunner();
 
         StrategyConfig longConfig = new StrategyConfig(CoinEnum.XTZUSDT, BybitDAO.class, LongStrategy.class, 1, 0.3);
-        StrategyConfig shortConfig = new StrategyConfig(CoinEnum.XTZUSDT, BybitDAO.class, ShortStrategy.class, 1, 0.3);
+        StrategyConfig shortConfig = new StrategyConfig(CoinEnum.XTZUSDT, BybitDAO.class, ShortStrategy.class, -1, 0.3);
         StrategyHandler longHandler = runner.runStrategy(longConfig);
         StrategyHandler shortHandler = runner.runStrategy(shortConfig);
 
         longHandler.start();
         shortHandler.start();
 
-        while (!br.readLine().equals("quit")) { }
+        while (!br.readLine().equals("quit"));
 
         br.close();
         longHandler.stop();
