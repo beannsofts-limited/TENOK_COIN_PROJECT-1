@@ -49,6 +49,7 @@ public class BybitWebsocket implements Closeable {
     }
 
     @OnMessage
+    @SuppressWarnings("unchecked")
     public void onMessage(JSONObject response) {
         logger.debug(response);
         WebsocketResponseEnum resType = (WebsocketResponseEnum) response.get("response_type");
@@ -86,25 +87,25 @@ public class BybitWebsocket implements Closeable {
                 IntervalEnum interval = IntervalEnum.valueOfApiString(topicParsed[1]);
                 coinType = CoinEnum.valueOf(topicParsed[2]);
 
-                JSONObject data = (JSONObject) ((JSONArray) response.get("data")).get(0);
+                JSONObject data0 = (JSONObject) ((JSONArray) response.get("data")).get(0);
+
                 if (((JSONArray) response.get("data")).size() == 2) {
+                    JSONObject data1 = (JSONObject) ((JSONArray) response.get("data")).get(1);
                     if (isConfirmDataHasNext) {
-                        kLineConsumerMap.get(coinType).get(interval)
-                                .accept((JSONObject) ((JSONArray) response.get("data")).get(1));
+                        data0.put("lastConfirm", true);
+                        kLineConsumerMap.get(coinType).get(interval).accept(data0);
+                        kLineConsumerMap.get(coinType).get(interval).accept(data1);
                         isConfirmDataHasNext = false;
                         break;
                     }
-                    System.out.println(((JSONObject) ((JSONArray) response.get("data")).get(1)).get("volume"));
-                    if (((JSONObject) ((JSONArray) response.get("data")).get(1)).get("volume").equals("0")) {
+
+                    if (data1.get("volume").equals("0")) {
                         isConfirmDataHasNext = true;
-                        kLineConsumerMap.get(coinType).get(interval).accept(data);
-                    } else {
-                        kLineConsumerMap.get(coinType).get(interval).accept(data);
-                        kLineConsumerMap.get(coinType).get(interval)
-                                .accept((JSONObject) ((JSONArray) response.get("data")).get(1));
                     }
+                    kLineConsumerMap.get(coinType).get(interval).accept(data0);
+                    kLineConsumerMap.get(coinType).get(interval).accept(data1);
                 } else {
-                    kLineConsumerMap.get(coinType).get(interval).accept(data);
+                    kLineConsumerMap.get(coinType).get(interval).accept(data0);
                 }
 
                 break;

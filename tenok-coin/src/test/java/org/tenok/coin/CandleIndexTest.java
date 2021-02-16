@@ -16,7 +16,7 @@ import org.tenok.coin.type.IntervalEnum;
 public class CandleIndexTest {
     @Test
     public void maTest() throws LoginException {
-        BybitDAO.getInstance().login("tenokMDC2021");
+        BybitDAO.getInstance().login("");
         CandleList candleList = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
         MovingAverage ma = candleList.createIndex(new MovingAverage());
         assertNotNull(ma);

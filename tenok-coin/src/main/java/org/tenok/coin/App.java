@@ -1,5 +1,7 @@
 package org.tenok.coin;
 
+import java.io.IOException;
+
 import javax.security.auth.login.LoginException;
 
 import org.tenok.coin.data.entity.impl.Candle;
@@ -15,12 +17,12 @@ import lombok.extern.log4j.Log4j;
 
 @Log4j
 public class App {
-    public static void main(String[] args) throws LoginException, InterruptedException {
-        candleDateTest();
+    public static void main(String[] args) throws LoginException, InterruptedException, IOException {
+        maTest();
     }
 
     public static void maTest() throws LoginException, InterruptedException {
-        BybitDAO.getInstance().login("tenokMDC2021");
+        BybitDAO.getInstance().login("tenok2019");
         CandleList candleList = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
         MovingAverage ma = candleList.createIndex(new MovingAverage());
 
@@ -29,9 +31,12 @@ public class App {
             MAObject maObj2 = ma.getReversed(1);
             MAObject maObj3 = ma.getReversed(2);
 
-            System.out.printf("%f %f %f %f %f%n", maObj1.getMa5(), maObj1.getMa10(), maObj1.getMa20(), maObj1.getMa60(), maObj1.getMa120());
-            System.out.printf("%f %f %f %f %f%n", maObj2.getMa5(), maObj2.getMa10(), maObj2.getMa20(), maObj2.getMa60(), maObj2.getMa120());
-            System.out.printf("%f %f %f %f %f%n", maObj3.getMa5(), maObj3.getMa10(), maObj3.getMa20(), maObj3.getMa60(), maObj3.getMa120());
+            System.out.printf("%f %f %f %f %f%n", maObj1.getMa5(), maObj1.getMa10(), maObj1.getMa20(), maObj1.getMa60(),
+                    maObj1.getMa120());
+            System.out.printf("%f %f %f %f %f%n", maObj2.getMa5(), maObj2.getMa10(), maObj2.getMa20(), maObj2.getMa60(),
+                    maObj2.getMa120());
+            System.out.printf("%f %f %f %f %f%n", maObj3.getMa5(), maObj3.getMa10(), maObj3.getMa20(), maObj3.getMa60(),
+                    maObj3.getMa120());
             Thread.sleep(500);
             if (false) {
                 break;
@@ -40,7 +45,7 @@ public class App {
     }
 
     public static void candleConfirmTest() throws LoginException, InterruptedException {
-        BybitDAO.getInstance().login("tenokMDC2021");
+        BybitDAO.getInstance().login("tenok2019");
         CandleList candleList = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
 
         while (true) {
@@ -50,8 +55,8 @@ public class App {
         }
     }
 
-    public static void candleDateTest() throws LoginException, InterruptedException {
-        BybitDAO.getInstance().login("tenokMDC2021");
+    public static void candleDateTest() throws LoginException, InterruptedException, IOException {
+        BybitDAO.getInstance().login("tenok2019");
 
         CandleList cl = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
 
@@ -60,5 +65,15 @@ public class App {
         for (Candle candle : cl) {
             System.out.println(candle.getStartAt());
         }
+
+        for (Candle candle : cl) {
+            System.out.printf("%f %f %f %f\n", candle.getOpen(), candle.getHigh(), candle.getLow(), candle.getClose());
+        }
+        MovingAverage ma = cl.createIndex(new MovingAverage());
+
+        for (MAObject maObject : ma) {
+            
+        }
+        BybitDAO.getInstance().close();
     }
 }
