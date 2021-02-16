@@ -15,7 +15,7 @@ public class MovingAverage extends BasicIndexAbstract<MAObject> {
         double ma120 = calMA(item, 120);
         return new MAObject(ma5, ma10, ma20, ma60, ma120);
     }
-    
+
     private double calMA(Candle item, int period) {
         double closeSum = 0;
         double ma = 0;
@@ -24,7 +24,7 @@ public class MovingAverage extends BasicIndexAbstract<MAObject> {
             return 0;
 
         } else {
-            for (int i = reference.size() - 1; i >= reference.size() - period + 1; i--) {
+            for (int i = reference.size() - 1; i > reference.size() - period; i--) {
                 closeSum = closeSum + reference.elementAt(i).getClose();
             }
             closeSum = item.getClose() + closeSum;

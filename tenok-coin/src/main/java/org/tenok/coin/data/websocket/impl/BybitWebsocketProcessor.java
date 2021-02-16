@@ -113,13 +113,20 @@ public class BybitWebsocketProcessor implements Closeable {
             Date startAt = new Date(((Number) data.get("start")).longValue() * 1000L);
             boolean confirm = (boolean) data.get("confirm");
 
-            if (confirm) {
-                System.out.println("confirm");
-                Candle candle = new Candle(startAt, volume, open, high, low, close);
-                candleList.registerNewCandle(candle);
+            if (data.containsKey("lastConfirm")) {
+                candleList.get(1).setOpen(open);
+                candleList.get(1).setHigh(high);
+                candleList.get(1).setLow(low);
+                candleList.get(1).setClose(close);
             } else {
-                Candle candle = new Candle(startAt, volume, open, high, low, close);
-                candleList.updateCurrentCandle(candle);
+                if (confirm) {
+                    Candle candle = new Candle(startAt, volume, open, high, low, close);
+                    candleList.updateCurrentCandle(candle);
+                    candleList.registerNewCandle(candle);
+                } else {
+                    Candle candle = new Candle(startAt, volume, open, high, low, close);
+                    candleList.updateCurrentCandle(candle);
+                }
             }
         });
     }
