@@ -7,6 +7,7 @@ import javax.security.auth.login.LoginException;
 import com.slack.api.webhook.WebhookResponse;
 
 import org.junit.Test;
+import org.tenok.coin.data.InsufficientCostException;
 import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.impl.ActiveOrder;
 import org.tenok.coin.data.entity.impl.CandleList;
@@ -33,19 +34,20 @@ public class DAOTest {
     }
 
     @Test
-    public void sendMessage(){
-        
+    public void sendMessage() {
+
         try {
             BybitDAO.getInstance().login("tenok2019");
         } catch (LoginException e1) {
             e1.printStackTrace();
         }
-        WebhookResponse response = SlackSender.getInstance().sendTradingMessage(CoinEnum.BTCUSDT, SideEnum.OPEN_BUY, 1);
+        WebhookResponse response = SlackSender.getInstance().sendTradingMessage(CoinEnum.BTCUSDT, SideEnum.OPEN_BUY, 1,
+                5, TIFEnum.GTC);
         assertEquals(200, response.getCode().intValue());
     }
 
     @Test
-    public void orderTest() throws LoginException {
+    public void orderTest() throws LoginException, InsufficientCostException {
         BybitDAO.getInstance().login("tenok2019");
 
         Orderable order = ActiveOrder.builder()

@@ -29,6 +29,17 @@ public class CandleList extends Stack<Candle> implements RealtimeAccessable {
         super();
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (!super.equals(obj)) {
+            return false;
+        }
+        CandleList cObj = (CandleList) obj;
+
+        return cObj.coinType == this.coinType && cObj.interval == this.interval
+                && cObj.indexList.equals(this.indexList);
+    }
+
     /**
      * 처음 open 된 캔들 등록
      */

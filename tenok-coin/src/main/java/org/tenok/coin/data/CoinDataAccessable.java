@@ -18,9 +18,23 @@ public interface CoinDataAccessable {
 
     public PositionList getPositionList();
 
+    /**
+     * 현재 잔고 현황 리턴.
+     * @return 잔고현황 객체
+     */
     public WalletAccessable getWalletInfo();
 
+    /**
+     * 코인을 주문한다.
+     * @param order 주문 상세 내용
+     * @throws InsufficientCostException 주문가능 금액 부족
+     */
     public void orderCoin(Orderable order) throws InsufficientCostException;
 
+    /**
+     * 해당 코인의 현재 시가를 받아온다.
+     * @param coinType 조회할 코인
+     * @return 시가
+     */
     public double getCurrentPrice(CoinEnum coinType);
 }

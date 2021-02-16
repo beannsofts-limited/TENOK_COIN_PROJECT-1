@@ -58,8 +58,8 @@ public class AuthDecryptor {
     }
 
     private static class AuthHolder {
-        public static final AuthDecryptor INSTANCE = new AuthDecryptor(new File("./../secret.auth"),
-                new File("./secret.auth")); // 상대주소 입력
+        public static final AuthDecryptor INSTANCE = new AuthDecryptor(new File("./../resources/secret/secret.auth"),
+                new File("./resources/secret/secret.auth")); // 상대주소 입력
     }
 
     public static AuthDecryptor getInstance() {
