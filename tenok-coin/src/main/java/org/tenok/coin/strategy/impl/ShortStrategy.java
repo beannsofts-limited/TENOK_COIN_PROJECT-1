@@ -34,7 +34,7 @@ public class ShortStrategy implements Strategy {
 
     @Override
     public boolean testCloseRBI() {
-        if (getProfitPercent() >= 2.0 || getProfitPercent() <= -2.0) {
+        if (getProfitPercent() >= 0.5 || getProfitPercent() <= -1.0) {
             return true;
         }
 

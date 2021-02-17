@@ -1,6 +1,7 @@
 package org.tenok.coin;
 
 import java.io.IOException;
+import java.util.Scanner;
 
 import javax.security.auth.login.LoginException;
 
@@ -17,12 +18,15 @@ import lombok.extern.log4j.Log4j;
 
 @Log4j
 public class App {
+    public static String password;
     public static void main(String[] args) throws LoginException, InterruptedException, IOException {
+        Scanner scan = new Scanner(System.in);
+        password = scan.nextLine();
         maTest();
     }
 
     public static void maTest() throws LoginException, InterruptedException {
-        BybitDAO.getInstance().login("tenok2019");
+        BybitDAO.getInstance().login(password);
         CandleList candleList = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
         MovingAverage ma = candleList.createIndex(new MovingAverage());
 
@@ -53,7 +57,7 @@ public class App {
     }
 
     public static void candleConfirmTest() throws LoginException, InterruptedException {
-        BybitDAO.getInstance().login("tenok2019");
+        BybitDAO.getInstance().login(password);
         CandleList candleList = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
 
         while (true) {
@@ -64,7 +68,7 @@ public class App {
     }
 
     public static void candleDateTest() throws LoginException, InterruptedException, IOException {
-        BybitDAO.getInstance().login("tenok2019");
+        BybitDAO.getInstance().login(password);
 
         CandleList cl = BybitDAO.getInstance().getCandleList(CoinEnum.BTCUSDT, IntervalEnum.ONE);
 

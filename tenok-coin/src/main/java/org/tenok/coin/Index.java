@@ -15,21 +15,8 @@ import org.tenok.coin.strategy.impl.ShortStrategy;
 import org.tenok.coin.type.CoinEnum;
 
 public class Index {
-    public static void main(String[] args) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
-        System.out.print("enter pw: ");
-        while (true) {
-            try {
-                BybitDAO.getInstance().login(br.readLine());
-                System.out.println("login success");
-                break;
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (LoginException e) {
-                System.out.println("retry");
-            }
-        }
+    public static void main(String[] args) throws IOException, LoginException {
+        BybitDAO.getInstance().login(args[0]);
 
         StrategyRunner runner = new StrategyRunner();
 
@@ -41,12 +28,14 @@ public class Index {
         longHandler.start();
         shortHandler.start();
 
-        while (!br.readLine().equals("quit"));
-
-        br.close();
+        while (true) {
+            if (false) {
+                break;
+            }
+        }
+        
         longHandler.stop();
         shortHandler.stop();
         BybitDAO.getInstance().close();
-
     }
 }

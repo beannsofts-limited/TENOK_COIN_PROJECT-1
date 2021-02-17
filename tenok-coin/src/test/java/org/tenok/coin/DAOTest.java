@@ -1,14 +1,17 @@
 package org.tenok.coin;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import javax.security.auth.login.LoginException;
 
 import com.slack.api.webhook.WebhookResponse;
 
 import org.junit.Test;
+import org.tenok.coin.data.CoinDataAccessable;
 import org.tenok.coin.data.InsufficientCostException;
 import org.tenok.coin.data.entity.Orderable;
+import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.data.entity.impl.ActiveOrder;
 import org.tenok.coin.data.entity.impl.CandleList;
 import org.tenok.coin.data.entity.impl.candle_index.bollinger_band.BollingerBand;
@@ -105,4 +108,14 @@ public class DAOTest {
         assertEquals(ma.getReversed(0).getMa20(), bb.getReversed(0).getMiddleBB(), 0.1);
     }
 
+    @Test
+    public void currentPriceTest() throws LoginException{
+        BybitDAO.getInstance().login("");
+        
+        double price = BybitDAO.getInstance().getCurrentPrice(CoinEnum.XTZUSDT);
+        System.out.println(price);
+        assertNotEquals(price, 0.0);
+    }
+    
+    
 }

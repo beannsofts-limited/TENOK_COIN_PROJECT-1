@@ -66,10 +66,17 @@ class StrategyThread implements Runnable {
 
                     // 예수금 / 현재가
                     double qty = currentAvailable / currentPrice;
+
+                    if (config.getCoinType() == CoinEnum.BTCUSDT) {
+                        qty = Math.floor(qty * 1000) / 1000.0;  // 비트코인은 세자리 까지
+                    } else if (config.getCoinType() == CoinEnum.ETHUSDT || config.getCoinType() == CoinEnum.BCHUSDT) {
+                        qty = Math.floor(qty * 100) / 100.0;  // 두자리 까지
+                    } else {
+                        qty = Math.floor(qty * 10) / 10.0;  // 한 자리 까지
+                    }
                     log.info(String.format("예수금: %f 시가: %f 개수: %.1f", currentAvailable, currentPrice, qty));
-                    qty = Double.parseDouble(String.format("%.1f", qty));
                     Orderable order = ActiveOrder.builder().coinType(config.getCoinType())
-                            .orderType(OrderTypeEnum.MARKET).qty(qty).side(side).tif(TIFEnum.IOC).build();
+                            .orderType(OrderTypeEnum.MARKET).qty(qty).side(side).tif(TIFEnum.IOC).leverage(config.getLeverage()).build();
                     try {
                         coinDAOInstance.orderCoin(order);
                     } catch (InsufficientCostException e) {
@@ -94,7 +101,7 @@ class StrategyThread implements Runnable {
                     }
 
                     Orderable order = ActiveOrder.builder().coinType(config.getCoinType())
-                            .orderType(OrderTypeEnum.MARKET).qty(myPosition.getQty()).side(side).tif(TIFEnum.GTC)
+                            .orderType(OrderTypeEnum.MARKET).qty(myPosition.getQty()).side(side).leverage(config.getLeverage()).tif(TIFEnum.GTC)
                             .build();
                     try {
                         coinDAOInstance.orderCoin(order);

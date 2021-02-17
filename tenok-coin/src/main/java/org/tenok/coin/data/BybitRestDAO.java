@@ -89,6 +89,18 @@ public class BybitRestDAO {
 
     }
 
+    public JSONObject getMyWalletBalance() {
+        logger.debug("getMyWalletBalance: wallet balance 불러오기");
+        Map<String, Object> request = new TreeMap<>();
+        request.put("api_key", AuthDecryptor.getInstance().getApiKey());
+        request.put("symbol", "USDT");
+        request.put("timestamp", Long.toString(System.currentTimeMillis()));
+        request.put("sign", AuthDecryptor.getInstance().generateSignature(request));
+        return requestByGet(request, "https://api.bybit.com/v2/private/wallet/balance?");
+    }
+
+
+
     public JSONObject getMyPositionList(CoinEnum coinType) {
         logger.debug("getMyPositionList: My Position 불러오기");
         Map<String, Object> request = new TreeMap<>();

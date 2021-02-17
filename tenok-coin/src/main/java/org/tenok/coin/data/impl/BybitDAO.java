@@ -211,10 +211,10 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
             double highPrice24h = Double.parseDouble((String) result.get("high_price_24h"));
             double lowPrice24h = Double.parseDouble((String) result.get("low_price_24h"));
             double price1hPcnt = Double.parseDouble((String) result.get("price_1h_pcnt"));
-            var insInfo = InstrumentInfo.builder().coinType(key).lastPriceE4((long) lastPrice * 10000)
-                    .lastTickDirection(lastTickDirection).price24hPcntE6((long) price24hPcnt * 1000000)
-                    .highPrice24hE4((long) highPrice24h * 10000).lowPrice24hE4((long) lowPrice24h * 10000)
-                    .price1hPcntE6((long) price1hPcnt * 1000000).build();
+            var insInfo = InstrumentInfo.builder().coinType(key).lastPriceE4((long) (lastPrice * 10000))
+                    .lastTickDirection(lastTickDirection).price24hPcntE6((long) (price24hPcnt * 1000000))
+                    .highPrice24hE4((long) (highPrice24h * 10000)).lowPrice24hE4((long) (lowPrice24h * 10000))
+                    .price1hPcntE6((long) (price1hPcnt * 1000000)).build();
             websocketProcessor.subscribeInsturmentInfo(key, insInfo);
             return insInfo;
         });
@@ -231,7 +231,7 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");
         }
-        return getInstrumentInfo(coinType).getLastPriceE4() / 10000L;
+        return getInstrumentInfo(coinType).getLastPriceE4() / 10000.0;
     }
 
     /**
@@ -245,7 +245,10 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
             throw new RuntimeException("DAO instance is not logged in");
         }
         if (walletInfo == null) {
-            walletInfo = new BybitWalletInfo(24, 24);
+            JSONObject walletObject = restDAO.getMyWalletBalance();
+            JSONObject result = (JSONObject) ((JSONObject) walletObject.get("result")).get("USDT");
+            walletInfo = new BybitWalletInfo((double) result.get("wallet_balance"), (double) result.get("available_balance"));
+
             websocketProcessor.subscribeWalletInfo(walletInfo);
         }
         return walletInfo;
