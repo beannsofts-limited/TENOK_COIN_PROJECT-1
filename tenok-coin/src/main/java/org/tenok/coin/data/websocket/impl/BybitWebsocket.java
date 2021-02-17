@@ -51,7 +51,7 @@ public class BybitWebsocket implements Closeable {
     @OnMessage
     @SuppressWarnings("unchecked")
     public void onMessage(JSONObject response) {
-        logger.debug(response);
+        logger.trace(response);
         WebsocketResponseEnum resType = (WebsocketResponseEnum) response.get("response_type");
         if (resType.equals(WebsocketResponseEnum.PING) || resType.equals(WebsocketResponseEnum.SUBSCRIPTION)) {
             boolean success = (boolean) response.get("success");
@@ -59,7 +59,7 @@ public class BybitWebsocket implements Closeable {
                 logger.fatal("Websocket Ping or Subscription failed");
                 logger.fatal(response.toJSONString());
             } else {
-                logger.debug(String.format("Websocket %s success", resType.name()));
+                logger.trace(String.format("Websocket %s success", resType.name()));
             }
             return;
         }

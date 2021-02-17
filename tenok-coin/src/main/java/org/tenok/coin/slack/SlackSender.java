@@ -29,7 +29,7 @@ public class SlackSender {
                     side.getKorean(), tif.getApiString());
             String payload = String.format("{\"text\":\"%s\"}", message);
             response = slackInstance.send(webhookUrl, payload);
-            logger.debug(response);
+            logger.trace(response);
             return response;
         } catch (IOException e) {
             e.printStackTrace();
@@ -42,7 +42,7 @@ public class SlackSender {
         try {
             String payload = String.format("{\"text\":\"Exception 발생%n%n%s\"}", t.getMessage());
             response = slackInstance.send(webhookUrl, payload);
-            logger.debug(response);
+            logger.trace(response);
             return response;
         } catch (IOException e) {
             e.printStackTrace();
@@ -54,7 +54,7 @@ public class SlackSender {
         try {
             String payload = String.format("{\"text\":\"%s\"}", text);
             response = slackInstance.send(webhookUrl, payload);
-            logger.debug(response);
+            logger.trace(response);
             return response;
         } catch (IOException e) {
             e.printStackTrace();

@@ -7,6 +7,7 @@ import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.data.entity.impl.ActiveOrder;
 import org.tenok.coin.data.entity.impl.Position;
+import org.tenok.coin.slack.SlackSender;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.OrderTypeEnum;
 import org.tenok.coin.type.SideEnum;
@@ -68,18 +69,22 @@ class StrategyThread implements Runnable {
                     double qty = currentAvailable / currentPrice;
 
                     if (config.getCoinType() == CoinEnum.BTCUSDT) {
-                        qty = Math.floor(qty * 1000) / 1000.0;  // 비트코인은 세자리 까지
+                        qty = Math.floor(qty * 1000) / 1000.0; // 비트코인은 세자리 까지
                     } else if (config.getCoinType() == CoinEnum.ETHUSDT || config.getCoinType() == CoinEnum.BCHUSDT) {
-                        qty = Math.floor(qty * 100) / 100.0;  // 두자리 까지
+                        qty = Math.floor(qty * 100) / 100.0; // 두자리 까지
                     } else {
-                        qty = Math.floor(qty * 10) / 10.0;  // 한 자리 까지
+                        qty = Math.floor(qty * 10) / 10.0; // 한 자리 까지
                     }
-                    log.info(String.format("예수금: %f 시가: %f 개수: %.1f", currentAvailable, currentPrice, qty));
+                    log.info(String.format("포지션 오픈 신호 포착 %s %s 전략", config.getCoinType().getKorean(),
+                            (config.getLeverage() > 0) ? "롱" : "숏"));
+                    log.info(String.format("예수금: %f 시가: %f 개수: %f", currentAvailable, currentPrice, qty));
                     Orderable order = ActiveOrder.builder().coinType(config.getCoinType())
-                            .orderType(OrderTypeEnum.MARKET).qty(qty).side(side).tif(TIFEnum.IOC).leverage(config.getLeverage()).build();
+                            .orderType(OrderTypeEnum.MARKET).qty(qty).side(side).tif(TIFEnum.IOC)
+                            .leverage(config.getLeverage()).build();
                     try {
                         coinDAOInstance.orderCoin(order);
                     } catch (InsufficientCostException e) {
+                        SlackSender.getInstance().sendException(e);
                         throw new RuntimeException(e);
                     }
 
@@ -99,10 +104,11 @@ class StrategyThread implements Runnable {
                     } else {
                         side = SideEnum.CLOSE_BUY;
                     }
-
+                    log.info(String.format("청산 신호 포착 %s %s 전략", config.getCoinType().getKorean(),
+                            (config.getLeverage() > 0) ? "롱" : "숏"));
                     Orderable order = ActiveOrder.builder().coinType(config.getCoinType())
-                            .orderType(OrderTypeEnum.MARKET).qty(myPosition.getQty()).side(side).leverage(config.getLeverage()).tif(TIFEnum.GTC)
-                            .build();
+                            .orderType(OrderTypeEnum.MARKET).qty(myPosition.getQty()).side(side)
+                            .leverage(config.getLeverage()).tif(TIFEnum.GTC).build();
                     try {
                         coinDAOInstance.orderCoin(order);
                     } catch (InsufficientCostException e) {

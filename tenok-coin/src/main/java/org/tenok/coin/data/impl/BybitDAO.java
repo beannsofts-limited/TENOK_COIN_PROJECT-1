@@ -272,7 +272,6 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
         if (res.get("ret_msg").equals("Insufficient cost")) {
             throw new InsufficientCostException("예수금이 부족하여 주문에 실패하였습니다.");
         }
-        System.out.println(res.toJSONString());
     }
 
     public boolean isLoggedIn() {
