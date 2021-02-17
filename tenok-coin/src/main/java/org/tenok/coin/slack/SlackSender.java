@@ -25,7 +25,7 @@ public class SlackSender {
 
     public WebhookResponse sendTradingMessage(CoinEnum coinType, SideEnum side, double qty, int leverage, TIFEnum tif) {
         try {
-            String message = String.format("%s %f개 %d레버리지로 %s 주문 완료. 주문타입: %s", coinType.getKorean(), qty, leverage,
+            String message = String.format("%s %.3f개 %d레버리지로 %s 주문 완료. 주문타입: %s", coinType.getKorean(), qty, leverage,
                     side.getKorean(), tif.getApiString());
             String payload = String.format("{\"text\":\"%s\"}", message);
             response = slackInstance.send(webhookUrl, payload);

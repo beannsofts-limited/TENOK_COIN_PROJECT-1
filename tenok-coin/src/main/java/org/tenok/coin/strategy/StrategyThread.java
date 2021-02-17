@@ -49,35 +49,23 @@ class StrategyThread implements Runnable {
 
     @Override
     public void run() {
-
         while (true) {
             if (strategyInstance.isNotOpened()) {
                 double openRBI = strategyInstance.testOpenRBI();
                 if (openRBI != 0.0) {
-                    double currentAvailable = wallet.getWalletAvailableBalance();
+
                     SideEnum side;
                     if (config.getLeverage() > 0) {
                         side = SideEnum.OPEN_BUY;
                     } else {
                         side = SideEnum.OPEN_SELL;
                     }
+                    double qty = getAvailable();
 
-                    // 주문하고자 하는 코인의 현재가
-                    double currentPrice = coinDAOInstance.getCurrentPrice(config.getCoinType());
-
-                    // 예수금 / 현재가
-                    double qty = currentAvailable / currentPrice;
-
-                    if (config.getCoinType() == CoinEnum.BTCUSDT) {
-                        qty = Math.floor(qty * 1000) / 1000.0; // 비트코인은 세자리 까지
-                    } else if (config.getCoinType() == CoinEnum.ETHUSDT || config.getCoinType() == CoinEnum.BCHUSDT) {
-                        qty = Math.floor(qty * 100) / 100.0; // 두자리 까지
-                    } else {
-                        qty = Math.floor(qty * 10) / 10.0; // 한 자리 까지
-                    }
                     log.info(String.format("포지션 오픈 신호 포착 %s %s 전략", config.getCoinType().getKorean(),
                             (config.getLeverage() > 0) ? "롱" : "숏"));
-                    log.info(String.format("예수금: %f 시가: %f 개수: %f", currentAvailable, currentPrice, qty));
+                    log.info(String.format("예수금: %f 시가: %f 개수: %f", wallet.getWalletAvailableBalance(),
+                            coinDAOInstance.getCurrentPrice(config.getCoinType()), qty));
                     Orderable order = ActiveOrder.builder().coinType(config.getCoinType())
                             .orderType(OrderTypeEnum.MARKET).qty(qty).side(side).tif(TIFEnum.IOC)
                             .leverage(config.getLeverage()).build();
@@ -151,5 +139,26 @@ class StrategyThread implements Runnable {
 
     public boolean isOpened() {
         return strategyInstance.isOpened();
+    }
+
+    /**
+     * this strategy thread에서 현재 구매 가능한 코인 개수
+     * @return 현재 구매 가능한 코인 개수
+     */
+    public double getAvailable() {
+        double currentAvailable = wallet.getWalletAvailableBalance();
+        // 주문하고자 하는 코인의 현재가
+        double currentPrice = coinDAOInstance.getCurrentPrice(config.getCoinType());
+
+        // 예수금 / 현재가
+        double qty = currentAvailable / currentPrice * config.getAvailableRate();
+        if (config.getCoinType() == CoinEnum.BTCUSDT) {
+            qty = Math.floor(qty * 1000) / 1000.0; // 비트코인은 세자리 까지
+        } else if (config.getCoinType() == CoinEnum.ETHUSDT || config.getCoinType() == CoinEnum.BCHUSDT) {
+            qty = Math.floor(qty * 100) / 100.0; // 두자리 까지
+        } else {
+            qty = Math.floor(qty * 10) / 10.0; // 한 자리 까지
+        }
+        return qty;
     }
 }
