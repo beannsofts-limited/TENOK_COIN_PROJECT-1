@@ -62,30 +62,10 @@ class StrategyThread implements Runnable {
                     }
                     double qty = getAvailable();
 
-<<<<<<< HEAD
-                    // 주문하고자 하는 코인의 현재가
-                    double currentPrice = coinDAOInstance.getCurrentPrice(config.getCoinType());
-
-                    // 예수금 / 현재가
-                    double qty = currentAvailable / currentPrice;
-
-                    if (config.getCoinType() == CoinEnum.BTCUSDT) {
-                        qty = Math.floor(qty * 1000) / 1000.0;  // 비트코인은 세자리 까지
-                        qty = qty-0.001;
-                    } else if (config.getCoinType() == CoinEnum.ETHUSDT || config.getCoinType() == CoinEnum.BCHUSDT) {
-                        qty = Math.floor(qty * 100) / 100.0;  // 두자리 까지
-                        qty = qty-0.01;
-                    } else {
-                        qty = Math.floor(qty * 10) / 10.0;  // 한 자리 까지
-                        qty = qty-0.1;
-                    }
-                    log.info(String.format("예수금: %f 시가: %f 개수: %.1f", currentAvailable, currentPrice, qty));
-=======
                     log.info(String.format("포지션 오픈 신호 포착 %s %s 전략", config.getCoinType().getKorean(),
                             (config.getLeverage() > 0) ? "롱" : "숏"));
                     log.info(String.format("예수금: %f 시가: %f 개수: %f", wallet.getWalletAvailableBalance(),
                             coinDAOInstance.getCurrentPrice(config.getCoinType()), qty));
->>>>>>> 894402a7f51b3da6c0c07fa7d2e78da153e90b29
                     Orderable order = ActiveOrder.builder().coinType(config.getCoinType())
                             .orderType(OrderTypeEnum.MARKET).qty(qty).side(side).tif(TIFEnum.IOC)
                             .leverage(config.getLeverage()).build();
