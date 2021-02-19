@@ -26,7 +26,10 @@ public class TrendShortStrategy implements Strategy{
     public double testOpenRBI() {
         //새로운 캔들이 갱신될때마다 봉초가에 open
         //만약 2분선이 20분 선 아래에 있을 경우에는 무조건 숏 포지션
-        return 1;
+        if(ma.getReversed(0).getMa2() < ma.getReversed(0).getMa20()){
+            return 1; 
+        }
+        return 0;
     }
 
     @Override
