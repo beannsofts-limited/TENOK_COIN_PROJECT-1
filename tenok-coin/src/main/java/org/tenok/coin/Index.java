@@ -33,9 +33,5 @@ public class Index {
                 break;
             }
         }
-        
-        longHandler.stop();
-        shortHandler.stop();
-        BybitDAO.getInstance().close();
     }
 }

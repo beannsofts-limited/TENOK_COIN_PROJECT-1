@@ -69,7 +69,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject getActiveOrder(CoinEnum coinType) {
-        logger.debug("getActiveOrder: active Order List 불러오기");
+        logger.trace("getActiveOrder: active Order List 불러오기");
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
@@ -80,7 +80,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject getConditionalOrder() {
-        logger.debug("getConditionalOrder: Conditional Order List 불러오기");
+        logger.trace("getConditionalOrder: Conditional Order List 불러오기");
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
@@ -90,7 +90,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject getMyWalletBalance() {
-        logger.debug("getMyWalletBalance: wallet balance 불러오기");
+        logger.trace("getMyWalletBalance: wallet balance 불러오기");
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", "USDT");
@@ -102,7 +102,7 @@ public class BybitRestDAO {
 
 
     public JSONObject getMyPositionList(CoinEnum coinType) {
-        logger.debug("getMyPositionList: My Position 불러오기");
+        logger.trace("getMyPositionList: My Position 불러오기");
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
@@ -139,7 +139,7 @@ public class BybitRestDAO {
                 break;
         }
         Map<String, Object> request = new TreeMap<>();
-        logger.debug("placeActiveOrder: active order 주문");
+        logger.trace("placeActiveOrder: active order 주문");
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("side", side.getApiString());
         request.put("symbol", coinType.name());
@@ -169,7 +169,7 @@ public class BybitRestDAO {
 
     public JSONObject placeConditionalOrder(SideEnum side, CoinEnum coinType, OrderTypeEnum orderType, double qty,
             TIFEnum tif) {
-        logger.debug("placeConditionalOrder: condition order 주문");
+        logger.trace("placeConditionalOrder: condition order 주문");
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("side", side.getApiString());
@@ -190,7 +190,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject cancelActiveOrder(CoinEnum coinType, String orderID) {
-        logger.debug("cancelActiveOrder: active order 주문 취소");
+        logger.trace("cancelActiveOrder: active order 주문 취소");
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
@@ -208,7 +208,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject cancelConditionalOrder(CoinEnum coinType, String orderID) {
-        logger.debug("cancelConditionalOrder: conditional order 주문 취소");
+        logger.trace("cancelConditionalOrder: conditional order 주문 취소");
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
@@ -226,7 +226,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject cancelAllActiveOrder(CoinEnum coinType, String orderID) {
-        logger.debug("cancelAllActiveOrder: 모든 active order 취소");
+        logger.trace("cancelAllActiveOrder: 모든 active order 취소");
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
@@ -245,7 +245,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject cancelAllConditionalOrder(CoinEnum coinType, String orderID) {
-        logger.debug("cancelAllConditionalOrder: 모든 conditional order 취소");
+        logger.trace("cancelAllConditionalOrder: 모든 conditional order 취소");
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
@@ -263,7 +263,7 @@ public class BybitRestDAO {
     }
 
     public JSONObject setLeverage(CoinEnum coinType, int buyLeverage, int sellLeverage) {
-        logger.debug("setLeverage: 레버리지 설정");
+        logger.trace("setLeverage: 레버리지 설정");
         Map<String, Object> request = new TreeMap<>();
         request.put("api_key", AuthDecryptor.getInstance().getApiKey());
         request.put("symbol", coinType.name());
