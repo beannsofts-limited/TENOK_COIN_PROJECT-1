@@ -2,6 +2,9 @@ package org.tenok.coin.data.impl;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumMap;
@@ -118,7 +121,6 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
                 candleList.registerNewCandle(new Candle(startAt, volume, open, high, low, close));
             });
 
-
             // 실시간 kLine에 등록
             websocketProcessor.subscribeCandle(coinType, interval, candleList);
         }
@@ -150,7 +152,11 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
                     TIFEnum tif = TIFEnum.valueOfApiString((String) dataObject.get("time_in_force"));
                     double qty = ((Number) dataObject.get("qty")).doubleValue();
                     OrderTypeEnum orderType = OrderTypeEnum.valueOfApiString((String) dataObject.get("order_type"));
+                    double cumExecFee = (double) dataObject.get("cum_exec_fee");
                     SideEnum sideEnum = null;
+                    LocalDateTime time = LocalDateTime.parse((String) dataObject.get("created_time"),
+                            DateTimeFormatter.ISO_INSTANT);
+                    Date date = Date.from(time.toInstant(ZoneOffset.of("+9")));
                     boolean reduceOnly = (boolean) dataObject.get("reduce_only");
                     String side = (String) dataObject.get("side");
                     if (reduceOnly && side.equals("Buy")) {
@@ -166,10 +172,11 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
                         // 매도로 청산
                         sideEnum = SideEnum.CLOSE_SELL;
                     }
-                    orderList.add(OrderedData.builder().coinType(coin).tif(tif).qty(qty).side(sideEnum)
-                            .orderType(orderType).build());
+                    orderList.add(OrderedData.builder().coinType(coin).tif(tif).qty(qty).side(sideEnum).timeStamp(date)
+                            .cumExecFee(cumExecFee).orderType(orderType).build());
                 });
             } // #end foreach
+            orderList.sort((obj1, obj2) -> obj1.getTimeStamp().compareTo(obj2.getTimeStamp()));
             websocketProcessor.subscribeOrder(orderList);
         } // #end if
         return orderList;
@@ -178,18 +185,17 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
     /**
      * position list 조회
      * 
-     * @deprecated
      */
     @Override
-    @Deprecated(forRemoval = false)
     public PositionList getPositionList() {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");
         }
         if (positionList == null) {
             positionList = new PositionList();
+            websocketProcessor.subscribePosition(positionList);
         }
-        return null;
+        return positionList;
     }
 
     /**
@@ -247,7 +253,8 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
         if (walletInfo == null) {
             JSONObject walletObject = restDAO.getMyWalletBalance();
             JSONObject result = (JSONObject) ((JSONObject) walletObject.get("result")).get("USDT");
-            walletInfo = new BybitWalletInfo((double) result.get("wallet_balance"), (double) result.get("available_balance"));
+            walletInfo = new BybitWalletInfo((double) result.get("wallet_balance"),
+                    (double) result.get("available_balance"));
 
             websocketProcessor.subscribeWalletInfo(walletInfo);
         }
@@ -265,9 +272,12 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");
         }
-        logger.info(String.format("coin: %s  leverage: %d qty: %f", order.getCoinType().getKorean(), order.getLeverage(), order.getQty()));
+        logger.info(String.format("coin: %s  leverage: %d qty: %f", order.getCoinType().getKorean(),
+                order.getLeverage(), order.getQty()));
         JSONObject res = restDAO.placeActiveOrder(order.getSide(), order.getCoinType(), order.getOrderType(),
                 order.getQty(), order.getTIF(), Math.abs(order.getLeverage()));
+
+        logger.debug(res);
 
         if (res.get("ret_msg").equals("Insufficient cost")) {
             throw new InsufficientCostException("예수금이 부족하여 주문에 실패하였습니다.");

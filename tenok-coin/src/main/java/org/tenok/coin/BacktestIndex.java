@@ -6,12 +6,13 @@ import org.tenok.coin.strategy.StrategyHandler;
 import org.tenok.coin.strategy.StrategyRunner;
 import org.tenok.coin.strategy.impl.LongStrategy;
 import org.tenok.coin.type.CoinEnum;
+import org.tenok.coin.type.SideEnum;
 
 public class BacktestIndex {
     public static void main(String[] args) throws InterruptedException {
         StrategyRunner runner = new StrategyRunner();
 
-        StrategyConfig config = new StrategyConfig(CoinEnum.BTCUSDT, BacktestDAO.class, LongStrategy.class, 1, 1.0);
+        StrategyConfig config = new StrategyConfig(CoinEnum.BTCUSDT, SideEnum.OPEN_BUY, BacktestDAO.class, LongStrategy.class, 1, 1.0);
         StrategyHandler handler = runner.runStrategy(config);
 
         handler.start();

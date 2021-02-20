@@ -15,4 +15,8 @@ public class Position {
     private double entryPrice;
     private double liqPrice;
     private int leverage;
+    private double positionValue;
+    private double bustPrice;
+    private double orderMargin;
+    private double occClosingFee;
 }

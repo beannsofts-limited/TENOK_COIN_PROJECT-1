@@ -1,5 +1,6 @@
 package org.tenok.coin.strategy;
 
+import org.tenok.coin.config.ConfigParser;
 import org.tenok.coin.data.CoinDataAccessable;
 import org.tenok.coin.data.InsufficientCostException;
 import org.tenok.coin.data.entity.BackTestable;
@@ -15,7 +16,7 @@ import org.tenok.coin.type.TIFEnum;
 
 import lombok.extern.log4j.Log4j;
 
-@Log4j
+@Log4j(topic = "bybit.strategy.logger")
 class StrategyThread implements Runnable {
     private CoinDataAccessable coinDAOInstance;
     private StrategyConfig config;
@@ -29,11 +30,11 @@ class StrategyThread implements Runnable {
                 // backtestable 클래스 일 경우 Runnable 객체 집어넣고 getInstance 호출
                 coinDAOInstance = (CoinDataAccessable) config.getCoinDataAccessableClass()
                         .getDeclaredMethod("getInstance", Runnable.class).invoke((Object) null, this);
-                log.info("get instance from Backtestable DAO Object");
+                log.info("got instance from Backtestable DAO Object");
             } else {
                 coinDAOInstance = (CoinDataAccessable) config.getCoinDataAccessableClass()
                         .getDeclaredMethod("getInstance", (Class<?>[]) null).invoke((Object) null);
-                log.info("get instance from Bybit DAO Object");
+                log.info("got instance from Bybit DAO Object");
             }
             strategyInstance = config.getStrategyClass()
                     .getDeclaredConstructor(CoinDataAccessable.class, CoinEnum.class)
@@ -54,17 +55,13 @@ class StrategyThread implements Runnable {
                 double openRBI = strategyInstance.testOpenRBI();
                 if (openRBI != 0.0) {
 
-                    SideEnum side;
-                    if (config.getLeverage() > 0) {
-                        side = SideEnum.OPEN_BUY;
-                    } else {
-                        side = SideEnum.OPEN_SELL;
-                    }
-                    double qty = getAvailable();
+                    SideEnum side = config.getOpenType();
 
-                    log.info(String.format("포지션 오픈 신호 포착 %s %s 전략", config.getCoinType().getKorean(),
+                    double qty = getAvailable() * openRBI;
+
+                    log.info(String.format("%s %s 전략: 포지션 오픈 신호 포착", config.getCoinType().getKorean(),
                             (config.getLeverage() > 0) ? "롱" : "숏"));
-                    log.info(String.format("예수금: %f 시가: %f 개수: %f", wallet.getWalletAvailableBalance(),
+                    log.debug(String.format("예수금: %f USDT 시가: %f 개수: %f", wallet.getWalletAvailableBalance(),
                             coinDAOInstance.getCurrentPrice(config.getCoinType()), qty));
                     Orderable order = ActiveOrder.builder().coinType(config.getCoinType())
                             .orderType(OrderTypeEnum.MARKET).qty(qty).side(side).tif(TIFEnum.IOC)
@@ -72,8 +69,11 @@ class StrategyThread implements Runnable {
                     try {
                         coinDAOInstance.orderCoin(order);
                     } catch (InsufficientCostException e) {
-                        SlackSender.getInstance().sendException(e);
-                        throw new RuntimeException(e);
+                        String errMsg = String.format("%s %s전략: 예수금 부족", config.getCoinType().getKorean(),
+                                (config.getLeverage() > 0) ? "롱" : "숏");
+                        SlackSender.getInstance().sendText(errMsg);
+                        log.warn(errMsg);
+                        break;
                     }
 
                     myPosition = Position.builder().coinType(config.getCoinType())
@@ -87,12 +87,13 @@ class StrategyThread implements Runnable {
                 if (strategyInstance.testCloseRBI()) {
                     SideEnum side;
 
-                    if (config.getLeverage() > 0) {
+                    if (config.getOpenType() == SideEnum.OPEN_BUY) {
                         side = SideEnum.CLOSE_SELL;
                     } else {
                         side = SideEnum.CLOSE_BUY;
                     }
-                    log.info(String.format("청산 신호 포착 %s %s 전략", config.getCoinType().getKorean(),
+
+                    log.info(String.format("%s %s 전략: 청산 신호 포착", config.getCoinType().getKorean(),
                             (config.getLeverage() > 0) ? "롱" : "숏"));
                     Orderable order = ActiveOrder.builder().coinType(config.getCoinType())
                             .orderType(OrderTypeEnum.MARKET).qty(myPosition.getQty()).side(side)
@@ -100,7 +101,11 @@ class StrategyThread implements Runnable {
                     try {
                         coinDAOInstance.orderCoin(order);
                     } catch (InsufficientCostException e) {
-                        throw new RuntimeException(e);
+                        String errMsg = String.format("%s %s전략: 예수금 부족", config.getCoinType().getKorean(),
+                                (config.getLeverage() > 0) ? "롱" : "숏");
+                        SlackSender.getInstance().sendText(errMsg);
+                        log.warn(errMsg);
+                        break;
                     }
                     strategyInstance.setIsopened(false);
                 }
@@ -120,13 +125,16 @@ class StrategyThread implements Runnable {
                 return; // TODO instrrupted 되면 그대로 끝낼지. 아님 자동매도 할지.
             }
             try {
-                Thread.sleep(1);
+                Thread.sleep(ConfigParser.getUpdateRate());
             } catch (InterruptedException e) {
                 log.info(String.format("%s strategy thread interrupted", Thread.currentThread().getName()));
                 Thread.currentThread().interrupt();
                 return;
             }
         }
+
+        log.info(String.format("%s %s전략: 전략 스레드 종료", config.getCoinType().getKorean(),
+                (config.getLeverage() > 0) ? "롱" : "숏"));
     }
 
     public void updateLeverage(int leverage) {
@@ -143,6 +151,7 @@ class StrategyThread implements Runnable {
 
     /**
      * this strategy thread에서 현재 구매 가능한 코인 개수
+     * 
      * @return 현재 구매 가능한 코인 개수
      */
     public double getAvailable() {
