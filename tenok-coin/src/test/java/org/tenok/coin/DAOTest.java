@@ -10,6 +10,7 @@ import javax.security.auth.login.LoginException;
 
 import com.slack.api.webhook.WebhookResponse;
 
+
 import org.junit.Test;
 import org.tenok.coin.data.CoinDataAccessable;
 import org.tenok.coin.data.InsufficientCostException;
@@ -28,7 +29,7 @@ import org.tenok.coin.type.SideEnum;
 import org.tenok.coin.type.OrderTypeEnum;
 import org.tenok.coin.type.TIFEnum;
 
-public class DAOTest {
+public class DAOTest{
     @Test
     public void loginTest() {
         try {

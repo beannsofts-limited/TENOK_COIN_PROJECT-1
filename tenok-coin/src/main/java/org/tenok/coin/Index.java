@@ -12,6 +12,8 @@ import org.tenok.coin.strategy.StrategyHandler;
 import org.tenok.coin.strategy.StrategyRunner;
 import org.tenok.coin.strategy.impl.LongStrategy;
 import org.tenok.coin.strategy.impl.ShortStrategy;
+import org.tenok.coin.strategy.impl.TrendLongStrategy;
+import org.tenok.coin.strategy.impl.TrendShortStrategy;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.SideEnum;
 
@@ -21,12 +23,10 @@ public class Index {
 
         StrategyRunner runner = new StrategyRunner();
 
-        StrategyConfig longConfig = new StrategyConfig(CoinEnum.XTZUSDT, SideEnum.OPEN_BUY, BybitDAO.class,
-                LongStrategy.class, 1, 1);
-        StrategyConfig shortConfig = new StrategyConfig(CoinEnum.XTZUSDT, SideEnum.OPEN_SELL, BybitDAO.class,
-                ShortStrategy.class, -1, 1);
-        StrategyHandler longHandler = runner.runStrategy(longConfig);
-        StrategyHandler shortHandler = runner.runStrategy(shortConfig);
+        StrategyConfig TrendlongConfig = new StrategyConfig(CoinEnum.BCHUSDT, SideEnum.OPEN_BUY, BybitDAO.class, TrendLongStrategy.class, 1, 0.9);
+        StrategyConfig TrendshortConfig = new StrategyConfig(CoinEnum.BCHUSDT,SideEnum.OPEN_SELL, BybitDAO.class, TrendShortStrategy.class, -1, 0.9);
+        StrategyHandler longHandler = runner.runStrategy(TrendlongConfig);
+        StrategyHandler shortHandler = runner.runStrategy(TrendshortConfig);
 
         
         longHandler.start();
