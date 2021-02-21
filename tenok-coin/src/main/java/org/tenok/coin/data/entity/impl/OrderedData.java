@@ -22,6 +22,9 @@ public class OrderedData implements OrderDataAccessable {
     @NonNull
     private TIFEnum tif;
     private double qty;
+    private int leverage;
+    private double cumExecFee;
+    private Date timeStamp;
 
     @Override
     public SideEnum getSide() {
@@ -50,23 +53,16 @@ public class OrderedData implements OrderDataAccessable {
 
     @Override
     public Date getTimeStamp() {
-        return null;
-    }
-
-    @Override
-    public double getEntryPrice() {
-        return 0;
-    }
-
-    @Override
-    public double getExitPrice() {
-        return 0;
+        return timeStamp;
     }
 
     @Override
     public int getLeverage() {
-        // TODO Auto-generated method stub
-        return 0;
+        return leverage;
+    }
+
+    public double getCumExecFee() {
+        return cumExecFee;
     }
 
 }

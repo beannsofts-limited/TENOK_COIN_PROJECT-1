@@ -19,6 +19,8 @@ import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
 import org.tenok.coin.data.entity.impl.OrderedData;
 import org.tenok.coin.data.entity.impl.OrderedList;
+import org.tenok.coin.data.entity.impl.Position;
+import org.tenok.coin.data.entity.impl.PositionList;
 import org.tenok.coin.data.impl.AuthDecryptor;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
@@ -96,6 +98,7 @@ public class BybitWebsocketProcessor implements Closeable {
     }
 
     Integer count = 0;
+
     /**
      * kLine 실시간 처리 등록
      * 
@@ -155,8 +158,24 @@ public class BybitWebsocketProcessor implements Closeable {
         });
     }
 
-    public void subscribePosition() {
+    public void subscribePosition(PositionList positionList) {
+        this.websocketPrivateInstance.registerPositionList(data -> {
+            CoinEnum coinType = CoinEnum.valueOf((String) data.get("symbol"));
+            SideEnum side = data.get("side").equals("Buy") ? SideEnum.OPEN_SELL : SideEnum.OPEN_BUY;
+            double qty = ((Number) data.get("size")).doubleValue();
+            double positionValue = ((Number) data.get("position_value")).doubleValue();
+            double entryPrice = ((Number) data.get("entry_price")).doubleValue();
+            double liqPrice = ((Number) data.get("liq_price")).doubleValue();
+            double bustPrice = ((Number) data.get("bust_price")).doubleValue();
+            int leverage = ((Number) data.get("leverage")).intValue();
+            int orderMargin = ((Number) data.get("order_margin")).intValue();
+            double occClosingFee = ((Number) data.get("occ_closing_fee")).doubleValue();
 
+            Position position = Position.builder().coinType(coinType).side(side).qty(qty).positionValue(positionValue)
+                    .entryPrice(entryPrice).liqPrice(liqPrice).bustPrice(bustPrice).leverage(leverage)
+                    .orderMargin(orderMargin).occClosingFee(occClosingFee).build();
+            positionList.add(position);
+        });
     }
 
     public void subscribeWalletInfo(WalletAccessable walletInfo) {

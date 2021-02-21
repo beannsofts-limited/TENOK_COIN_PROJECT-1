@@ -13,11 +13,14 @@ public class ConfigParser {
     }
 
     static {
-        File configFile = new File("./../resources/config/tenok_config.json");
         try {
-            configJson = (JSONObject) new JSONParser().parse(new FileReader(configFile));
+            configJson = (JSONObject) new JSONParser().parse(new FileReader("./../resources/config/tenok_config.json"));
         } catch (Exception e) {
-            e.printStackTrace();
+            try {
+                configJson = (JSONObject) new JSONParser().parse(new FileReader(new File("./resources/config/tenok_config.json")));
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
         }
     }
 

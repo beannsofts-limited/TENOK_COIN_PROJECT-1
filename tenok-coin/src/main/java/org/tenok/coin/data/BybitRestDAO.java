@@ -43,7 +43,8 @@ public class BybitRestDAO {
 
     }
 
-    public CompletableFuture<HttpResponse<String>> requestKlineHttp2(CoinEnum coinType, IntervalEnum interval, int limit, Date from) {
+    public CompletableFuture<HttpResponse<String>> requestKlineHttp2(CoinEnum coinType, IntervalEnum interval,
+            int limit, Date from) {
         Map<String, Object> request = new TreeMap<>();
         request.put("symbol", coinType.name());
         request.put("interval", interval.getApiString());
@@ -53,7 +54,7 @@ public class BybitRestDAO {
         request.entrySet().stream().forEachOrdered(requestSet -> {
             requestParam.append(String.format("%s=%s&", requestSet.getKey(), (String) requestSet.getValue()));
         });
-        requestParam.deleteCharAt(requestParam.length()-1);
+        requestParam.deleteCharAt(requestParam.length() - 1);
         try {
             HttpClient client = HttpClient.newBuilder().followRedirects(Redirect.ALWAYS).build();
             HttpRequest httpRequest = HttpRequest
@@ -98,8 +99,6 @@ public class BybitRestDAO {
         request.put("sign", AuthDecryptor.getInstance().generateSignature(request));
         return requestByGet(request, "https://api.bybit.com/v2/private/wallet/balance?");
     }
-
-
 
     public JSONObject getMyPositionList(CoinEnum coinType) {
         logger.trace("getMyPositionList: My Position 불러오기");
@@ -150,6 +149,7 @@ public class BybitRestDAO {
         request.put("close_on_trigger", Boolean.valueOf(false));
         request.put("timestamp", Long.toString(System.currentTimeMillis()));
         request.put("sign", AuthDecryptor.getInstance().generateSignature(request));
+        logger.debug(request);
         URL url;
         try {
             url = new URL("https://api.bybit.com/private/linear/order/create");

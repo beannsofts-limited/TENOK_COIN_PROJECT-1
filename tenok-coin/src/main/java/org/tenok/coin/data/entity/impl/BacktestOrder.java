@@ -51,13 +51,11 @@ public class BacktestOrder implements OrderDataAccessable {
         return null;
     }
 
-    @Override
     public double getEntryPrice() {
         // TODO Auto-generated method stub
         return 0;
     }
 
-    @Override
     public double getExitPrice() {
         // TODO Auto-generated method stub
         return 0;
