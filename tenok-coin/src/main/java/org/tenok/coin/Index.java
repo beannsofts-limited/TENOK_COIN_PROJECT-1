@@ -16,7 +16,7 @@ import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.SideEnum;
 
 public class Index {
-    public static void main(String[] args) throws IOException, LoginException {
+    public static void main(String[] args) throws LoginException {
         BybitDAO.getInstance().login(args[0]);
 
         StrategyRunner runner = new StrategyRunner();
@@ -28,13 +28,8 @@ public class Index {
         StrategyHandler longHandler = runner.runStrategy(longConfig);
         StrategyHandler shortHandler = runner.runStrategy(shortConfig);
 
+        
         longHandler.start();
         shortHandler.start();
-
-        while (true) {
-            if (false) {
-                break;
-            }
-        }
     }
 }

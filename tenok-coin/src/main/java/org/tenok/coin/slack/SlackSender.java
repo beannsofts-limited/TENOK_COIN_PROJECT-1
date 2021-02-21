@@ -5,7 +5,6 @@ import java.io.IOException;
 import com.slack.api.Slack;
 import com.slack.api.webhook.WebhookResponse;
 
-import org.apache.log4j.Logger;
 import org.tenok.coin.data.impl.AuthDecryptor;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.SideEnum;
@@ -14,8 +13,6 @@ import org.tenok.coin.type.TIFEnum;
 public class SlackSender {
     private String webhookUrl;
     private Slack slackInstance;
-    private static Logger logger = Logger.getLogger(SlackSender.class);
-
     WebhookResponse response;
 
     private SlackSender() {

@@ -73,7 +73,7 @@ class StrategyThread implements Runnable {
                                 (config.getLeverage() > 0) ? "롱" : "숏");
                         SlackSender.getInstance().sendText(errMsg);
                         log.warn(errMsg);
-                        break;
+                        return;
                     }
 
                     myPosition = Position.builder().coinType(config.getCoinType())
@@ -105,7 +105,7 @@ class StrategyThread implements Runnable {
                                 (config.getLeverage() > 0) ? "롱" : "숏");
                         SlackSender.getInstance().sendText(errMsg);
                         log.warn(errMsg);
-                        break;
+                        return;
                     }
                     strategyInstance.setIsopened(false);
                 }
