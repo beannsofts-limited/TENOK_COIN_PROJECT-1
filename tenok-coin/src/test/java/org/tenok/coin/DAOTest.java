@@ -3,9 +3,11 @@ package org.tenok.coin;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
+
 import javax.security.auth.login.LoginException;
 
 import com.slack.api.webhook.WebhookResponse;
+
 
 import org.junit.Test;
 import org.tenok.coin.data.CoinDataAccessable;
@@ -24,7 +26,7 @@ import org.tenok.coin.type.SideEnum;
 import org.tenok.coin.type.OrderTypeEnum;
 import org.tenok.coin.type.TIFEnum;
 
-public class DAOTest {
+public class DAOTest{
     @Test
     public void loginTest() {
         try {
@@ -116,6 +118,7 @@ public class DAOTest {
         System.out.println(price);
         assertNotEquals(price, 0.0);
     }
+    
     
     
 }
