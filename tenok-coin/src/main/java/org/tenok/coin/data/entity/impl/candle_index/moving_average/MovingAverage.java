@@ -7,12 +7,13 @@ public class MovingAverage extends BasicIndexAbstract<MAObject> {
 
     @Override
     protected MAObject calculate() {
+        double ma2 = calMA(2);
         double ma5 = calMA(5);
         double ma10 = calMA(10);
         double ma20 = calMA(20);
         double ma60 = calMA(60);
         double ma120 = calMA(120);
-        return new MAObject(ma5, ma10, ma20, ma60, ma120);
+        return new MAObject(ma2, ma5, ma10, ma20, ma60, ma120);
     }
 
     private double calMA(int period) {
