@@ -18,24 +18,22 @@ public class CommidityChannelIndex extends BasicIndexAbstract<Double> {
 
     @Override
     protected Double calculate() {
-        // return (getMeanPrice(item) - calMA(item, length))/(getMeanDeviation(item, length) * DIVISOR);
-        return null;
+        return (getMeanPrice(reference.getReversed(0)) - calMA(length)) / (getMeanDeviation(length) * DIVISOR);
     }
 
     /**
      * mean price의 이동평균을 계산한다.
      */
-    private double calMA(Candle item, int period) {
-        double meanPriceSum = 0;   // mean price: (High + Low + Close) / 3
+    private double calMA(int period) {
+        double meanPriceSum = 0;    // mean price = (high + low + close) / 3
         double ma = 0;
 
-        if (period > reference.size()) {
+        if (period > reference.size() - 1) {
             return 0;
         } else {
-            for (int i = reference.size() - 1; i >= reference.size() - period + 1; i--) {
-                meanPriceSum += getMeanPrice(reference.get(i));
+            for (int i = 0; i < period; i++) {
+                meanPriceSum += getMeanPrice(reference.getReversed(i));
             }
-            meanPriceSum += getMeanPrice(item);
             ma = meanPriceSum / period;
 
             return ma;
@@ -46,17 +44,16 @@ public class CommidityChannelIndex extends BasicIndexAbstract<Double> {
         return (item.getHigh() + item.getLow() + item.getClose()) / 3.0;
     }
 
-    private double getMeanDeviation(Candle item, int period) {
+    private double getMeanDeviation(int period) {
         double meanDeviationSum = 0;   // mean price: (High + Low + Close) / 3
         double ma = 0;
 
         if (period > reference.size()) {
             return 0;
         } else {
-            for (int i = reference.size() - 1; i >= reference.size() - period + 1; i--) {
-                meanDeviationSum += Math.abs(calMA(reference.get(i), period) - getMeanPrice(reference.get(i)));
+            for (int i = 0; i < period; i++) {
+                meanDeviationSum += Math.abs(calMA(period) - getMeanPrice(reference.getReversed(i)));
             }
-            meanDeviationSum += calMA(item, period);
             ma = meanDeviationSum / period;
 
             return ma;
