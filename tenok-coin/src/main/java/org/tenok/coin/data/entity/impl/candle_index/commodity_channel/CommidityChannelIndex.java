@@ -17,8 +17,9 @@ public class CommidityChannelIndex extends BasicIndexAbstract<Double> {
     }
 
     @Override
-    protected Double calculate(Candle item) {
-        return (getMeanPrice(item) - calMA(item, length))/(getMeanDeviation(item, length) * DIVISOR);
+    protected Double calculate() {
+        // return (getMeanPrice(item) - calMA(item, length))/(getMeanDeviation(item, length) * DIVISOR);
+        return null;
     }
 
     /**
@@ -32,7 +33,7 @@ public class CommidityChannelIndex extends BasicIndexAbstract<Double> {
             return 0;
         } else {
             for (int i = reference.size() - 1; i >= reference.size() - period + 1; i--) {
-                meanPriceSum += getMeanPrice(reference.elementAt(i));
+                meanPriceSum += getMeanPrice(reference.get(i));
             }
             meanPriceSum += getMeanPrice(item);
             ma = meanPriceSum / period;
@@ -53,7 +54,7 @@ public class CommidityChannelIndex extends BasicIndexAbstract<Double> {
             return 0;
         } else {
             for (int i = reference.size() - 1; i >= reference.size() - period + 1; i--) {
-                meanDeviationSum += Math.abs(calMA(reference.elementAt(i), period) - getMeanPrice(reference.elementAt(i)));
+                meanDeviationSum += Math.abs(calMA(reference.get(i), period) - getMeanPrice(reference.get(i)));
             }
             meanDeviationSum += calMA(item, period);
             ma = meanDeviationSum / period;

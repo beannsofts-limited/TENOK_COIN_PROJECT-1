@@ -1,12 +1,11 @@
 package org.tenok.coin.data.entity.impl.candle_index;
 
-import java.util.Stack;
+import java.util.ArrayList;
 
-import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
 
 @SuppressWarnings("serial")
-public abstract class BasicIndexAbstract<T> extends Stack<T> implements Indexable<T> {
+public abstract class BasicIndexAbstract<T> extends ArrayList<T> implements Indexable<T> {
     protected CandleList reference;
 
     protected BasicIndexAbstract() {
@@ -17,25 +16,27 @@ public abstract class BasicIndexAbstract<T> extends Stack<T> implements Indexabl
         return reference;
     }
 
-    protected abstract T calculate(Candle item);
+    protected abstract T calculate();
 
     @Override
-    public void injectReference(CandleList candleList) {
-        this.reference = candleList;
-        if (!reference.isEmpty()) {
-            reference.stream().forEachOrdered(this::calculateNewCandle);
+    public final void injectReference(CandleList candleList) {
+        this.reference = new CandleList();
+        for (int i = 0; i < candleList.size(); i++) {
+            this.reference.add(candleList.get(i));
+            calculateNewCandle();
         }
+
+        this.reference = candleList;
     }
 
     @Override
-    public final void calculateNewCandle(Candle item) {
-        push(calculate(item));
+    public final void calculateNewCandle() {
+        super.add(calculate());
     }
 
     @Override
-    public final void calculateCurrentCandle(Candle item) {
-        pop();
-        push(calculate(item));
+    public final void calculateCurrentCandle() {
+        ((IndexObject) super.get(super.size() - 1)).updateData(calculate());
     }
 
     @Override

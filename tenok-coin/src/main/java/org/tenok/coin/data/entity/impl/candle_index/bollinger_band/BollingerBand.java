@@ -13,7 +13,8 @@ public class BollingerBand extends BasicIndexAbstract<BBObject> {
     }
 
     @Override
-    protected BBObject calculate(Candle item) {
+    protected BBObject calculate() {
+        Candle item = null;
         return new BBObject(calUpperBB(item, 20), calMiddleBB(item, 20), calLowerBB(item, 20));
     }
 
@@ -26,7 +27,7 @@ public class BollingerBand extends BasicIndexAbstract<BBObject> {
 
         } else {
             for (int i = reference.size() - 1; i >= reference.size() - period + 1; i--) {
-                closeSum = closeSum + reference.elementAt(i).getClose();
+                closeSum = closeSum + reference.get(i).getClose();
             }
             closeSum = item.getClose() + closeSum;
             ma = closeSum / period;
@@ -58,8 +59,8 @@ public class BollingerBand extends BasicIndexAbstract<BBObject> {
             ArrayList<Candle> closeArray = new ArrayList<>();
             ArrayList<Double> deviationArray = new ArrayList<>();
             for (int i = reference.size() - 1; i >= reference.size() - period + 1; i--) {
-                closeArray.add(reference.elementAt(i));
-                closeSum = closeSum + reference.elementAt(i).getClose();
+                closeArray.add(reference.get(i));
+                closeSum = closeSum + reference.get(i).getClose();
             }
             closeArray.add(item);
             closeSum = item.getClose() + closeSum;

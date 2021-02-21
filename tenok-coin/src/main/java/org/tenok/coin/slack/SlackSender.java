@@ -5,16 +5,14 @@ import java.io.IOException;
 import com.slack.api.Slack;
 import com.slack.api.webhook.WebhookResponse;
 
-import org.apache.log4j.Logger;
 import org.tenok.coin.data.impl.AuthDecryptor;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.SideEnum;
+import org.tenok.coin.type.TIFEnum;
 
 public class SlackSender {
     private String webhookUrl;
     private Slack slackInstance;
-    private static Logger logger = Logger.getLogger(SlackSender.class);
-
     WebhookResponse response;
 
     private SlackSender() {
@@ -22,11 +20,12 @@ public class SlackSender {
         this.webhookUrl = AuthDecryptor.getInstance().getSlackWebhookURL();
     }
 
-    public WebhookResponse sendTradingMessage(CoinEnum coinType, SideEnum side, double qty) {
+    public WebhookResponse sendTradingMessage(CoinEnum coinType, SideEnum side, double qty, int leverage, TIFEnum tif) {
         try {
-            String payload = String.format("{\"text\":\"%s %f개 %s\"}", coinType.getKorean(), qty, side.getKorean());
+            String message = String.format("%s %.3f개 %d레버리지로 %s 주문 완료. 주문타입: %s", coinType.getKorean(), qty, leverage,
+                    side.getKorean(), tif.getApiString());
+            String payload = String.format("{\"text\":\"%s\"}", message);
             response = slackInstance.send(webhookUrl, payload);
-            logger.debug(response);
             return response;
         } catch (IOException e) {
             e.printStackTrace();
@@ -37,9 +36,8 @@ public class SlackSender {
 
     public WebhookResponse sendException(Throwable t) {
         try {
-            String payload = String.format("{\"text\":\"Exception 발생%n%n%s\"}", t.getMessage());
+            String payload = String.format("{\"text\":\"Exception 발생%n%n%s\"}", t.toString());
             response = slackInstance.send(webhookUrl, payload);
-            logger.debug(response);
             return response;
         } catch (IOException e) {
             e.printStackTrace();
@@ -51,7 +49,6 @@ public class SlackSender {
         try {
             String payload = String.format("{\"text\":\"%s\"}", text);
             response = slackInstance.send(webhookUrl, payload);
-            logger.debug(response);
             return response;
         } catch (IOException e) {
             e.printStackTrace();

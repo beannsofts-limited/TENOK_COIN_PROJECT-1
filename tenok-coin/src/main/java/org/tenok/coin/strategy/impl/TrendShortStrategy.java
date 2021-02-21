@@ -1,5 +1,7 @@
 package org.tenok.coin.strategy.impl;
 
+import java.util.Date;
+
 import org.tenok.coin.data.CoinDataAccessable;
 import org.tenok.coin.data.entity.impl.CandleList;
 import org.tenok.coin.data.entity.impl.candle_index.moving_average.MovingAverage;
@@ -7,45 +9,43 @@ import org.tenok.coin.strategy.Strategy;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
 
-import lombok.extern.log4j.Log4j;
-
-@Log4j(topic = "bybit.strategy.logger")
-public class LongStrategy implements Strategy {
+public class TrendShortStrategy implements Strategy{
     private CoinDataAccessable coinDAO;
     private CoinEnum coinType;
     private boolean isOpened = false;
     private CandleList candleList;
     private MovingAverage ma;
-    private double entryPrice;
+ 
+    private Date standardDate = null;
 
-    public LongStrategy(CoinDataAccessable coinDAO, CoinEnum coinType) {
+    public TrendShortStrategy(CoinDataAccessable coinDAO, CoinEnum coinType) {
         this.coinDAO = coinDAO;
         this.coinType = coinType;
-        candleList = this.coinDAO.getCandleList(coinType, IntervalEnum.FIVE);
+        candleList = this.coinDAO.getCandleList(coinType, IntervalEnum.FIFTEEN);
         ma = candleList.createIndex(new MovingAverage());
     }
 
     @Override
     public double testOpenRBI() {
-        if (ma.getReversed(2).getMa5() < ma.getReversed(2).getMa20()
-                && ma.getReversed(1).getMa5() > ma.getReversed(1).getMa20()) {
-            entryPrice = coinDAO.getCurrentPrice(coinType);
-            return 1;
+        //새로운 캔들이 갱신될때마다 봉초가에 open
+        //만약 2분선이 20분 선 아래에 있을 경우에는 무조건 숏 포지션
+        if(standardDate != candleList.getReversed(0).getStartAt()){
+            if(candleList.getReversed(0).getOpen() <= ma.getReversed(1).getMa10()){
+                standardDate = candleList.getReversed(0).getStartAt();
+                return 1; 
+            }
         }
         return 0;
     }
 
     @Override
     public boolean testCloseRBI() {
-        if (getProfitPercent() >= 0.5 || getProfitPercent() <= -1.0) {
-            log.info("profit" + getProfitPercent());
-            log.info(String.format("%s %s 도달", coinType.getKorean(), (getProfitPercent() > 0) ? "익절가" : "손절가"));
+         //15분봉의 종가에 청산
+         if(standardDate != candleList.getReversed(0).getStartAt()){   
             return true;
         }
 
-        return !(ma.getReversed(2).getMa5() < ma.getReversed(2).getMa20()
-                && ma.getReversed(1).getMa5() > ma.getReversed(1).getMa20());
-
+        return false;
     }
 
     @Override
@@ -66,10 +66,6 @@ public class LongStrategy implements Strategy {
     @Override
     public void setIsopened(boolean isOpened) {
         this.isOpened = isOpened;
-    }
-
-    private double getProfitPercent() {
-        return ((coinDAO.getCurrentPrice(coinType) / entryPrice) - 1.0) * 100;
     }
 
 }

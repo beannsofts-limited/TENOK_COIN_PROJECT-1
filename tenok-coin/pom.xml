@@ -5,7 +5,7 @@
 
   <groupId>org.tenok.coin</groupId>
   <artifactId>tenok-coin</artifactId>
-  <version>1.0</version>
+  <version>0.2.0</version>
 
   <name>tenok-coin</name>
   <!-- FIXME change it to the project's website -->
@@ -28,7 +28,7 @@
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
+      <version>1.2.15</version>
     </dependency>
     <dependency>
       <groupId>javax.websocket</groupId>
@@ -146,7 +146,7 @@
               <archive>
                   <manifest>
                       <!-- FQCN으로 public static void main(String[] args)가 있는 메인 클래스를 넣자 -->
-                      <mainClass>org.tenok.coin.CandleIndex</mainClass>
+                      <mainClass>org.tenok.coin.Index</mainClass>
                   </manifest>
               </archive>
               <descriptorRefs>

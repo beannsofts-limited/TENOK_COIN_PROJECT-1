@@ -29,10 +29,12 @@ import org.tenok.coin.type.IntervalEnum;
 @ClientEndpoint(encoders = { BybitEncoder.class }, decoders = { BybitDecoder.class })
 public class BybitWebsocket implements Closeable {
     private static Logger logger = Logger.getLogger(BybitWebsocket.class);
-    Map<CoinEnum, Map<IntervalEnum, Consumer<JSONObject>>> kLineConsumerMap;
-    Consumer<JSONObject> walletInfoConsumer;
-    Consumer<JSONObject> orderConsumer;
-    Map<CoinEnum, Consumer<JSONObject>> instrumentInfoConsumerMap;
+    private boolean isConfirmDataHasNext = false;
+    private Map<CoinEnum, Map<IntervalEnum, Consumer<JSONObject>>> kLineConsumerMap;
+    private Consumer<JSONObject> walletInfoConsumer;
+    private Consumer<JSONObject> orderConsumer;
+    private Consumer<JSONObject> positionConsumer;
+    private Map<CoinEnum, Consumer<JSONObject>> instrumentInfoConsumerMap;
 
     private Session session;
 
@@ -48,8 +50,9 @@ public class BybitWebsocket implements Closeable {
     }
 
     @OnMessage
+    @SuppressWarnings("unchecked")
     public void onMessage(JSONObject response) {
-        logger.debug(response);
+        logger.trace(response);
         WebsocketResponseEnum resType = (WebsocketResponseEnum) response.get("response_type");
         if (resType.equals(WebsocketResponseEnum.PING) || resType.equals(WebsocketResponseEnum.SUBSCRIPTION)) {
             boolean success = (boolean) response.get("success");
@@ -57,7 +60,7 @@ public class BybitWebsocket implements Closeable {
                 logger.fatal("Websocket Ping or Subscription failed");
                 logger.fatal(response.toJSONString());
             } else {
-                logger.debug(String.format("Websocket %s success", resType.name()));
+                logger.trace(String.format("Websocket %s success", resType.name()));
             }
             return;
         }
@@ -85,8 +88,27 @@ public class BybitWebsocket implements Closeable {
                 IntervalEnum interval = IntervalEnum.valueOfApiString(topicParsed[1]);
                 coinType = CoinEnum.valueOf(topicParsed[2]);
 
-                kLineConsumerMap.get(coinType).get(interval)
-                        .accept((JSONObject) ((JSONArray) response.get("data")).get(0));
+                JSONObject data0 = (JSONObject) ((JSONArray) response.get("data")).get(0);
+
+                if (((JSONArray) response.get("data")).size() == 2) {
+                    JSONObject data1 = (JSONObject) ((JSONArray) response.get("data")).get(1);
+                    if (isConfirmDataHasNext) {
+                        data0.put("lastConfirm", true);
+                        kLineConsumerMap.get(coinType).get(interval).accept(data0);
+                        kLineConsumerMap.get(coinType).get(interval).accept(data1);
+                        isConfirmDataHasNext = false;
+                        break;
+                    }
+
+                    if (data1.get("volume").equals("0")) {
+                        isConfirmDataHasNext = true;
+                    }
+                    kLineConsumerMap.get(coinType).get(interval).accept(data0);
+                    kLineConsumerMap.get(coinType).get(interval).accept(data1);
+                } else {
+                    kLineConsumerMap.get(coinType).get(interval).accept(data0);
+                }
+
                 break;
 
             case "wallet":
@@ -95,6 +117,10 @@ public class BybitWebsocket implements Closeable {
 
             case "order":
                 this.orderConsumer.accept((JSONObject) ((JSONArray) response.get("data")).get(0));
+                break;
+            
+            case "position":
+                this.positionConsumer.accept((JSONObject) ((JSONArray) response.get("data")).get(0));
                 break;
 
             default:
@@ -154,6 +180,12 @@ public class BybitWebsocket implements Closeable {
         session.getAsyncRemote().sendObject(requestJson);
     }
 
+    public void registerPositionList(Consumer<JSONObject> consumer) {
+        this.positionConsumer = consumer;
+        JSONObject requestJson = getSubscriptionJSONObject(Arrays.asList("position"));
+        session.getAsyncRemote().sendObject(requestJson);
+    }
+
     /**
      * instrument info 실시간 처리 등록
      * 
@@ -172,6 +204,7 @@ public class BybitWebsocket implements Closeable {
 
     /**
      * return subscribe query json object
+     * 
      * @param args
      * @return
      */

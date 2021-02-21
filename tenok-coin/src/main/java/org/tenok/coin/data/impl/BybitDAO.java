@@ -2,6 +2,9 @@ package org.tenok.coin.data.impl;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumMap;
@@ -15,6 +18,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.tenok.coin.data.BybitRestDAO;
 import org.tenok.coin.data.CoinDataAccessable;
+import org.tenok.coin.data.InsufficientCostException;
 import org.tenok.coin.data.entity.impl.PositionList;
 import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.WalletAccessable;
@@ -148,7 +152,11 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
                     TIFEnum tif = TIFEnum.valueOfApiString((String) dataObject.get("time_in_force"));
                     double qty = ((Number) dataObject.get("qty")).doubleValue();
                     OrderTypeEnum orderType = OrderTypeEnum.valueOfApiString((String) dataObject.get("order_type"));
+                    double cumExecFee = (double) dataObject.get("cum_exec_fee");
                     SideEnum sideEnum = null;
+                    LocalDateTime time = LocalDateTime.parse((String) dataObject.get("created_time"),
+                            DateTimeFormatter.ISO_INSTANT);
+                    Date date = Date.from(time.toInstant(ZoneOffset.of("+9")));
                     boolean reduceOnly = (boolean) dataObject.get("reduce_only");
                     String side = (String) dataObject.get("side");
                     if (reduceOnly && side.equals("Buy")) {
@@ -164,10 +172,11 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
                         // 매도로 청산
                         sideEnum = SideEnum.CLOSE_SELL;
                     }
-                    orderList.add(OrderedData.builder().coinType(coin).tif(tif).qty(qty).side(sideEnum)
-                            .orderType(orderType).build());
+                    orderList.add(OrderedData.builder().coinType(coin).tif(tif).qty(qty).side(sideEnum).timeStamp(date)
+                            .cumExecFee(cumExecFee).orderType(orderType).build());
                 });
             } // #end foreach
+            orderList.sort((obj1, obj2) -> obj1.getTimeStamp().compareTo(obj2.getTimeStamp()));
             websocketProcessor.subscribeOrder(orderList);
         } // #end if
         return orderList;
@@ -176,18 +185,17 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
     /**
      * position list 조회
      * 
-     * @deprecated
      */
     @Override
-    @Deprecated(forRemoval = false)
     public PositionList getPositionList() {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");
         }
         if (positionList == null) {
             positionList = new PositionList();
+            websocketProcessor.subscribePosition(positionList);
         }
-        return null;
+        return positionList;
     }
 
     /**
@@ -209,10 +217,10 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
             double highPrice24h = Double.parseDouble((String) result.get("high_price_24h"));
             double lowPrice24h = Double.parseDouble((String) result.get("low_price_24h"));
             double price1hPcnt = Double.parseDouble((String) result.get("price_1h_pcnt"));
-            var insInfo = InstrumentInfo.builder().coinType(key).lastPriceE4((long) lastPrice * 10000)
-                    .lastTickDirection(lastTickDirection).price24hPcntE6((long) price24hPcnt * 1000000)
-                    .highPrice24hE4((long) highPrice24h * 10000).lowPrice24hE4((long) lowPrice24h * 10000)
-                    .price1hPcntE6((long) price1hPcnt * 1000000).build();
+            var insInfo = InstrumentInfo.builder().coinType(key).lastPriceE4((long) (lastPrice * 10000))
+                    .lastTickDirection(lastTickDirection).price24hPcntE6((long) (price24hPcnt * 1000000))
+                    .highPrice24hE4((long) (highPrice24h * 10000)).lowPrice24hE4((long) (lowPrice24h * 10000))
+                    .price1hPcntE6((long) (price1hPcnt * 1000000)).build();
             websocketProcessor.subscribeInsturmentInfo(key, insInfo);
             return insInfo;
         });
@@ -229,7 +237,7 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");
         }
-        return getInstrumentInfo(coinType).getLastPriceE4() / 10000L;
+        return getInstrumentInfo(coinType).getLastPriceE4() / 10000.0;
     }
 
     /**
@@ -243,7 +251,11 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
             throw new RuntimeException("DAO instance is not logged in");
         }
         if (walletInfo == null) {
-            walletInfo = new BybitWalletInfo(24, 24);
+            JSONObject walletObject = restDAO.getMyWalletBalance();
+            JSONObject result = (JSONObject) ((JSONObject) walletObject.get("result")).get("USDT");
+            walletInfo = new BybitWalletInfo((double) result.get("wallet_balance"),
+                    (double) result.get("available_balance"));
+
             websocketProcessor.subscribeWalletInfo(walletInfo);
         }
         return walletInfo;
@@ -253,16 +265,23 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
      * 코인 주문
      * 
      * @param order 주문 청구 객체
+     * @throws InsufficientCostException 잔금 부족 시
      */
     @Override
-    public void orderCoin(Orderable order) {
+    public void orderCoin(Orderable order) throws InsufficientCostException {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");
         }
-        // active order 실패 시 exception 뜨게 바꿨으면 좋겠음.
+        logger.info(String.format("coin: %s  leverage: %d qty: %f", order.getCoinType().getKorean(),
+                order.getLeverage(), order.getQty()));
         JSONObject res = restDAO.placeActiveOrder(order.getSide(), order.getCoinType(), order.getOrderType(),
                 order.getQty(), order.getTIF(), Math.abs(order.getLeverage()));
-        System.out.println(res.toJSONString());
+
+        logger.debug(res);
+
+        if (res.get("ret_msg").equals("Insufficient cost")) {
+            throw new InsufficientCostException("예수금이 부족하여 주문에 실패하였습니다.");
+        }
     }
 
     public boolean isLoggedIn() {

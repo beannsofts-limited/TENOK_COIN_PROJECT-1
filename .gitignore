@@ -41,3 +41,7 @@ target
 /.idea/
 /.metadata/
 *.iml
+
+# log file
+logs/
+log4j.xml

@@ -97,7 +97,7 @@ public class BacktestDAO implements CoinDataAccessable, BackTestable {
             myPosition.add(pos);
             wallet.setWalletAvailableBalance(
                     wallet.getWalletAvailableBalance() - (order.getQty() * getCurrentPrice(order.getCoinType())));
-            logger.debug(String.format("orderCoin : Open Position(coin: %s, entryPrice: %f, side: %s, qty: %f)",
+            logger.trace(String.format("orderCoin : Open Position(coin: %s, entryPrice: %f, side: %s, qty: %f)",
                     pos.getCoinType().getKorean(), pos.getEntryPrice(), pos.getSide().getKorean(), pos.getQty()));
         } else {
             // 포지션 청산 -> close 값 업데이트

@@ -1,8 +1,8 @@
 GET http://api.bybit.com/public/linear/kline
-        ?symbol=ETHUSDT
+        ?symbol=BTCUSDT
         &interval=1
-        &limit=3
-        &from=1585118245
+        &limit=100
+        &from=1613459531
 
 ###
 GET http://sugang.ajou.ac.kr/aply/index.action

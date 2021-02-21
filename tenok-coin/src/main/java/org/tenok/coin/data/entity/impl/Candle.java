@@ -28,6 +28,16 @@ public class Candle {
         
     }
 
+    public void updateData(Candle obj) {
+        this.startAt = obj.startAt;
+        this.volume = obj.volume;
+        this.open = obj.open;
+        this.high = obj.high;
+        this.low = obj.low;
+        this.close = obj.close;
+        this.isConfirmed = obj.isConfirmed;
+    }
+
     /**
      * @return open 시간
      */

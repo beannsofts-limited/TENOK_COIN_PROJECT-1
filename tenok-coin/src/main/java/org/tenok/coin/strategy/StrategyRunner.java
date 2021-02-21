@@ -6,7 +6,7 @@ import org.apache.log4j.Logger;
  * Strategy Factory
  */
 public class StrategyRunner {
-    private static Logger logger = Logger.getLogger(StrategyRunner.class);
+    private static Logger logger = Logger.getLogger("bybit.strategy.logger");
 
     /**
      * Create Strategy Handler

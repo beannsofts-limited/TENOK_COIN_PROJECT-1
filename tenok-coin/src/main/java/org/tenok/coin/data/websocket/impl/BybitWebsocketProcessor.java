@@ -19,6 +19,8 @@ import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
 import org.tenok.coin.data.entity.impl.OrderedData;
 import org.tenok.coin.data.entity.impl.OrderedList;
+import org.tenok.coin.data.entity.impl.Position;
+import org.tenok.coin.data.entity.impl.PositionList;
 import org.tenok.coin.data.impl.AuthDecryptor;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.IntervalEnum;
@@ -95,6 +97,8 @@ public class BybitWebsocketProcessor implements Closeable {
         websocketPrivateSession.getBasicRemote().sendObject(authObject);
     }
 
+    Integer count = 0;
+
     /**
      * kLine 실시간 처리 등록
      * 
@@ -112,12 +116,20 @@ public class BybitWebsocketProcessor implements Closeable {
             Date startAt = new Date(((Number) data.get("start")).longValue() * 1000L);
             boolean confirm = (boolean) data.get("confirm");
 
-            if (confirm) {
-                Candle candle = new Candle(startAt, volume, open, high, low, close);
-                candleList.registerNewCandle(candle);
+            if (data.containsKey("lastConfirm")) {
+                candleList.get(1).setOpen(open);
+                candleList.get(1).setHigh(high);
+                candleList.get(1).setLow(low);
+                candleList.get(1).setClose(close);
             } else {
-                Candle candle = new Candle(startAt, volume, open, high, low, close);
-                candleList.updateCurrentCandle(candle);
+                if (confirm) {
+                    Candle candle = new Candle(startAt, volume, open, high, low, close);
+                    candleList.updateCurrentCandle(candle);
+                    candleList.registerNewCandle(candle);
+                } else {
+                    Candle candle = new Candle(startAt, volume, open, high, low, close);
+                    candleList.updateCurrentCandle(candle);
+                }
             }
         });
     }
@@ -129,25 +141,41 @@ public class BybitWebsocketProcessor implements Closeable {
                         TickDirectionEnum.valueOfApiString((String) data.get("last_tick_direction")));
             }
             if (data.containsKey("last_price_e4")) {
-                instrumentInfo.lastPriceE4((long) data.get("last_price_e4"));
+                instrumentInfo.lastPriceE4(Long.valueOf((String) data.get("last_price_e4")));
             }
             if (data.containsKey("price_24h_pcnt_e6")) {
-                instrumentInfo.price24hPcntE6((long) data.get("price_24h_pcnt_e6"));
+                instrumentInfo.price24hPcntE6(Long.valueOf((String) data.get("price_24h_pcnt_e6")));
             }
             if (data.containsKey("high_price_24h_e4")) {
-                instrumentInfo.price24hPcntE6((long) data.get("high_price_24h_e4"));
+                instrumentInfo.price24hPcntE6(Long.valueOf((String) data.get("high_price_24h_e4")));
             }
             if (data.containsKey("low_price_24h_e4")) {
-                instrumentInfo.lowPrice24hE4((long) data.get("low_price_24h_e4"));
+                instrumentInfo.lowPrice24hE4(Long.valueOf((String) data.get("low_price_24h_e4")));
             }
             if (data.containsKey("price_1h_pcnt_e6")) {
-                instrumentInfo.price1hPcntE6((long) data.get("price_1h_pcnt_e6"));
+                instrumentInfo.price1hPcntE6(Long.valueOf((String) data.get("price_1h_pcnt_e6")));
             }
         });
     }
 
-    public void subscribePosition() {
+    public void subscribePosition(PositionList positionList) {
+        this.websocketPrivateInstance.registerPositionList(data -> {
+            CoinEnum coinType = CoinEnum.valueOf((String) data.get("symbol"));
+            SideEnum side = data.get("side").equals("Buy") ? SideEnum.OPEN_SELL : SideEnum.OPEN_BUY;
+            double qty = ((Number) data.get("size")).doubleValue();
+            double positionValue = ((Number) data.get("position_value")).doubleValue();
+            double entryPrice = ((Number) data.get("entry_price")).doubleValue();
+            double liqPrice = ((Number) data.get("liq_price")).doubleValue();
+            double bustPrice = ((Number) data.get("bust_price")).doubleValue();
+            int leverage = ((Number) data.get("leverage")).intValue();
+            int orderMargin = ((Number) data.get("order_margin")).intValue();
+            double occClosingFee = ((Number) data.get("occ_closing_fee")).doubleValue();
 
+            Position position = Position.builder().coinType(coinType).side(side).qty(qty).positionValue(positionValue)
+                    .entryPrice(entryPrice).liqPrice(liqPrice).bustPrice(bustPrice).leverage(leverage)
+                    .orderMargin(orderMargin).occClosingFee(occClosingFee).build();
+            positionList.add(position);
+        });
     }
 
     public void subscribeWalletInfo(WalletAccessable walletInfo) {

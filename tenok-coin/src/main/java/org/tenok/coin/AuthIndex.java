@@ -31,7 +31,7 @@ public class AuthIndex {
         System.out.printf("%nplease enter slack url%n> ");
         String slackUrl = scan.nextLine();
 
-        File outFile = new File("." + File.separator + "secret.auth");
+        File outFile = new File("./resources/secret" + File.separator + "secret.auth");
 
         outFile.createNewFile();
 
