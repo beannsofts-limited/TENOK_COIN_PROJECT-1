@@ -72,4 +72,9 @@ public class LongStrategy implements Strategy {
         return ((coinDAO.getCurrentPrice(coinType) / entryPrice) - 1.0) * 100;
     }
 
+    @Override
+    public String getStrategyName() {
+        return "골든크로스 롱 전략";
+    }
+
 }
