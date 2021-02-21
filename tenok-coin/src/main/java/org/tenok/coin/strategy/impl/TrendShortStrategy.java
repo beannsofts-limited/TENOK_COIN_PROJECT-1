@@ -47,7 +47,7 @@ public class TrendShortStrategy implements Strategy{
     @Override
     public boolean testCloseRBI() {
          //15분봉의 종가에 청산
-         if((standardDate + 895000) == System.currentTimeMillis() || getProfitPercent() <= -0.7){   
+         if((standardDate + 895000) <= System.currentTimeMillis() || getProfitPercent() <= -0.7){   
             return true;
         }
 

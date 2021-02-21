@@ -120,5 +120,11 @@ public class DAOTest{
     }
     
     
-    
+    @Test
+    public void test() {
+        while(true){
+
+            System.out.println(System.currentTimeMillis());
+        }
+    }
 }

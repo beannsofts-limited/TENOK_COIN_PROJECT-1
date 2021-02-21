@@ -50,7 +50,7 @@ public class TrendLongStrategy implements Strategy{
     public boolean testCloseRBI() {
         //15분봉의 종가에 청산
         //timer 14분 50초 후 청산
-        if(standardDate != candleList.getReversed(0).getStartAt().getTime() || getProfitPercent() <= -0.7 ){   
+        if((standardDate + 895000) <= System.currentTimeMillis() || getProfitPercent() <= -0.7 ){   
             return true;
         }
 
