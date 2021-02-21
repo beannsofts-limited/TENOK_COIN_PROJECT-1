@@ -15,7 +15,7 @@ public class TrendLongStrategy implements Strategy{
     private boolean isOpened = false;
     private CandleList candleList;
     private MovingAverage ma;
-    private double entryPrice;
+    
     private Date standardDate = null;
     
     public TrendLongStrategy(CoinDataAccessable coinDAO, CoinEnum coinType) {
@@ -70,8 +70,6 @@ public class TrendLongStrategy implements Strategy{
         this.isOpened = isOpened;
     }
 
-    private double getProfitPercent() {
-        return ((coinDAO.getCurrentPrice(coinType) / entryPrice) - 1.0) * 100;
-    }
+   
     
 }
