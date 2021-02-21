@@ -7,6 +7,7 @@ import javax.security.auth.login.LoginException;
 
 import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
+import org.tenok.coin.data.entity.impl.PositionList;
 import org.tenok.coin.data.entity.impl.candle_index.commodity_channel.CommidityChannelIndex;
 import org.tenok.coin.data.entity.impl.candle_index.moving_average.MAObject;
 import org.tenok.coin.data.entity.impl.candle_index.moving_average.MovingAverage;
@@ -22,7 +23,13 @@ public class App {
     public static void main(String[] args) throws LoginException, InterruptedException, IOException {
         Scanner scan = new Scanner(System.in);
         password = scan.nextLine();
-        maTest();
+        PositionTest();
+    }
+    public static void PositionTest() throws LoginException {
+        BybitDAO.getInstance().login(password);
+        PositionList pl = BybitDAO.getInstance().getPositionList();
+        BybitDAO.getInstance().getOrderList();
+        while (true);
     }
 
     public static void maTest() throws LoginException, InterruptedException {

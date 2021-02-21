@@ -2,6 +2,9 @@ package org.tenok.coin;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+
+import java.io.IOException;
 
 import javax.security.auth.login.LoginException;
 
@@ -14,6 +17,7 @@ import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.data.entity.impl.ActiveOrder;
 import org.tenok.coin.data.entity.impl.CandleList;
+import org.tenok.coin.data.entity.impl.OrderedList;
 import org.tenok.coin.data.entity.impl.candle_index.bollinger_band.BollingerBand;
 import org.tenok.coin.data.entity.impl.candle_index.moving_average.MovingAverage;
 import org.tenok.coin.data.impl.BybitDAO;
@@ -53,14 +57,9 @@ public class DAOTest {
     public void orderTest() throws LoginException, InsufficientCostException {
         BybitDAO.getInstance().login("tenok2019");
 
-        Orderable order = ActiveOrder.builder()
-                                     .coinType(CoinEnum.LTCUSDT)
-                                     .orderType(OrderTypeEnum.MARKET)
-                                     .side(SideEnum.OPEN_BUY)
-                                     .qty(0.1)
-                                     .tif(TIFEnum.GTC)
-                                     .build();
-                                     
+        Orderable order = ActiveOrder.builder().coinType(CoinEnum.LTCUSDT).orderType(OrderTypeEnum.MARKET)
+                .side(SideEnum.OPEN_BUY).qty(0.1).tif(TIFEnum.GTC).build();
+
         BybitDAO.getInstance().orderCoin(order);
 
         assertEquals(1, BybitDAO.getInstance().getOrderList().size());
@@ -69,22 +68,23 @@ public class DAOTest {
     @Test
     public void excpetionTest() throws LoginException {
         BybitDAO.getInstance().login("tenok2019");
-        
+
         WebhookResponse res = SlackSender.getInstance().sendException(new RuntimeException("something went wrong!"));
         assertEquals(200, res.getCode().intValue());
     }
 
-    //  // @Test
-    //  // public void BacktestCandleTest() {
-    //     // BacktestDAO back = new BacktestDAO();
-    //     //back.inputTest(CoinEnum.BTCUSDT, IntervalEnum.FIFTEEN);
-    //     // back.getCandleList(CoinEnum.BTCUSDT, IntervalEnum.FIFTEEN);  
-    //     // CandleList candle = back.getCandleList(CoinEnum.BTCUSDT, IntervalEnum.DAY);
-    //     // for (int i = 0; i<1000; i++){
-    //     //     System.out.println(candle.get(i));
-            
-    //     // }
-    //  // }
+    // // @Test
+    // // public void BacktestCandleTest() {
+    // // BacktestDAO back = new BacktestDAO();
+    // //back.inputTest(CoinEnum.BTCUSDT, IntervalEnum.FIFTEEN);
+    // // back.getCandleList(CoinEnum.BTCUSDT, IntervalEnum.FIFTEEN);
+    // // CandleList candle = back.getCandleList(CoinEnum.BTCUSDT,
+    // IntervalEnum.DAY);
+    // // for (int i = 0; i<1000; i++){
+    // // System.out.println(candle.get(i));
+
+    // // }
+    // // }
 
     @Test
     public void getInstrumentInfoTest() throws LoginException, InterruptedException {
@@ -109,13 +109,23 @@ public class DAOTest {
     }
 
     @Test
-    public void currentPriceTest() throws LoginException{
+    public void currentPriceTest() throws LoginException {
         BybitDAO.getInstance().login("");
-        
+
         double price = BybitDAO.getInstance().getCurrentPrice(CoinEnum.XTZUSDT);
         System.out.println(price);
         assertNotEquals(price, 0.0);
     }
-    
+
+    @Test
+    public void orderedListTest() throws LoginException, IOException {
+        BybitDAO.getInstance().login("tenokMDC2021");
+
+        OrderedList ol = BybitDAO.getInstance().getOrderList();
+        System.out.println(ol);
+        BybitDAO.getInstance().close();
+
+        assertNotNull(ol);
+    }
     
 }

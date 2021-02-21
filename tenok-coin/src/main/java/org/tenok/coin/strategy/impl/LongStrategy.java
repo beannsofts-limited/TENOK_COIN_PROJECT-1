@@ -9,7 +9,7 @@ import org.tenok.coin.type.IntervalEnum;
 
 import lombok.extern.log4j.Log4j;
 
-@Log4j
+@Log4j(topic = "bybit.strategy.logger")
 public class LongStrategy implements Strategy {
     private CoinDataAccessable coinDAO;
     private CoinEnum coinType;
@@ -38,6 +38,7 @@ public class LongStrategy implements Strategy {
     @Override
     public boolean testCloseRBI() {
         if (getProfitPercent() >= 0.5 || getProfitPercent() <= -1.0) {
+            log.info("profit" + getProfitPercent());
             log.info(String.format("%s %s 도달", coinType.getKorean(), (getProfitPercent() > 0) ? "익절가" : "손절가"));
             return true;
         }

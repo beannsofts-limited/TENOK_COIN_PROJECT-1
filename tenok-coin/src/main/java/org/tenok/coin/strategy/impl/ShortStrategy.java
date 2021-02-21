@@ -9,7 +9,7 @@ import org.tenok.coin.type.IntervalEnum;
 
 import lombok.extern.log4j.Log4j;
 
-@Log4j
+@Log4j(topic = "bybit.strategy.logger")
 public class ShortStrategy implements Strategy {
     private CoinDataAccessable coinDAO;
     private CoinEnum coinType;

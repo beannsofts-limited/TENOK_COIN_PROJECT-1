@@ -5,7 +5,6 @@ import java.io.IOException;
 import com.slack.api.Slack;
 import com.slack.api.webhook.WebhookResponse;
 
-import org.apache.log4j.Logger;
 import org.tenok.coin.data.impl.AuthDecryptor;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.SideEnum;
@@ -14,8 +13,6 @@ import org.tenok.coin.type.TIFEnum;
 public class SlackSender {
     private String webhookUrl;
     private Slack slackInstance;
-    private static Logger logger = Logger.getLogger(SlackSender.class);
-
     WebhookResponse response;
 
     private SlackSender() {
@@ -29,7 +26,6 @@ public class SlackSender {
                     side.getKorean(), tif.getApiString());
             String payload = String.format("{\"text\":\"%s\"}", message);
             response = slackInstance.send(webhookUrl, payload);
-            logger.trace(response);
             return response;
         } catch (IOException e) {
             e.printStackTrace();
@@ -40,9 +36,8 @@ public class SlackSender {
 
     public WebhookResponse sendException(Throwable t) {
         try {
-            String payload = String.format("{\"text\":\"Exception 발생%n%n%s\"}", t.getMessage());
+            String payload = String.format("{\"text\":\"Exception 발생%n%n%s\"}", t.toString());
             response = slackInstance.send(webhookUrl, payload);
-            logger.trace(response);
             return response;
         } catch (IOException e) {
             e.printStackTrace();
@@ -54,7 +49,6 @@ public class SlackSender {
         try {
             String payload = String.format("{\"text\":\"%s\"}", text);
             response = slackInstance.send(webhookUrl, payload);
-            logger.trace(response);
             return response;
         } catch (IOException e) {
             e.printStackTrace();

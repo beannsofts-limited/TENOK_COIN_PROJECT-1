@@ -33,6 +33,7 @@ public class BybitWebsocket implements Closeable {
     private Map<CoinEnum, Map<IntervalEnum, Consumer<JSONObject>>> kLineConsumerMap;
     private Consumer<JSONObject> walletInfoConsumer;
     private Consumer<JSONObject> orderConsumer;
+    private Consumer<JSONObject> positionConsumer;
     private Map<CoinEnum, Consumer<JSONObject>> instrumentInfoConsumerMap;
 
     private Session session;
@@ -117,6 +118,10 @@ public class BybitWebsocket implements Closeable {
             case "order":
                 this.orderConsumer.accept((JSONObject) ((JSONArray) response.get("data")).get(0));
                 break;
+            
+            case "position":
+                this.positionConsumer.accept((JSONObject) ((JSONArray) response.get("data")).get(0));
+                break;
 
             default:
                 throw new RuntimeException("Websocket Topic Parse Failed" + Arrays.toString(topicParsed));
@@ -172,6 +177,12 @@ public class BybitWebsocket implements Closeable {
     public void registerOrder(Consumer<JSONObject> consumer) {
         this.orderConsumer = consumer;
         JSONObject requestJson = getSubscriptionJSONObject(Arrays.asList("order"));
+        session.getAsyncRemote().sendObject(requestJson);
+    }
+
+    public void registerPositionList(Consumer<JSONObject> consumer) {
+        this.positionConsumer = consumer;
+        JSONObject requestJson = getSubscriptionJSONObject(Arrays.asList("position"));
         session.getAsyncRemote().sendObject(requestJson);
     }
 
