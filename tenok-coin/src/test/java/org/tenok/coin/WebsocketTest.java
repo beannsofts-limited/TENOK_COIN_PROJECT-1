@@ -11,7 +11,7 @@ import org.tenok.coin.data.impl.BybitDAO;
 public class WebsocketTest {
     @Test
     public void PositionTest() throws LoginException {
-        BybitDAO.getInstance().login("tenokMDC2021");
+        BybitDAO.getInstance().login("");
         PositionList pl = BybitDAO.getInstance().getPositionList();
         assertNotNull(pl);
         while (true);

@@ -119,7 +119,7 @@ public class DAOTest {
 
     @Test
     public void orderedListTest() throws LoginException, IOException {
-        BybitDAO.getInstance().login("tenokMDC2021");
+        BybitDAO.getInstance().login("");
 
         OrderedList ol = BybitDAO.getInstance().getOrderList();
         System.out.println(ol);
