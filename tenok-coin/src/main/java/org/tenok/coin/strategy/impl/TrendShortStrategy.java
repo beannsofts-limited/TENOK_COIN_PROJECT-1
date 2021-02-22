@@ -77,4 +77,10 @@ public class TrendShortStrategy implements Strategy{
     private double getProfitPercent() {
         return (1.0 - (coinDAO.getCurrentPrice(coinType) / entryPrice)) * 100;
     }
+
+    @Override
+    public String getStrategyName() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }
