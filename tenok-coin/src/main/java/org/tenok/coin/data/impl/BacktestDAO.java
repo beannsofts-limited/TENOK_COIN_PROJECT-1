@@ -12,6 +12,7 @@ import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.data.entity.impl.BybitWalletInfo;
 import org.tenok.coin.data.entity.impl.Candle;
 import org.tenok.coin.data.entity.impl.CandleList;
+import org.tenok.coin.data.entity.impl.InstrumentInfo;
 import org.tenok.coin.data.entity.impl.OrderedList;
 import org.tenok.coin.data.entity.impl.Position;
 import org.tenok.coin.data.entity.impl.PositionList;
@@ -216,6 +217,12 @@ public class BacktestDAO implements CoinDataAccessable, BackTestable {
     @Override
     @Deprecated(forRemoval = false)
     public OrderedList getOrderList() {
+        return null;
+    }
+
+    @Override
+    public InstrumentInfo getInstrumentInfo(CoinEnum coinType) {
+        // TODO Auto-generated method stub
         return null;
     }
 

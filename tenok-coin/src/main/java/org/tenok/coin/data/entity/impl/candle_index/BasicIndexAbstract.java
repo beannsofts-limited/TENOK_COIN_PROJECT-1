@@ -36,7 +36,12 @@ public abstract class BasicIndexAbstract<T> extends ArrayList<T> implements Inde
 
     @Override
     public final void calculateCurrentCandle() {
-        ((IndexObject) super.get(super.size() - 1)).updateData(calculate());
+        var updatableObj = super.get(super.size() - 1);
+        if (updatableObj instanceof IndexObject) {
+            ((IndexObject) updatableObj).updateData(calculate());
+        } else {
+            super.set(super.size() - 1, calculate());
+        }
     }
 
     @Override

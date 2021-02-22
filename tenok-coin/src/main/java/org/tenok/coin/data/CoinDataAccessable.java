@@ -3,6 +3,7 @@ package org.tenok.coin.data;
 import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.data.entity.impl.CandleList;
+import org.tenok.coin.data.entity.impl.InstrumentInfo;
 import org.tenok.coin.data.entity.impl.OrderedList;
 import org.tenok.coin.data.entity.impl.PositionList;
 import org.tenok.coin.type.CoinEnum;
@@ -37,4 +38,6 @@ public interface CoinDataAccessable {
      * @return 시가
      */
     public double getCurrentPrice(CoinEnum coinType);
+
+    public InstrumentInfo getInstrumentInfo(CoinEnum coinType);
 }

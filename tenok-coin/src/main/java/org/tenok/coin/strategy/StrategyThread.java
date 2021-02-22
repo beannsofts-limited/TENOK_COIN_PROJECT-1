@@ -8,6 +8,8 @@ import org.tenok.coin.data.entity.Orderable;
 import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.data.entity.impl.ActiveOrder;
 import org.tenok.coin.data.entity.impl.Position;
+import org.tenok.coin.data.impl.BybitDAO;
+import org.tenok.coin.data.impl.RealtimeBacktestDAO;
 import org.tenok.coin.slack.SlackSender;
 import org.tenok.coin.type.CoinEnum;
 import org.tenok.coin.type.OrderTypeEnum;
@@ -30,11 +32,15 @@ class StrategyThread implements Runnable {
                 // backtestable 클래스 일 경우 Runnable 객체 집어넣고 getInstance 호출
                 coinDAOInstance = (CoinDataAccessable) config.getCoinDataAccessableClass()
                         .getDeclaredMethod("getInstance", Runnable.class).invoke((Object) null, this);
-                log.info("got instance from Backtestable DAO Object");
-            } else {
+                log.info("got instance from Backtestable DAO Class");
+            } else if (BybitDAO.class.isAssignableFrom(config.getCoinDataAccessableClass())) {
                 coinDAOInstance = (CoinDataAccessable) config.getCoinDataAccessableClass()
                         .getDeclaredMethod("getInstance", (Class<?>[]) null).invoke((Object) null);
-                log.info("got instance from Bybit DAO Object");
+                log.info("got instance from Bybit DAO Class");
+            } else if (RealtimeBacktestDAO.class.isAssignableFrom(config.getCoinDataAccessableClass())) {
+                coinDAOInstance = (CoinDataAccessable) config.getCoinDataAccessableClass()
+                        .getDeclaredMethod("getInstance", (Class<?>[]) null).invoke((Object) null);
+                log.info("got instance from realtime DAO Class");
             }
             strategyInstance = config.getStrategyClass()
                     .getDeclaredConstructor(CoinDataAccessable.class, CoinEnum.class)
@@ -154,7 +160,7 @@ class StrategyThread implements Runnable {
      * 
      * @return 현재 구매 가능한 코인 개수
      */
-    public double getAvailable() {
+    private double getAvailable() {
         double currentAvailable = wallet.getWalletAvailableBalance();
         // 주문하고자 하는 코인의 현재가
         double currentPrice = coinDAOInstance.getCurrentPrice(config.getCoinType());
@@ -169,5 +175,9 @@ class StrategyThread implements Runnable {
             qty = Math.floor(qty * 10) / 10.0; // 한 자리 까지
         }
         return qty;
+    }
+
+    public String getStrategyName() {
+        return strategyInstance.getStrategyName();
     }
 }
