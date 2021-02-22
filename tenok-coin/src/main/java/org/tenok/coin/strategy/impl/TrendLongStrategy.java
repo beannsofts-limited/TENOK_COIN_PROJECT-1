@@ -24,7 +24,7 @@ public class TrendLongStrategy implements Strategy{
     public TrendLongStrategy(CoinDataAccessable coinDAO, CoinEnum coinType) {
         this.coinDAO = coinDAO;
         this.coinType = coinType;
-        candleList = this.coinDAO.getCandleList(coinType, IntervalEnum.FIFTEEN);
+        candleList = this.coinDAO.getCandleList(coinType, IntervalEnum.FIVE);
         ma = candleList.createIndex(new MovingAverage());
     }
 
