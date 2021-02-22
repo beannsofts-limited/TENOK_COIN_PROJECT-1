@@ -27,6 +27,11 @@ public class LongStrategy implements Strategy {
 
     @Override
     public double testOpenRBI() {
+        if (true) {
+            entryPrice = coinDAO.getCurrentPrice(coinType);
+            log.info("current price: " + entryPrice);
+            return 1;
+        }
         if (ma.getReversed(2).getMa5() < ma.getReversed(2).getMa20()
                 && ma.getReversed(1).getMa5() > ma.getReversed(1).getMa20()) {
             entryPrice = coinDAO.getCurrentPrice(coinType);
@@ -37,14 +42,14 @@ public class LongStrategy implements Strategy {
 
     @Override
     public boolean testCloseRBI() {
-        if (getProfitPercent() >= 0.5 || getProfitPercent() <= -1.0) {
-            log.info("profit" + getProfitPercent());
-            log.info(String.format("%s %s 도달", coinType.getKorean(), (getProfitPercent() > 0) ? "익절가" : "손절가"));
-            return true;
-        }
-
-        return !(ma.getReversed(2).getMa5() < ma.getReversed(2).getMa20()
-                && ma.getReversed(1).getMa5() > ma.getReversed(1).getMa20());
+        log.info(String.format("profit %f", getProfitPercent()));
+        return false;
+        // if (getProfitPercent() >= 0.5 || getProfitPercent() <= -1.0) {
+        //     log.info(String.format("%s %s 도달", coinType.getKorean(), (getProfitPercent() > 0) ? "익절가" : "손절가"));
+        //     return true;
+        // }
+        // return !(ma.getReversed(2).getMa5() < ma.getReversed(2).getMa20()
+        //         && ma.getReversed(1).getMa5() > ma.getReversed(1).getMa20());
 
     }
 
@@ -69,7 +74,8 @@ public class LongStrategy implements Strategy {
     }
 
     private double getProfitPercent() {
-        return ((coinDAO.getCurrentPrice(coinType) / entryPrice) - 1.0) * 100;
+        log.info(String.format("in method: %f %f", coinDAO.getCurrentPrice(coinType), entryPrice));
+        return ((coinDAO.getCurrentPrice(coinType) / entryPrice) - 1.0) * 100.0;
     }
 
     @Override

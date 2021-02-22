@@ -18,7 +18,7 @@ public class CciExitLongStrategy extends BasicStrategyAbstract {
 
     public CciExitLongStrategy(CoinDataAccessable coinDAO, CoinEnum coinType) {
         super(coinDAO, coinType);
-        candleList4h = coinDAO.getCandleList(coinType, IntervalEnum.TWOHUNDREDFORTY);
+        candleList4h = coinDAO.getCandleList(coinType, IntervalEnum.FOUR_HOUR);
         cci4h = candleList4h.createIndex(new CommidityChannelIndex(9));
         candleList5m = coinDAO.getCandleList(coinType, IntervalEnum.FIVE);
         cci5m = candleList5m.createIndex(new CommidityChannelIndex(20));
@@ -28,7 +28,7 @@ public class CciExitLongStrategy extends BasicStrategyAbstract {
     @Override
     public double testOpenRBI() {
         if (isExiting() && isMaRising()) {
-            entryPrice = coinDAO.getCurrentPrice(coinType);
+            entryPrice = candleList4h.getReversed(0).getClose();
             return 1;
         }
         return 0;
@@ -83,8 +83,8 @@ public class CciExitLongStrategy extends BasicStrategyAbstract {
     private boolean isCciFalling() {
         return cci5m.getReversed(0) - cci5m.getReversed(1) < 0;
     }
-    
+
     private double getProfitPercent() {
-        return ((coinDAO.getCurrentPrice(coinType) / entryPrice) - 1.0) * 100;
+        return ((candleList4h.getReversed(0).getClose() / entryPrice) - 1.0) * 100;
     }
 }

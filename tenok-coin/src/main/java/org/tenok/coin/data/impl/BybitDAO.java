@@ -202,6 +202,7 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
      * instrument info 조회
      */
     @SuppressWarnings("unchecked")
+    @Override
     public InstrumentInfo getInstrumentInfo(CoinEnum coinType) {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");
@@ -237,7 +238,8 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");
         }
-        return getInstrumentInfo(coinType).getLastPriceE4() / 10000.0;
+        // return getInstrumentInfo(coinType).getLastPriceE4() / 10000.0;
+        return getCandleList(coinType, IntervalEnum.ONE).getReversed(0).getClose();
     }
 
     /**

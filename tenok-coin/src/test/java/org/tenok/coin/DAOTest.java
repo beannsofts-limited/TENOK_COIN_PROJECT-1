@@ -12,10 +12,8 @@ import com.slack.api.webhook.WebhookResponse;
 
 
 import org.junit.Test;
-import org.tenok.coin.data.CoinDataAccessable;
 import org.tenok.coin.data.InsufficientCostException;
 import org.tenok.coin.data.entity.Orderable;
-import org.tenok.coin.data.entity.WalletAccessable;
 import org.tenok.coin.data.entity.impl.ActiveOrder;
 import org.tenok.coin.data.entity.impl.CandleList;
 import org.tenok.coin.data.entity.impl.OrderedList;
@@ -110,12 +108,16 @@ public class DAOTest{
     }
 
     @Test
-    public void currentPriceTest() throws LoginException {
+    public void currentPriceTest() throws LoginException, InterruptedException {
         BybitDAO.getInstance().login("");
 
-        double price = BybitDAO.getInstance().getCurrentPrice(CoinEnum.XTZUSDT);
+        double price = BybitDAO.getInstance().getCurrentPrice(CoinEnum.BTCUSDT);
         System.out.println(price);
         assertNotEquals(price, 0.0);
+        for (int i = 0; i < 50; i++) {
+            System.out.println(BybitDAO.getInstance().getCurrentPrice(CoinEnum.BTCUSDT));
+            Thread.sleep(1000);
+        }
     }
 
     @Test

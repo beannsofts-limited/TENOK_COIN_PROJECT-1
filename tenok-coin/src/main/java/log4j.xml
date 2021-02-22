@@ -40,6 +40,16 @@
         </layout>  
     </appender>
 
+	<appender name="realtimeDAOFile" class="org.apache.log4j.DailyRollingFileAppender">
+		<param name="File" value="./logs/realtimeDAO/tenok.log"></param>
+
+		<param name="Append" value="true"/>
+        <param name="DatePattern" value="'.'yyyy-MM-dd"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="[%d{yyyy-MM-dd HH:mm:ss}] [%-5p] [%c{1}:%L] - %m%n" />
+        </layout>  
+	</appender>
+
 	<category name="bybit.order.logger">
 		<level  value="DEBUG"/>
 		<appender-ref ref="console"/>
@@ -52,9 +62,15 @@
 		<appender-ref ref="strategyFile"/>
 	</category>
 
+	<category name="bybit.realtimeDAO.logger">
+		<level  value="DEBUG"/>
+		<appender-ref ref="console"/>
+		<appender-ref ref="strategyFile"/>
+	</category>
+
 	<!-- Root Logger -->
 	<root>
-		<priority value="trace" />
+		<priority value="info" />
 		<appender-ref ref="console" />
 		<appender-ref ref="rootFile" />
 	</root>
