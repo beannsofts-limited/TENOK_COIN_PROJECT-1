@@ -9,70 +9,88 @@ import org.tenok.coin.type.SideEnum;
 import org.tenok.coin.type.TIFEnum;
 
 import lombok.Builder;
+import lombok.Setter;
 
 /**
  * Backtest 할 때. 진입가격, 수익률 등을 기록하기 위한 클래스
  */
 @Builder
+@Setter
 public class BacktestOrder implements OrderDataAccessable {
+    private SideEnum side;
+    private CoinEnum coinType;
+    private OrderTypeEnum orderType;
+    private TIFEnum tif;
+    private double qty;
+    private Date timestamp;
+    private double entryPrice;
+    private double exitPrice;
+    private Date exitDate;
+    private int leverage;
+
     @Override
     public SideEnum getSide() {
-        // TODO Auto-generated method stub
-        return null;
+        return side;
     }
 
     @Override
     public CoinEnum getCoinType() {
-        // TODO Auto-generated method stub
-        return null;
+        return coinType;
     }
 
     @Override
     public OrderTypeEnum getOrderType() {
-        // TODO Auto-generated method stub
-        return null;
+        return orderType;
     }
 
     @Override
     public TIFEnum getTIF() {
-        // TODO Auto-generated method stub
-        return null;
+        return tif;
     }
 
     @Override
     public double getQty() {
-        // TODO Auto-generated method stub
-        return 0;
+        return qty;
     }
 
     @Override
     public Date getTimeStamp() {
-        // TODO Auto-generated method stub
-        return null;
+        return timestamp;
     }
 
     public double getEntryPrice() {
-        // TODO Auto-generated method stub
-        return 0;
+        return entryPrice;
     }
 
     public double getExitPrice() {
-        // TODO Auto-generated method stub
-        return 0;
+        return exitPrice;
     }
 
     public Date getEntryDate() {
-        return null;
+        return getTimeStamp();
     }
 
     public Date getExitDate() {
-        return null;
+        return exitDate;
     }
 
     @Override
     public int getLeverage() {
-        // TODO Auto-generated method stub
-        return 0;
+        return Math.abs(leverage);
+    }
+
+    public double getProfit() throws IllegalAccessException {
+        if (exitDate == null) {
+            throw new IllegalAccessException("거래가 종료되지 않음.");
+        }
+        return ((exitPrice / entryPrice) - 1) * 100 * leverage;
+    }
+
+    public double getEarnUSDT() throws IllegalAccessException {
+        if (exitDate == null) {
+            throw new IllegalAccessException("거래가 종료되지 않음.");
+        }
+        return (exitPrice - entryPrice) * qty * leverage;
     }
 
 }

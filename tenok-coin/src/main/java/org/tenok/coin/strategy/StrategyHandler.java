@@ -83,4 +83,8 @@ public class StrategyHandler {
         }
         strategyInstance.updateAvailableRate(availableRate);
     }
+
+    public String getStrategyName() {
+        return strategyInstance.getStrategyName();
+    }
 }
