@@ -8,6 +8,7 @@ import java.util.Map;
 
 import javax.security.auth.login.LoginException;
 
+import org.apache.log4j.Logger;
 import org.tenok.coin.data.CoinDataAccessable;
 import org.tenok.coin.data.InsufficientCostException;
 import org.tenok.coin.data.entity.Orderable;
@@ -23,6 +24,7 @@ import org.tenok.coin.type.IntervalEnum;
 import org.tenok.coin.type.SideEnum;
 
 public class RealtimeBacktestDAO implements CoinDataAccessable {
+    private static Logger logFile = Logger.getLogger("bybit.realtimeDAO.logger");
     private WalletAccessable myWallet;
     private Map<Orderable, BacktestOrder> orderListMap;
 
@@ -88,7 +90,7 @@ public class RealtimeBacktestDAO implements CoinDataAccessable {
                 .orderType(order.getOrderType()).qty(order.getQty()).side(order.getSide()).tif(order.getTIF())
                 .timestamp(new Date()).build();
         orderListMap.put(order, backtestOrder);
-
+        logFile.info(String.format("%s 코인 %d 레버리지로 %f 개 %s", order.getCoinType(), order.getLeverage(), order.getQty(), order.getSide()));
     }
 
     @Override
