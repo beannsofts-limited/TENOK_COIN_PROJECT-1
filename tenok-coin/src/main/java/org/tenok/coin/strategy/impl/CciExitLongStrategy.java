@@ -28,7 +28,7 @@ public class CciExitLongStrategy extends BasicStrategyAbstract {
     @Override
     public double testOpenRBI() {
         if (isExiting() && isMaRising()) {
-            entryPrice = coinDAO.getCurrentPrice(coinType);
+            entryPrice = candleList4h.getReversed(0).getClose();
             return 1;
         }
         return 0;
@@ -83,8 +83,8 @@ public class CciExitLongStrategy extends BasicStrategyAbstract {
     private boolean isCciFalling() {
         return cci5m.getReversed(0) - cci5m.getReversed(1) < 0;
     }
-    
+
     private double getProfitPercent() {
-        return ((coinDAO.getCurrentPrice(coinType) / entryPrice) - 1.0) * 100;
+        return ((candleList4h.getReversed(0).getClose() / entryPrice) - 1.0) * 100;
     }
 }

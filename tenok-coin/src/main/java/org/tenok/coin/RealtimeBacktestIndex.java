@@ -20,7 +20,7 @@ public class RealtimeBacktestIndex {
 
         handler.start();
 
-        Thread.sleep(1000L * 60L * 60L * 2L);   // 2시간
+        Thread.sleep(1000L * 60L * 60L * 30L);   // 30시간
 
         handler.stop();
 
@@ -33,6 +33,6 @@ public class RealtimeBacktestIndex {
             profit += backtestOrder.getProfit();
         }
         SlackSender.getInstance().sendText(String.format("%s 검증 완료", handler.getStrategyName()));
-        SlackSender.getInstance().sendText(String.format("수익: %f USDT%n수익률: %f %%n", earnUSDT, profit));
+        SlackSender.getInstance().sendText(String.format("수익: %f USDT%n수익률: %f %%n", earnUSDT, profit / orderList.size()));
     }
 }
