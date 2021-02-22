@@ -109,7 +109,7 @@ public class DAOTest{
 
     @Test
     public void currentPriceTest() throws LoginException, InterruptedException {
-        BybitDAO.getInstance().login("tenokMDC2021");
+        BybitDAO.getInstance().login("");
 
         double price = BybitDAO.getInstance().getCurrentPrice(CoinEnum.BTCUSDT);
         System.out.println(price);
