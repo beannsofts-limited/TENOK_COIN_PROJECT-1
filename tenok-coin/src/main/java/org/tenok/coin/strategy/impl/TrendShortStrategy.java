@@ -23,7 +23,13 @@ public class TrendShortStrategy implements Strategy{
     public TrendShortStrategy(CoinDataAccessable coinDAO, CoinEnum coinType) {
         this.coinDAO = coinDAO;
         this.coinType = coinType;
-        candleList = this.coinDAO.getCandleList(coinType, IntervalEnum.FIVE);
+        if(coinType == CoinEnum.BTCUSDT || coinType == CoinEnum.ETHUSDT){
+            candleList = this.coinDAO.getCandleList(coinType, IntervalEnum.FIFTEEN);
+
+        }else{
+
+            candleList = this.coinDAO.getCandleList(coinType, IntervalEnum.FIVE);
+        }
         ma = candleList.createIndex(new MovingAverage());
     }
 
@@ -47,9 +53,20 @@ public class TrendShortStrategy implements Strategy{
     @Override
     public boolean testCloseRBI() {
          //15분봉의 종가에 청산
-         if((standardDate + 895000) <= System.currentTimeMillis() || getProfitPercent() <= -0.7){   
-            return true;
+         if(coinType == CoinEnum.BTCUSDT || coinType == CoinEnum.ETHUSDT){
+          
+            if((standardDate + 895000) <= System.currentTimeMillis() || getProfitPercent() <= -0.7 ){   
+                return true;
+            }
+
+        }else{
+
+            if((standardDate + 297000) <= System.currentTimeMillis() || getProfitPercent() <= -0.7 ){   
+                return true;
+            }
         }
+
+
 
         return false;
     }
@@ -81,6 +98,6 @@ public class TrendShortStrategy implements Strategy{
     @Override
     public String getStrategyName() {
         // TODO Auto-generated method stub
-        return null;
+        return "추세 숏 전략";
     }
 }
