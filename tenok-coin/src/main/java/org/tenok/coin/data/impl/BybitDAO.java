@@ -202,6 +202,7 @@ public class BybitDAO implements CoinDataAccessable, Closeable {
      * instrument info 조회
      */
     @SuppressWarnings("unchecked")
+    @Override
     public InstrumentInfo getInstrumentInfo(CoinEnum coinType) {
         if (!isLoggedIn) {
             throw new RuntimeException("DAO instance is not logged in");
