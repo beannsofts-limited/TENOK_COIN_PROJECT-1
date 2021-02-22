@@ -60,7 +60,7 @@ class StrategyThread implements Runnable {
                     double qty = getAvailable() * openRBI;
 
                     log.info(String.format("%s %s 전략: 포지션 오픈 신호 포착", config.getCoinType().getKorean(),
-                            (config.getLeverage() > 0) ? "롱" : "숏"));
+                            strategyInstance.getStrategyName()));
                     log.debug(String.format("예수금: %f USDT 시가: %f 개수: %f", wallet.getWalletAvailableBalance(),
                             coinDAOInstance.getCurrentPrice(config.getCoinType()), qty));
                     Orderable order = ActiveOrder.builder().coinType(config.getCoinType())
@@ -70,7 +70,7 @@ class StrategyThread implements Runnable {
                         coinDAOInstance.orderCoin(order);
                     } catch (InsufficientCostException e) {
                         String errMsg = String.format("%s %s전략: 예수금 부족", config.getCoinType().getKorean(),
-                                (config.getLeverage() > 0) ? "롱" : "숏");
+                                strategyInstance.getStrategyName());
                         SlackSender.getInstance().sendText(errMsg);
                         log.warn(errMsg);
                         return;
@@ -94,7 +94,7 @@ class StrategyThread implements Runnable {
                     }
 
                     log.info(String.format("%s %s 전략: 청산 신호 포착", config.getCoinType().getKorean(),
-                            (config.getLeverage() > 0) ? "롱" : "숏"));
+                            strategyInstance.getStrategyName()));
                     Orderable order = ActiveOrder.builder().coinType(config.getCoinType())
                             .orderType(OrderTypeEnum.MARKET).qty(myPosition.getQty()).side(side)
                             .leverage(config.getLeverage()).tif(TIFEnum.GTC).build();
@@ -102,7 +102,7 @@ class StrategyThread implements Runnable {
                         coinDAOInstance.orderCoin(order);
                     } catch (InsufficientCostException e) {
                         String errMsg = String.format("%s %s전략: 예수금 부족", config.getCoinType().getKorean(),
-                                (config.getLeverage() > 0) ? "롱" : "숏");
+                                strategyInstance.getStrategyName());
                         SlackSender.getInstance().sendText(errMsg);
                         log.warn(errMsg);
                         return;
@@ -134,7 +134,7 @@ class StrategyThread implements Runnable {
         }
 
         log.info(String.format("%s %s전략: 전략 스레드 종료", config.getCoinType().getKorean(),
-                (config.getLeverage() > 0) ? "롱" : "숏"));
+                strategyInstance.getStrategyName()));
     }
 
     public void updateLeverage(int leverage) {

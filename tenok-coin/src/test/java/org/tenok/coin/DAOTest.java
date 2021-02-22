@@ -6,7 +6,6 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 
-
 import javax.security.auth.login.LoginException;
 
 import com.slack.api.webhook.WebhookResponse;
@@ -130,11 +129,4 @@ public class DAOTest{
         assertNotNull(ol);
     }
     
-    @Test
-    public void test() {
-        while(true){
-
-            System.out.println(System.currentTimeMillis());
-        }
-    }
 }

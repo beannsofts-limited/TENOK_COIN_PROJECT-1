@@ -70,4 +70,9 @@ public class ShortStrategy implements Strategy {
     private double getProfitPercent() {
         return (1.0 - (coinDAO.getCurrentPrice(coinType) / entryPrice)) * 100;
     }
+
+    @Override
+    public String getStrategyName() {
+        return "골든크로스 숏 전략";
+    }
 }
