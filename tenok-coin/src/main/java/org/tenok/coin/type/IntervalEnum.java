@@ -29,22 +29,22 @@ public enum IntervalEnum {
     /**
      * 60
      */
-    SIXTY("60", 3600, 60),
+    ONE_HOUR("60", 3600, 60),
 
     /**
      * 120
      */
-    HUNDREDTWENTY("120", 7200, 120),
+    TWO_HOUR("120", 7200, 120),
 
     /**
      * 240
      */
-    TWOHUNDREDFORTY("240", 14400, 240),
+    FOUR_HOUR("240", 14400, 240),
 
     /**
      * 360
      */
-    THREEHOUNDREDSIXTY("360", 21600, 360),
+    SIX_HOUR("360", 21600, 360),
 
     /**
      * D

@@ -18,7 +18,7 @@ public class CciExitLongStrategy extends BasicStrategyAbstract {
 
     public CciExitLongStrategy(CoinDataAccessable coinDAO, CoinEnum coinType) {
         super(coinDAO, coinType);
-        candleList4h = coinDAO.getCandleList(coinType, IntervalEnum.TWOHUNDREDFORTY);
+        candleList4h = coinDAO.getCandleList(coinType, IntervalEnum.FOUR_HOUR);
         cci4h = candleList4h.createIndex(new CommidityChannelIndex(9));
         candleList5m = coinDAO.getCandleList(coinType, IntervalEnum.FIVE);
         cci5m = candleList5m.createIndex(new CommidityChannelIndex(20));
